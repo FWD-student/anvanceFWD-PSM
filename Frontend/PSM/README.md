@@ -3,3 +3,7 @@ Guia para continuar en casa, hice la construccion de dos componentes para comenz
 test
 para que funcione el calendar falta el instalar lo siguiente
 npm install date-fns
+lo de los cors y jwt
+pip install django-cors-headers
+pip install cloudinary django-cloudinary-storage
+pip install djangorestframework-simplejwt
