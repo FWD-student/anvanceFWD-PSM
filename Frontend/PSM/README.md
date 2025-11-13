@@ -1,0 +1,2 @@
+Guia para continuar en casa, hice la construccion de dos componentes para comenzar, y tambien corregir la implementacion de react-big-calendar, y en el apartado de configuracion del backend me falta lo siguiente, la respectiva configuracion de los cors, seguir con la asignacion de roles, con la interfaz de django solo cambiando http://127.0.0.1:8000/admin/ en vez de api, y con el comando py manage.py createsuperuser crear un usuario y contraseña , en este caso la contra es admin123 y el resto de datos esta en config-imagen. 
+
