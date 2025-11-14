@@ -25,6 +25,8 @@ urlpatterns = [
     
     # resena
     path('Resena/', ResenaListCreateView.as_view(), name="crear y listar resenhas"),
-    path('Resena/<int:pk>/', ResenaDetailView.as_view(), name="actualizar y eliminar resena")
+    path('Resena/<int:pk>/', ResenaDetailView.as_view(), name="actualizar y eliminar resena"),
 
+    # contacto
+    path('Contacto/', ContactoView.as_view(), name="enviar mensaje de contacto"),
 ]

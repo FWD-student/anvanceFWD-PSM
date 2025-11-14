@@ -1,5 +1,7 @@
 from django.shortcuts import render
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from .models import *
 from .serializers import *
 
@@ -61,3 +63,12 @@ class ResenaListCreateView(ListCreateAPIView):
 class ResenaDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Resena.objects.all()
     serializer_class = ResenaSerializer
+
+
+class ContactoView(APIView):
+    def post(self, request):
+        serializer = ContactoSerializer(data=request.data)
+        if serializer.is_valid():
+            # Aca proceso el mensaje (email o notificacion)
+            return Response({"message": "Mensaje recibido"})
+        return Response(serializer.errors, status=400)
