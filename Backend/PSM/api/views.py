@@ -1,74 +1,80 @@
 from django.shortcuts import render
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import *
 from .serializers import *
+from django.contrib.auth.models import User
 
-# vistas usuario
-class UsuarioListCreateView(ListCreateAPIView):
+# Vistas Usuario
+""" class UsuarioListCreateView(generics.ListCreateAPIView):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
 
-class UsuarioDetailView(RetrieveUpdateDestroyAPIView):
+class UsuarioDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Usuario.objects.all()
-    serializer_class = UsuarioSerializer
+    serializer_class = UsuarioSerializer """
 
+# Vistas User (autenticacion)
+class UserListCreateView(generics.ListCreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
 # Vistas CategEvento 
-class CategEventoListCreateView(ListCreateAPIView):
+class CategEventoListCreateView(generics.ListCreateAPIView):
     queryset = CategEvento.objects.all()
     serializer_class = CategEventoSerializer
 
-class CategEventoDetailView(RetrieveUpdateDestroyAPIView):
+class CategEventoDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = CategEvento.objects.all()
     serializer_class = CategEventoSerializer
 
 
 # Vistas Ubicacion
-class UbicacionListCreateView(ListCreateAPIView):
+class UbicacionListCreateView(generics.ListCreateAPIView):
     queryset = Ubicacion.objects.all()
     serializer_class = UbicacionSerializer
 
-class UbicacionDetailView(RetrieveUpdateDestroyAPIView):
+class UbicacionDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Ubicacion.objects.all()
     serializer_class = UbicacionSerializer
 
 
 # Vistas de Evento
-class EventoListCreateView(ListCreateAPIView):
+class EventoListCreateView(generics.ListCreateAPIView):
     queryset = Evento.objects.all()
     serializer_class = EventoSerializer
 
-class EventoDetailView(RetrieveUpdateDestroyAPIView):
+class EventoDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Evento.objects.all()
     serializer_class = EventoSerializer
 
 
-# vistas de inscripcion
-class InscripcionListCreateView(ListCreateAPIView):
+# Vistas de inscripcion
+class InscripcionListCreateView(generics.ListCreateAPIView):
     queryset = Inscripcion.objects.all()
     serializer_class = InscripcionSerializer
 
-class InscripcionDetailView(RetrieveUpdateDestroyAPIView):
+class InscripcionDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Inscripcion.objects.all()
     serializer_class = InscripcionSerializer
 
 
-# vista de reseña
-class ResenaListCreateView(ListCreateAPIView):
+# Vista de reseña
+class ResenaListCreateView(generics.ListCreateAPIView):
     queryset = Resena.objects.all()
     serializer_class = ResenaSerializer
 
-class ResenaDetailView(RetrieveUpdateDestroyAPIView):
+class ResenaDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Resena.objects.all()
     serializer_class = ResenaSerializer
 
 
-class ContactoView(APIView):
-    def post(self, request):
-        serializer = ContactoSerializer(data=request.data)
-        if serializer.is_valid():
-            # Aca proceso el mensaje (email o notificacion)
-            return Response({"message": "Mensaje recibido"})
-        return Response(serializer.errors, status=400)
+# Vista de Contacto
+class ContactoListCreateView(generics.ListCreateAPIView):
+    queryset = Contacto.objects.all()
+    serializer_class = ContactoSerializer

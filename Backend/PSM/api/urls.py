@@ -3,9 +3,9 @@ from .views import *
 
 urlpatterns = [
 
-    # usuario
-    path('Usuario/', UsuarioListCreateView.as_view(), name="crear y listar usuarios"),
-    path('Usuario/<int:pk>/', UsuarioDetailView.as_view(), name="actualizar y eliminar usuario"),
+    # user (autenticacion)
+    path('User/', UserListCreateView.as_view(), name="crear y listar usuarios"),
+    path('User/<int:pk>/', UserDetailView.as_view(), name="actualizar y eliminar usuario"),
     
     # categEvento
     path('CategEvento/', CategEventoListCreateView.as_view(), name="crear y listar categorias"),
@@ -28,5 +28,6 @@ urlpatterns = [
     path('Resena/<int:pk>/', ResenaDetailView.as_view(), name="actualizar y eliminar resena"),
 
     # contacto
-    path('Contacto/', ContactoView.as_view(), name="enviar mensaje de contacto"),
+    path('Contacto/', ContactoListCreateView.as_view(), name="crear y listar mensajes de contacto"),
 ]
+

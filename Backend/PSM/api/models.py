@@ -3,24 +3,16 @@ from django.db import models
 # Create your models here.
 
 # tabla para usuario
-class Usuario(models.Model):
-    TIPO_USUARIO = [
-        ('admin', 'Administrador'),
-        ('ciudadano', 'Ciudadano'),
-    ]
-    
-    nombre = models.CharField(max_length=100, blank=False, null=False)
-    apellido = models.CharField(max_length=100, blank=False, null=False)
-    correo = models.EmailField(unique=True)
+""" class Usuario(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="perfil")
     telefono = models.CharField(max_length=20, blank=True, null=True)
     edad = models.IntegerField(blank=True, null=True)
     fecha_nacimiento = models.DateField(blank=True, null=True)
-    tipo_usuario = models.CharField(max_length=10, choices=TIPO_USUARIO, default='ciudadano')
     fecha_registro = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f"{self.nombre} {self.apellido}"
-
+        return f"{self.user.first_name} {self.user.last_name}"
+ """
 
 # tabla de categoria de eventos
 class CategEvento(models.Model):
@@ -96,3 +88,11 @@ class Resena(models.Model):
     
     def __str__(self):
         return f"{self.usuario.nombre} - {self.evento.nombre} ({self.calificacion}⭐)"
+
+# Contacto    
+class Contacto(models.Model):
+    nombre = models.CharField(max_length=100)
+    correo = models.EmailField()
+    telefono = models.CharField(max_length=20, blank=True)
+    mensaje = models.TextField()
+    fecha_envio = models.DateTimeField(auto_now_add=True)
