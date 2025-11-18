@@ -1,18 +1,17 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser #para heredar el AuthUser
+from django.conf import settings  # << IMPORTANTE para relacionar el usuario
 
 # Create your models here.
 
 # tabla para usuario
-""" class Usuario(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="perfil")
+class Usuario(AbstractUser): #una correccion con el nombramiento de 
     telefono = models.CharField(max_length=20, blank=True, null=True)
     edad = models.IntegerField(blank=True, null=True)
     fecha_nacimiento = models.DateField(blank=True, null=True)
-    fecha_registro = models.DateTimeField(auto_now_add=True)
-    
+
     def __str__(self):
-        return f"{self.user.first_name} {self.user.last_name}"
- """
+        return self.username
 
 # tabla de categoria de eventos
 class CategEvento(models.Model):
@@ -32,7 +31,6 @@ class Ubicacion(models.Model):
     
     def __str__(self):
         return self.recinto
-
 
 # Eventos (programas deportivos)
 class Evento(models.Model):
@@ -59,7 +57,6 @@ class Evento(models.Model):
     def __str__(self):
         return self.nombre
 
-
 # Inscripciones
 class Inscripcion(models.Model):
     ESTADO_CHOICES = [
@@ -68,26 +65,25 @@ class Inscripcion(models.Model):
         ('cancelada', 'Cancelada'),
     ]
     
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name="inscripciones")
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="inscripciones")
     evento = models.ForeignKey(Evento, on_delete=models.CASCADE, related_name="inscripciones")
     fecha_inscripcion = models.DateTimeField(auto_now_add=True)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
     comentarios = models.TextField(blank=True)
     
     def __str__(self):
-        return f"{self.usuario.nombre} - {self.evento.nombre}"
-
+        return f"{self.usuario.username} - {self.evento.nombre}"
 
 # Reseñas
 class Resena(models.Model):
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name="resenas")
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="resenas") #correcciones si hay algun cambio con la tabla del authuser
     evento = models.ForeignKey(Evento, on_delete=models.CASCADE, related_name="resenas")
     calificacion = models.IntegerField(blank=False, null=False)  # 1-5 estrellas
     comentario = models.TextField(blank=True)
     fecha_resena = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f"{self.usuario.nombre} - {self.evento.nombre} ({self.calificacion}⭐)"
+        return f"{self.usuario.username} - {self.evento.nombre} ({self.calificacion}⭐)"
 
 # Contacto    
 class Contacto(models.Model):

@@ -4,7 +4,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import *
 from .serializers import *
-from django.contrib.auth.models import User
+#from django.contrib.auth.models import User # El auth viejo
+from django.contrib.auth import get_user_model
+Usuario = get_user_model()
+
 
 # Vistas Usuario
 """ class UsuarioListCreateView(generics.ListCreateAPIView):
@@ -17,11 +20,11 @@ class UsuarioDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 # Vistas User (autenticacion)
 class UserListCreateView(generics.ListCreateAPIView):
-    queryset = User.objects.all()
+    queryset = Usuario.objects.all()
     serializer_class = UserSerializer
 
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = User.objects.all()
+    queryset = Usuario.objects.all()
     serializer_class = UserSerializer
 
 # Vistas CategEvento 
