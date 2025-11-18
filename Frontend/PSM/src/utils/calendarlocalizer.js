@@ -1,6 +1,6 @@
-import { dateFnsLocalizer } from 'react-big-calendar' //el npm del repo de react-big-calendar del github
-import { format, parse, startOfWeek, getDay } from ' date-fns' 
-import es from 'date-fns/locale/es'  //Config idioma
+import { dateFnsLocalizer } from "react-big-calendar" //el npm del repo de react-big-calendar del github
+import { format, parse, startOfWeek, getDay } from "date-fns"
+import es from "date-fns/locale/es"  //Config idioma
 
 const locales = {
     'es' : es,

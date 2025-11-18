@@ -18,7 +18,7 @@ const eventosIniciales = [
   },
 ]
 
- function MiCalendario() {
+ function CalendarioEv() {
   const [eventos, setEventos] = useState(eventosIniciales);
 
   return (
@@ -37,4 +37,4 @@ const eventosIniciales = [
   )
 }
 
-export default MiCalendario;
+export default CalendarioEv;

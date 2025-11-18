@@ -15,6 +15,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# >>IMPORTANTE<< Permitir la herencia a usuario 
+AUTH_USER_MODEL = "api.Usuario"
+
 
 # Application definition
 
