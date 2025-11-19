@@ -4,19 +4,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import *
 from .serializers import *
-#from django.contrib.auth.models import User # El auth viejo
+#Rol y auth
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
 Usuario = get_user_model()
 
-
-# Vistas Usuario
-""" class UsuarioListCreateView(generics.ListCreateAPIView):
-    queryset = Usuario.objects.all()
-    serializer_class = UsuarioSerializer
-
-class UsuarioDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Usuario.objects.all()
-    serializer_class = UsuarioSerializer """
 
 # Vistas User (autenticacion)
 class UserListCreateView(generics.ListCreateAPIView):
@@ -81,3 +74,23 @@ class ResenaDetailView(generics.RetrieveUpdateDestroyAPIView):
 class ContactoListCreateView(generics.ListCreateAPIView):
     queryset = Contacto.objects.all()
     serializer_class = ContactoSerializer
+
+# Las vistas para el auth y los roles
+
+# tabla intermedia para asignar los roles
+userGroup = Usuario.groups.through
+
+# Vista para asignar roles a usuarios
+class UserGroupView(generics.ListCreateAPIView):
+    queryset = userGroup.objects.all()
+    serializer_class = UserGroupSerializer
+
+# Vista personalizada para el login con JWT (devuelve token y rol)
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+# Vista de registro (para crear usuarios sin autenticacion)
+class RegisterView(generics.CreateAPIView):
+    queryset = Usuario.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [AllowAny]  # Cualquiera se puede registrar
