@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import contactoService from '../../services/contactoService';
 import { Button } from "@/components/ui/button.jsx"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card.jsx"
-
-//CONEXION CON LA LIBRERIA
-//https://ui.shadcn.com/docs/components/carousel
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle, CheckCircle2 } from "lucide-react"
 
 function Contactar() {
   const [nombre, setNombre] = useState("");
@@ -12,20 +11,24 @@ function Contactar() {
   const [telefono, setTelefono] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (!nombre || !correo || !mensaje) {
-      alert("Por favor completa los campos requeridos.");
+      setError("Por favor completa los campos requeridos.");
       return;
     }
+    setError(null);
+    setSuccess(null);
 
     setEnviando(true);
-    
+
     try {
       const response = await contactoService.createContacto(nombre, correo, telefono, mensaje);
       console.log("Contacto creado:", response);
-      alert("Mensaje enviado con exito!");
+      setSuccess("Mensaje enviado con exito!");
       // Limpiar formulario
       setNombre("");
       setCorreo("");
@@ -33,7 +36,7 @@ function Contactar() {
       setMensaje("");
     } catch (error) {
       console.error("Error al enviar mensaje:", error);
-      alert("Hubo un error al enviar el mensaje. Por favor intenta de nuevo.");
+      setError("Hubo un error al enviar el mensaje. Por favor intenta de nuevo.");
     } finally {
       setEnviando(false);
     }
@@ -49,6 +52,22 @@ function Contactar() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {success && (
+            <Alert className="mb-4 border-green-500 text-green-600">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <AlertTitle>Éxito</AlertTitle>
+              <AlertDescription>{success}</AlertDescription>
+            </Alert>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">

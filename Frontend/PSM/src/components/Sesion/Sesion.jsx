@@ -1,0 +1,312 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import authService from '../../services/authService';
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Terminal, AlertCircle, CheckCircle2 } from "lucide-react"
+
+const Sesion = () => {
+    const navigate = useNavigate();
+    const [tipoForm, setTipoForm] = useState('login'); // 'login' or 'registro'
+    const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    // inicio de sesion
+    const [loginData, setLoginData] = useState({ username: '', password: '' });
+
+    // registro
+    const [registerData, setRegisterData] = useState({
+        username: '',
+        email: '',
+        password: '',
+        nombre: '', // first_name
+        apellido: '', // last_name
+        telefono: '',
+        edad: '',
+        fecha_nacimiento: ''
+    });
+
+    const handleLoginChange = (e) => {
+        setLoginData({ ...loginData, [e.target.name]: e.target.value });
+    };
+
+    const handleRegisterChange = (e) => {
+        const { name, value } = e.target;
+        setRegisterData(prev => {
+            const newData = { ...prev, [name]: value };
+
+            // Calcular edad si cambia la fecha de nacimiento
+            if (name === 'fecha_nacimiento') {
+                const birthDate = new Date(value);
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                newData.edad = age >= 0 ? age : '';
+            }
+            return newData;
+        });
+    };
+
+    const handleLoginSubmit = async (e) => {
+        e.preventDefault();
+        setError(null);
+        setSuccess(null);
+        setLoading(true);
+
+        try {
+            const response = await authService.login(loginData.username, loginData.password);
+            console.log("Login successful:", response);
+            // guardando los tokens
+            if (response.access) {
+                localStorage.setItem('token', response.access);
+                localStorage.setItem('refreshToken', response.refresh);
+                setSuccess("Inicio de sesión exitoso. Redirigiendo...");
+                setTimeout(() => navigate('/home'), 1500);
+            } else {
+                setError("No se recibió el token de acceso.");
+            }
+        } catch (err) {
+            console.error("Login error:", err);
+            setError("Credenciales inválidas o error en el servidor.");
+        }
+    };
+
+    const handleRegisterSubmit = async (e) => {
+        e.preventDefault();
+        setError(null);
+        setSuccess(null);
+        setLoading(true);
+
+        // validacion simple
+        if (registerData.password.length < 8) {
+            setError("La contraseña debe tener al menos 8 caracteres.");
+            setLoading(false);
+            return;
+        }
+
+        // Validacion de telefono
+        const numPermitido = /^[678]\d{7,15}$/;
+        if (!numPermitido.test(registerData.telefono)) {
+            setError("El teléfono debe empezar con 6, 7 u 8 y tener entre 8 y 16 dígitos.");
+            setLoading(false);
+            return;
+        }
+
+        try {
+
+            await authService.register(
+                registerData.username,
+                registerData.apellido,
+                registerData.email,
+                registerData.password,
+                registerData.telefono,
+                registerData.edad,
+                registerData.fecha_nacimiento
+            );
+
+            setSuccess("Registro exitoso. Por favor inicia sesión.");
+            setTipoForm('login');
+            setRegisterData({
+                username: '', email: '', password: '', nombre: '', apellido: '', telefono: '', edad: '', fecha_nacimiento: ''
+            });
+        } catch (err) {
+            console.error("Register error:", err);
+            setError("Error al registrar. Verifica los datos o intenta más tarde.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex justify-center items-center min-h-[80vh] bg-background p-4">
+            <Card className="w-full max-w-md shadow-xl">
+                <CardHeader>
+                    <CardTitle className="text-2xl font-bold text-center text-primary">
+                        {tipoForm === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta'}
+                    </CardTitle>
+                    <CardDescription className="text-center">
+                        {tipoForm === 'login' ? 'Bienvenido de vuelta' : 'Únete a nuestra comunidad'}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+
+                    {error && (
+                        <Alert variant="destructive" className="mb-4">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Error</AlertTitle>
+                            <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                    )}
+
+                    {success && (
+                        <Alert className="mb-4 border-green-500 text-green-600">
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            <AlertTitle>Éxito</AlertTitle>
+                            <AlertDescription>{success}</AlertDescription>
+                        </Alert>
+                    )}
+
+                    {tipoForm === 'login' ? (
+                        <form onSubmit={handleLoginSubmit} className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Usuario</label>
+                                <input
+                                    type="text"
+                                    name="username"
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    placeholder="Tu nombre de usuario"
+                                    value={loginData.username}
+                                    onChange={handleLoginChange}
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Contraseña</label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    placeholder="••••••••"
+                                    value={loginData.password}
+                                    onChange={handleLoginChange}
+                                    required
+                                />
+                            </div>
+                            <Button type="submit" className="w-full" disabled={loading}>
+                                {loading ? "Cargando..." : "Ingresar"}
+                            </Button>
+                        </form>
+                    ) : (
+                        <form onSubmit={handleRegisterSubmit} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Cédula</label>
+                                    <input
+                                        type="text"
+                                        name="username"
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={registerData.username}
+                                        onChange={handleRegisterChange}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Email</label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={registerData.email}
+                                        onChange={handleRegisterChange}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Nombre</label>
+                                    <input
+                                        type="text"
+                                        name="nombre"
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={registerData.nombre}
+                                        onChange={handleRegisterChange}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Apellido</label>
+                                    <input
+                                        type="text"
+                                        name="apellido"
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={registerData.apellido}
+                                        onChange={handleRegisterChange}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Contraseña</label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    value={registerData.password}
+                                    onChange={handleRegisterChange}
+                                    required
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Teléfono</label>
+                                    <input
+                                        type="tel"
+                                        name="telefono"
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={registerData.telefono}
+                                        onChange={handleRegisterChange}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Edad</label>
+                                    <input
+                                        type="number"
+                                        name="edad"
+                                        value={registerData.edad}
+                                        readOnly
+                                        className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Fecha de Nacimiento</label>
+                                <input
+                                    type="date"
+                                    name="fecha_nacimiento"
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    value={registerData.fecha_nacimiento}
+                                    onChange={handleRegisterChange}
+                                />
+                            </div>
+
+                            <Button type="submit" className="w-full" disabled={loading}>
+                                {loading ? "Registrando..." : "Registrarse"}
+                            </Button>
+                        </form>
+                    )}
+                </CardContent>
+                <CardFooter className="flex justify-center">
+                    <p className="text-sm text-muted-foreground">
+                        {tipoForm === 'login' ? (
+                            <>
+                                ¿No tienes cuenta?{" "}
+                                <button onClick={() => setTipoForm('registro')} className="text-primary hover:underline font-medium">
+                                    Regístrate aquí
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                ¿Ya tienes cuenta?{" "}
+                                <button onClick={() => setTipoForm('login')} className="text-primary hover:underline font-medium">
+                                    Inicia sesión aquí
+                                </button>
+                            </>
+                        )}
+                    </p>
+                </CardFooter>
+            </Card>
+        </div>
+    );
+};
+
+export default Sesion;

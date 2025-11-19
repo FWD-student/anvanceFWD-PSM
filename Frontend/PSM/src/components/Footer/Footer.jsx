@@ -1,41 +1,49 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import './footer.css';
 
 function Footer() {
   return (
-    <footer className="footer">
-      <div className="footer-container">
-        <div className="footer-logo">
-          <h2 className="logo-text">Puntarenas Se Mueve</h2>
-        </div>
-
-        <div className="footer-columnas">
-          <div className="columna">
-            <h3 className="titulo-columna">Eventos</h3>
-            <ul className="lista-footer">
-              <li><Link to="/eventos">Todos</Link></li>
-              <li><Link to="/eventos/proximos">Proximos</Link></li>
-              <li><Link to="/eventos/pasados">Pasados</Link></li>
-            </ul>
+    <footer className="bg-gray-50 border-t border-gray-200 py-12 mt-16 text-sm text-gray-600 min-w-[375px]">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-wrap gap-8 lg:gap-12 justify-between items-start">
+          <div className="w-full lg:flex-1 lg:min-w-[220px] text-center lg:text-left">
+            <h2 className="text-xl lg:text-2xl font-bold text-gray-800 tracking-tight leading-tight">
+              Puntarenas Se Mueve
+            </h2>
           </div>
 
-          <div className="columna">
-            <h3 className="titulo-columna">Soporte</h3>
-            <ul className="lista-footer">
-              <li><Link to="/contacto">Contacto</Link></li>
-              <li><Link to="/ayuda">Ayuda</Link></li>
-              <li><Link to="/faq">Preguntas</Link></li>
-            </ul>
-          </div>
+          <div className="w-full lg:flex-[2] flex flex-col sm:flex-row flex-wrap gap-8 lg:gap-12 justify-center lg:justify-end">
+            <div className="min-w-[160px] text-center lg:text-left">
+              <h3 className="text-base font-semibold text-gray-800 mb-4 uppercase tracking-wide relative pb-2 after:content-[''] after:absolute after:left-1/2 lg:after:left-0 after:-translate-x-1/2 lg:after:translate-x-0 after:bottom-0 after:w-8 after:h-0.5 after:bg-gray-300 after:rounded-sm">
+                Eventos
+              </h3>
+              <ul className="space-y-2.5">
+                <li><Link to="/eventos" className="hover:text-gray-800 transition-colors font-medium block py-0.5">Todos</Link></li>
+                <li><Link to="/eventos/proximos" className="hover:text-gray-800 transition-colors font-medium block py-0.5">Próximos</Link></li>
+                <li><Link to="/eventos/pasados" className="hover:text-gray-800 transition-colors font-medium block py-0.5">Pasados</Link></li>
+              </ul>
+            </div>
 
-          <div className="columna">
-            <h3 className="titulo-columna">Cuenta</h3>
-            <ul className="lista-footer">
-              <li><Link to="/login">Ingresar</Link></li>
-              <li><Link to="/registro">Registro</Link></li>
-              <li><Link to="/terminos">Terminos</Link></li>
-            </ul>
+            <div className="min-w-[160px] text-center lg:text-left">
+              <h3 className="text-base font-semibold text-gray-800 mb-4 uppercase tracking-wide relative pb-2 after:content-[''] after:absolute after:left-1/2 lg:after:left-0 after:-translate-x-1/2 lg:after:translate-x-0 after:bottom-0 after:w-8 after:h-0.5 after:bg-gray-300 after:rounded-sm">
+                Soporte
+              </h3>
+              <ul className="space-y-2.5">
+                <li><Link to="/contacto" className="hover:text-gray-800 transition-colors font-medium block py-0.5">Contacto</Link></li>
+                <li><Link to="/ayuda" className="hover:text-gray-800 transition-colors font-medium block py-0.5">Ayuda</Link></li>
+                <li><Link to="/faq" className="hover:text-gray-800 transition-colors font-medium block py-0.5">Preguntas</Link></li>
+              </ul>
+            </div>
+
+            <div className="min-w-[160px] text-center lg:text-left">
+              <h3 className="text-base font-semibold text-gray-800 mb-4 uppercase tracking-wide relative pb-2 after:content-[''] after:absolute after:left-1/2 lg:after:left-0 after:-translate-x-1/2 lg:after:translate-x-0 after:bottom-0 after:w-8 after:h-0.5 after:bg-gray-300 after:rounded-sm">
+                Cuenta
+              </h3>
+              <ul className="space-y-2.5">
+                <li><Link to="/sesion" className="hover:text-gray-800 transition-colors font-medium block py-0.5">Ingresar</Link></li>
+                <li><Link to="/sesion" className="hover:text-gray-800 transition-colors font-medium block py-0.5">Registro</Link></li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
