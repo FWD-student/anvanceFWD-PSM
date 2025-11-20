@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Home from '../pages/Home'
 import Calendario from '../pages/Calendario'
 import Contacto from '../pages/Contacto'
-import Sesion from '../components/Sesion/Sesion'
+import Sesion from '../pages/Sesion'
 
 function Routing() {
   return (

@@ -30,8 +30,7 @@ function Footer() {
               </h3>
               <ul className="space-y-2.5">
                 <li><Link to="/contacto" className="hover:text-gray-800 transition-colors font-medium block py-0.5">Contacto</Link></li>
-                <li><Link to="/ayuda" className="hover:text-gray-800 transition-colors font-medium block py-0.5">Ayuda</Link></li>
-                <li><Link to="/faq" className="hover:text-gray-800 transition-colors font-medium block py-0.5">Preguntas</Link></li>
+                <li><Link to="/preguntas" className="hover:text-gray-800 transition-colors font-medium block py-0.5">Preguntas</Link></li>
               </ul>
             </div>
 

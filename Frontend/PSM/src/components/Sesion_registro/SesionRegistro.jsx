@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Terminal, AlertCircle, CheckCircle2 } from "lucide-react"
 
-const Sesion = () => {
+const SesionRegistro = () => {
     const navigate = useNavigate();
     const [tipoForm, setTipoForm] = useState('login'); // 'login' or 'registro'
     const [error, setError] = useState(null);
@@ -309,4 +309,4 @@ const Sesion = () => {
     );
 };
 
-export default Sesion;
+export default SesionRegistro;
