@@ -183,294 +183,98 @@ function EventosAdmin() {
 
     return (
         <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Gestión de Eventos</h1>
-                        <p className="text-gray-600 mt-1">Administra los eventos deportivos</p>
-                    </div>
-                    <Button onClick={() => abrirModal()} className="bg-blue-600 hover:bg-blue-700">
-                        <Plus size={20} className="mr-2" />
-                        Nuevo Evento
-                    </Button>
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Gestión de Eventos</h1>
+                    <p className="text-gray-600 mt-1">Administra los eventos deportivos</p>
                 </div>
-
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex gap-4 items-center">
-                            <Label>Filtrar por estado:</Label>
-                            <Select value={filtroEstado} onValueChange={setFiltroEstado}>
-                                <SelectTrigger className="w-48">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="todos">Todos</SelectItem>
-                                    <SelectItem value="activo">Activos</SelectItem>
-                                    <SelectItem value="inactivo">Inactivos</SelectItem>
-                                    <SelectItem value="finalizado">Finalizados</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <span className="text-sm text-gray-600">
-                                {eventosFiltrados.length} evento(s)
-                            </span>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="pt-6">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Nombre</TableHead>
-                                    <TableHead>Categoría</TableHead>
-                                    <TableHead>Ubicación</TableHead>
-                                    <TableHead>Fechas</TableHead>
-                                    <TableHead>Cupos</TableHead>
-                                    <TableHead>Estado</TableHead>
-                                    <TableHead className="text-right">Acciones</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {eventosFiltrados.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                                            No hay eventos registrados
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    eventosFiltrados.map((evento) => (
-                                        <TableRow key={evento.id}>
-                                            <TableCell className="font-medium">{evento.nombre}</TableCell>
-                                            <TableCell>
-                                                {categorias.find(c => c.id === evento.categoria)?.nombre || 'N/A'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {ubicaciones.find(u => u.id === evento.ubicacion)?.recinto || 'N/A'}
-                                            </TableCell>
-                                            <TableCell className="text-sm">
-                                                {evento.fecha_inicio} - {evento.fecha_fin}
-                                            </TableCell>
-                                            <TableCell>
-                                                {evento.cupos_disponibles}/{evento.cupo_maximo}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge className={getEstadoBadge(evento.estado)}>
-                                                    {evento.estado}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <Button variant="outline" size="sm" onClick={() => abrirModal(evento)}>
-                                                        <Pencil size={16} />
-                                                    </Button>
-                                                    <Button variant="outline" size="sm" onClick={() => eliminarEvento(evento.id)} className="text-red-600">
-                                                        <Trash2 size={16} />
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
+                <Button onClick={() => abrirModal()} className="bg-blue-600 hover:bg-blue-700">
+                    <Plus size={20} className="mr-2" />
+                    Nuevo Evento
+                </Button>
             </div>
 
-            <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>{editando ? 'Editar Evento' : 'Nuevo Evento'}</DialogTitle>
-                        <DialogDescription>Completa la información del evento</DialogDescription>
-                    </DialogHeader>
-
-                    <form onSubmit={guardarEvento} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="col-span-2">
-                                <Label>Nombre *</Label>
-                                <Input value={formData.nombre} onChange={(e) => handleChange('nombre', e.target.value)} required />
-                            </div>
-
-                            <div className="col-span-2">
-                                <Label>Descripción *</Label>
-                                <Textarea value={formData.descripcion} onChange={(e) => handleChange('descripcion', e.target.value)} rows={3} required />
-                            </div>
-
-                            <div>
-                                <Label>Categoría *</Label>
-                                <Select value={formData.categoria.toString()} onValueChange={(value) => handleChange('categoria', parseInt(value))}>
-                                    <SelectTrigger><SelectValue placeholder="Selecciona" /></SelectTrigger>
-                                    <SelectContent>
-                                        {categorias.map((cat) => (
-                                            <SelectItem key={cat.id} value={cat.id.toString()}>{cat.nombre}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div>
-                                <Label>Ubicación *</Label>
-                                <Select value={formData.ubicacion.toString()} onValueChange={(value) => handleChange('ubicacion', parseInt(value))}>
-                                    <SelectTrigger><SelectValue placeholder="Selecciona" /></SelectTrigger>
-                                    <SelectContent>
-                                        {ubicaciones.map((ubi) => (
-                                            <SelectItem key={ubi.id} value={ubi.id.toString()}>{ubi.recinto}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div>
-                                <Label>Fecha Inicio *</Label>
-                                <Input type="date" value={formData.fecha_inicio} onChange={(e) => handleChange('fecha_inicio', e.target.value)} required />
-                            </div>
-
-                            <div>
-                                <Label>Fecha Fin *</Label>
-                                <Input type="date" value={formData.fecha_fin} onChange={(e) => handleChange('fecha_fin', e.target.value)} required />
-                            </div>
-
-                            <div className="col-span-2">
-                                <Label>Horario *</Label>
-                                <Input value={formData.horario} onChange={(e) => handleChange('horario', e.target.value)} placeholder="Ej: Lunes a Viernes 3:00-5:00 PM" required />
-                            </div>
-
-                            <div>
-                                <Label>Cupo Máximo *</Label>
-                                <Input type="number" value={formData.cupo_maximo} onChange={(e) => handleChange('cupo_maximo', parseInt(e.target.value))} required />
-                            </div>
-
-                            <div>
-                                <Label>Cupos Disponibles *</Label>
-                                <Input type="number" value={formData.cupos_disponibles} onChange={(e) => handleChange('cupos_disponibles', parseInt(e.target.value))} required />
-                            </div>
-
-                            <div>
-                                <Label>Edad Mínima</Label>
-                                <Input type="number" value={formData.edad_minima} onChange={(e) => handleChange('edad_minima', e.target.value ? parseInt(e.target.value) : '')} />
-                            </div>
-
-                            <div>
-                                <Label>Edad Máxima</Label>
-                                <Input type="number" value={formData.edad_maxima} onChange={(e) => handleChange('edad_maxima', e.target.value ? parseInt(e.target.value) : '')} />
-                            </div>
-
-                            <div className="col-span-2">
-                                <Label>Requisitos</Label>
-                                <Textarea value={formData.requisitos} onChange={(e) => handleChange('requisitos', e.target.value)} rows={2} />
-                            </div>
-
-                            <div>
-                                <Label>Estado *</Label>
-                                <Select value={formData.estado} onValueChange={(value) => handleChange('estado', value)}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="activo">Activo</SelectItem>
-                                        <SelectItem value="inactivo">Inactivo</SelectItem>
-                                        <SelectItem value="finalizado">Finalizado</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={cerrarModal}>Cancelar</Button>
-                            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                                {editando ? 'Actualizar' : 'Crear'}
-        <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Gestión de Eventos</h1>
-                        <p className="text-gray-600 mt-1">Administra los eventos deportivos</p>
+            <Card>
+                <CardContent className="pt-6">
+                    <div className="flex gap-4 items-center">
+                        <Label>Filtrar por estado:</Label>
+                        <Select value={filtroEstado} onValueChange={setFiltroEstado}>
+                            <SelectTrigger className="w-48">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="todos">Todos</SelectItem>
+                                <SelectItem value="activo">Activos</SelectItem>
+                                <SelectItem value="inactivo">Inactivos</SelectItem>
+                                <SelectItem value="finalizado">Finalizados</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <span className="text-sm text-gray-600">
+                            {eventosFiltrados.length} evento(s)
+                        </span>
                     </div>
-                    <Button onClick={() => abrirModal()} className="bg-blue-600 hover:bg-blue-700">
-                        <Plus size={20} className="mr-2" />
-                        Nuevo Evento
-                    </Button>
-                </div>
+                </CardContent>
+            </Card>
 
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex gap-4 items-center">
-                            <Label>Filtrar por estado:</Label>
-                            <Select value={filtroEstado} onValueChange={setFiltroEstado}>
-                                <SelectTrigger className="w-48">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="todos">Todos</SelectItem>
-                                    <SelectItem value="activo">Activos</SelectItem>
-                                    <SelectItem value="inactivo">Inactivos</SelectItem>
-                                    <SelectItem value="finalizado">Finalizados</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <span className="text-sm text-gray-600">
-                                {eventosFiltrados.length} evento(s)
-                            </span>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="pt-6">
-                        <Table>
-                            <TableHeader>
+            <Card>
+                <CardContent className="pt-6">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Nombre</TableHead>
+                                <TableHead>Categoría</TableHead>
+                                <TableHead>Ubicación</TableHead>
+                                <TableHead>Fechas</TableHead>
+                                <TableHead>Cupos</TableHead>
+                                <TableHead>Estado</TableHead>
+                                <TableHead className="text-right">Acciones</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {eventosFiltrados.length === 0 ? (
                                 <TableRow>
-                                    <TableHead>Nombre</TableHead>
-                                    <TableHead>Categoría</TableHead>
-                                    <TableHead>Ubicación</TableHead>
-                                    <TableHead>Fechas</TableHead>
-                                    <TableHead>Cupos</TableHead>
-                                    <TableHead>Estado</TableHead>
-                                    <TableHead className="text-right">Acciones</TableHead>
+                                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                                        No hay eventos registrados
+                                    </TableCell>
                                 </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {eventosFiltrados.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                                            No hay eventos registrados
+                            ) : (
+                                eventosFiltrados.map((evento) => (
+                                    <TableRow key={evento.id}>
+                                        <TableCell className="font-medium">{evento.nombre}</TableCell>
+                                        <TableCell>
+                                            {categorias.find(c => c.id === evento.categoria)?.nombre || 'N/A'}
+                                        </TableCell>
+                                        <TableCell>
+                                            {ubicaciones.find(u => u.id === evento.ubicacion)?.recinto || 'N/A'}
+                                        </TableCell>
+                                        <TableCell className="text-sm">
+                                            {evento.fecha_inicio} - {evento.fecha_fin}
+                                        </TableCell>
+                                        <TableCell>
+                                            {evento.cupos_disponibles}/{evento.cupo_maximo}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge className={getEstadoBadge(evento.estado)}>
+                                                {evento.estado}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <Button variant="outline" size="sm" onClick={() => abrirModal(evento)}>
+                                                    <Pencil size={16} />
+                                                </Button>
+                                                <Button variant="outline" size="sm" onClick={() => eliminarEvento(evento.id)} className="text-red-600">
+                                                    <Trash2 size={16} />
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
-                                ) : (
-                                    eventosFiltrados.map((evento) => (
-                                        <TableRow key={evento.id}>
-                                            <TableCell className="font-medium">{evento.nombre}</TableCell>
-                                            <TableCell>
-                                                {categorias.find(c => c.id === evento.categoria)?.nombre || 'N/A'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {ubicaciones.find(u => u.id === evento.ubicacion)?.recinto || 'N/A'}
-                                            </TableCell>
-                                            <TableCell className="text-sm">
-                                                {evento.fecha_inicio} - {evento.fecha_fin}
-                                            </TableCell>
-                                            <TableCell>
-                                                {evento.cupos_disponibles}/{evento.cupo_maximo}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge className={getEstadoBadge(evento.estado)}>
-                                                    {evento.estado}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <Button variant="outline" size="sm" onClick={() => abrirModal(evento)}>
-                                                        <Pencil size={16} />
-                                                    </Button>
-                                                    <Button variant="outline" size="sm" onClick={() => eliminarEvento(evento.id)} className="text-red-600">
-                                                        <Trash2 size={16} />
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-            </div>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
 
             <Dialog open={modalOpen} onOpenChange={setModalOpen}>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

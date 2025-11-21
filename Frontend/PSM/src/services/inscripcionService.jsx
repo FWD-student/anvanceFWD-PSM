@@ -1,113 +1,67 @@
-const API_URL = 'http://127.0.0.1:8000/api/';
+import axios from 'axios';
 
-async function getInscripciones() {
-    try {
-        const response = await fetch(`${API_URL}Inscripcion/`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+const API_URL = 'http://127.0.0.1:8000/api/inscripciones/';
 
-        return await response.json();
+const getInscripciones = async () => {
+    const token = localStorage.getItem('token');
+    const config = {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    };
+    const response = await axios.get(API_URL, config);
+    return response.data;
+};
 
-    } catch (error) {
-        console.error('Error obteniendo inscripciones:', error);
-        throw error;
-    }
-}
+const getInscripcionById = async (id) => {
+    const token = localStorage.getItem('token');
+    const config = {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    };
+    const response = await axios.get(`${API_URL}${id}/`, config);
+    return response.data;
+};
 
-async function getInscripcionById(id) {
-    try {
-        const response = await fetch(`${API_URL}Inscripcion/${id}/`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+const createInscripcion = async (inscripcionData, token) => {
+    const config = {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    };
+    const response = await axios.post(API_URL, inscripcionData, config);
+    return response.data;
+};
 
-        return await response.json();
+const updateInscripcion = async (id, inscripcionData, token) => {
+    const config = {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    };
+    const response = await axios.put(`${API_URL}${id}/`, inscripcionData, config);
+    return response.data;
+};
 
-    } catch (error) {
-        console.error('Error obteniendo inscripcion por id:', error);
-        throw error;
-    }
-}
+const deleteInscripcion = async (id, token) => {
+    const config = {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    };
+    const response = await axios.delete(`${API_URL}${id}/`, config);
+    return response.data;
+};
 
-async function createInscripcion(usuario, evento, estado, comentarios) {
-    try {
-        const token = localStorage.getItem('access_token');
-        
-        const inscripcionData = {
-            usuario,
-            evento,
-            estado,
-            comentarios
-        };
+const inscripcionService = {
+    getInscripciones,
+    getInscripcionById,
+    createInscripcion,
+    updateInscripcion,
+    deleteInscripcion
+};
 
-        const response = await fetch(`${API_URL}Inscripcion/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(inscripcionData)
-        });
-
-        return await response.json();
-
-    } catch (error) {
-        console.error('Error creando inscripcion:', error);
-        throw error;
-    }
-}
-
-async function updateInscripcion(id, usuario, evento, estado, comentarios) {
-    try {
-        const token = localStorage.getItem('access_token');
-
-        const inscripcionData = {
-            usuario,
-            evento,
-            estado,
-            comentarios
-        };
-
-        const response = await fetch(`${API_URL}Inscripcion/${id}/`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(inscripcionData)
-        });
-
-        return await response.json();
-
-    } catch (error) {
-        console.error('Error actualizando inscripcion:', error);
-        throw error;
-    }
-}
-
-async function deleteInscripcion(id) {
-    try {
-        const token = localStorage.getItem('access_token');
-
-        const response = await fetch(`${API_URL}Inscripcion/${id}/`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        return await response.json();
-
-    } catch (error) {
-        console.error('Error eliminando inscripcion:', error);
-        throw error;
-    }
-}
-
-export default { getInscripciones, getInscripcionById, createInscripcion, updateInscripcion, deleteInscripcion }
+export default inscripcionService;

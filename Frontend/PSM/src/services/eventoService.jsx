@@ -2,10 +2,12 @@ const API_URL = 'http://127.0.0.1:8000/api/';
 
 async function getEventos() {
     try {
+        const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}Evento/`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             }
         });
 
@@ -19,10 +21,12 @@ async function getEventos() {
 
 async function getEventoById(id) {
     try {
+        const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}Evento/${id}/`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             }
         });
 
@@ -36,8 +40,8 @@ async function getEventoById(id) {
 
 async function createEvento(nombre, descripcion, categoria, ubicacion, fecha_inicio, fecha_fin, horario, cupo_maximo, cupos_disponibles, edad_minima, edad_maxima, requisitos, estado) {
     try {
-        const token = localStorage.getItem('access_token');
-        
+        const token = localStorage.getItem('token');
+
         const eventoData = {
             nombre,
             descripcion,
@@ -73,7 +77,7 @@ async function createEvento(nombre, descripcion, categoria, ubicacion, fecha_ini
 
 async function updateEvento(id, eventoData) {
     try {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('token');
 
         const response = await fetch(`${API_URL}Evento/${id}/`, {
             method: 'PUT',
@@ -94,7 +98,7 @@ async function updateEvento(id, eventoData) {
 
 async function deleteEvento(id) {
     try {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('token');
 
         const response = await fetch(`${API_URL}Evento/${id}/`, {
             method: 'DELETE',
