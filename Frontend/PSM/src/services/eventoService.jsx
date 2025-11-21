@@ -1,14 +1,24 @@
 const API_URL = 'http://127.0.0.1:8000/api/';
 
-async function getEventos() {
+async function getEventos(noCache = false) {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}Evento/`, {
+        let url = `${API_URL}Evento/`;
+        if (noCache) {
+            url += `?t=${new Date().getTime()}`;
+        }
+
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(url, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
+            headers: headers
         });
 
         return await response.json();
@@ -22,12 +32,18 @@ async function getEventos() {
 async function getEventoById(id) {
     try {
         const token = localStorage.getItem('token');
+
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${API_URL}Evento/${id}/`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
+            headers: headers
         });
 
         return await response.json();

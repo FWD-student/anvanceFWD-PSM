@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Calendar, MapPin, Users, MessageSquare, LogOut, Menu, X } from 'lucide-react';
+import { jwtDecode } from "jwt-decode";
 
 function AdminLayout({ children }) {
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -17,9 +18,37 @@ function AdminLayout({ children }) {
 
     const handleLogout = () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userRole');
         localStorage.removeItem('user');
-        navigate('/');
+        navigate('/sesion');
     };
+
+    useEffect(() => {
+        const checkSession = () => {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            try {
+                const decoded = jwtDecode(token);
+                const currentTime = Date.now() / 1000;
+
+                if (decoded.exp < currentTime) {
+                    handleLogout();
+                }
+            } catch (error) {
+                handleLogout();
+            }
+        };
+
+        // Check immediately
+        checkSession();
+
+        // Check every minute
+        const interval = setInterval(checkSession, 60000);
+
+        return () => clearInterval(interval);
+    }, [navigate]);
 
     return (
         <div className="flex h-screen bg-gray-50">

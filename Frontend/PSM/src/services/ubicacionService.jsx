@@ -1,9 +1,13 @@
 const API_URL = 'http://127.0.0.1:8000/api/';
 
-async function getUbicaciones() {
+async function getUbicaciones(noCache = false) {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}Ubicacion/`, {
+        let url = `${API_URL}Ubicacion/`;
+        if (noCache) {
+            url += `?t=${new Date().getTime()}`;
+        }
+        const response = await fetch(url, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

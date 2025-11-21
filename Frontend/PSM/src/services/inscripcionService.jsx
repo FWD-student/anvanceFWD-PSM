@@ -1,14 +1,20 @@
 import axios from 'axios';
 
-const API_URL = 'http://127.0.0.1:8000/api/inscripciones/';
+const API_URL = 'http://127.0.0.1:8000/api/Inscripcion/';
 
-const getInscripciones = async () => {
+const getInscripciones = async (noCache = false) => {
     const token = localStorage.getItem('token');
     const config = {
         headers: {
             'Authorization': `Bearer ${token}`
-        }
+        },
+        params: {}
     };
+
+    if (noCache) {
+        config.params.t = new Date().getTime();
+    }
+
     const response = await axios.get(API_URL, config);
     return response.data;
 };
