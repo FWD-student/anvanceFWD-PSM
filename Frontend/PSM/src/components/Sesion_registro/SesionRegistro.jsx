@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
+import { jwtDecode } from "jwt-decode";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -61,18 +62,28 @@ const SesionRegistro = () => {
         try {
             const response = await authService.login(loginData.username, loginData.password);
             console.log("Login successful:", response);
-            // guardando los tokens
+
             if (response.access) {
                 localStorage.setItem('token', response.access);
                 localStorage.setItem('refreshToken', response.refresh);
                 setSuccess("Inicio de sesión exitoso. Redirigiendo...");
-                setTimeout(() => navigate('/home'), 1500);
+
+                // El rol viene en la respuesta del backend, no en el token JWT
+                const role = response.role || '';
+                localStorage.setItem('userRole', role);  // Guardar rol para validación posterior
+
+                const isAdminRole = role.toLowerCase() === 'admin' || role.toLowerCase() === 'administrador';
+                const targetPath = isAdminRole ? '/admin' : '/home';
+
+                setTimeout(() => navigate(targetPath), 1500);
             } else {
                 setError("No se recibió el token de acceso.");
             }
         } catch (err) {
             console.error("Login error:", err);
             setError("Credenciales inválidas o error en el servidor.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -98,7 +109,6 @@ const SesionRegistro = () => {
         }
 
         try {
-
             await authService.register(
                 registerData.username,
                 registerData.apellido,
@@ -130,7 +140,7 @@ const SesionRegistro = () => {
                         {tipoForm === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta'}
                     </CardTitle>
                     <CardDescription className="text-center">
-                        {tipoForm === 'login' ? 'Bienvenido de vuelta' : 'Únete a nuestra comunidad'}
+                        {tipoForm === 'login' ? 'Bienvenido de vuelta' : 'Únete a la comunidad deportiva'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -159,7 +169,7 @@ const SesionRegistro = () => {
                                     type="text"
                                     name="username"
                                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    placeholder="Tu nombre de usuario"
+                                    placeholder="Tu numero de cedula"
                                     value={loginData.username}
                                     onChange={handleLoginChange}
                                     required

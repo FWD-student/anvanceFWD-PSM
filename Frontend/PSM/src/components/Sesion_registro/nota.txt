@@ -1,0 +1,6 @@
+El Problema:
+El rol NO está dentro del token JWT, está en la respuesta del login como un campo separado:
+
+Respuesta del login: Tiene role: 'Admin' ✅
+Token JWT decodificado: NO tiene el campo role ❌
+El backend está enviando el rol en la respuesta HTTP, pero no lo está incluyendo en el payload del JWT. Por eso cuando decodificas el token, decoded.role es undefined.

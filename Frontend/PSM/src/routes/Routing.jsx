@@ -4,6 +4,8 @@ import Home from '../pages/Home'
 import Calendario from '../pages/Calendario'
 import Contacto from '../pages/Contacto'
 import Sesion from '../pages/Sesion'
+import Admin from '../pages/Admin'
+import { AdminRoute } from './PrivateRoute'
 
 function Routing() {
   return (
@@ -15,6 +17,11 @@ function Routing() {
           <Route path='/calendario' element={<Calendario />} />
           <Route path='/contacto' element={<Contacto />} />
           <Route path='/sesion' element={<Sesion />} />
+          <Route path='/admin/*' element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
+          } />
         </Routes>
       </Router>
     </div>

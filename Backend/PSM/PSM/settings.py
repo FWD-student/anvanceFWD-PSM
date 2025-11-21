@@ -1,4 +1,7 @@
 from pathlib import Path
+#timpor de expiracion del token
+from datetime import timedelta
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -18,6 +21,24 @@ ALLOWED_HOSTS = []
 # >>IMPORTANTE<< Permitir la herencia a usuario 
 AUTH_USER_MODEL = "api.Usuario"
 
+# clases de autenticacion
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES' : (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
+
+# hacer que la sesion expire por seguridad
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True, # para evitar que si renuevo un token viejo
+}
+
+# INSTALAR: pip install djangorestframework-simplejwt
 
 # Application definition
 
@@ -30,7 +51,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'api',
     'rest_framework',
-    'corsheaders'  #seccion de cors
+    'corsheaders',  #seccion de cors
+    'rest_framework_simplejwt' # llamar la dependencia de los tokens 
 ]
 
 MIDDLEWARE = [
@@ -45,31 +67,16 @@ MIDDLEWARE = [
     
 ]
 
-# configuracion del cors
+# configuracion del cors especifico de los puertos
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
     'http://localhost:5174',
     'http://127.0.0.1:5174'
 ]
-
-# config del JWT
-from datetime import timedelta
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
-}
-
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-}
-
-# INSTALAR: pip install djangorestframework-simplejwt
-
-
+ 
+# configuracion del cors version general de los puertos 
+#CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'PSM.urls'
 

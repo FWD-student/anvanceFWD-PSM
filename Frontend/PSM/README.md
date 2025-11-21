@@ -112,3 +112,6 @@ El proyecto tenia problemas porque estaba instalado Tailwind v4, que tiene cambi
 - Instale Tailwind CSS v3.4.17 con postcss y autoprefixer
 - Ajuste postcss.config.js para usar el plugin estandar `tailwindcss` en lugar de `@tailwindcss/postcss`
 - Ejecute `npm run dev` y funciono correctamente
+
+
+Para la seecion de administracion se hizo una conversion para que funcione con tailwind y shadcn/ui, porque funcionaba con ts
