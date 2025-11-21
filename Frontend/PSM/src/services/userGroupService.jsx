@@ -40,4 +40,4 @@ async function getUserGroups() {
     }
 }
 
-export default { assignRole, getUserGroups }
+export default { asignarRole, getUserGroups }

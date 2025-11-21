@@ -2,10 +2,12 @@ const API_URL = 'http://127.0.0.1:8000/api/';
 
 async function getCategEventos() {
     try {
+        const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}CategEvento/`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             }
         });
 
@@ -19,10 +21,12 @@ async function getCategEventos() {
 
 async function getCategEventoById(id) {
     try {
+        const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}CategEvento/${id}/`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             }
         });
 
@@ -36,8 +40,8 @@ async function getCategEventoById(id) {
 
 async function createCategEvento(nombre, descripcion, estado) {
     try {
-        const token = localStorage.getItem('access_token');
-        
+        const token = localStorage.getItem('token');
+
         const categData = {
             nombre,
             descripcion,
@@ -63,7 +67,7 @@ async function createCategEvento(nombre, descripcion, estado) {
 
 async function updateCategEvento(id, nombre, descripcion, estado) {
     try {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('token');
 
         const categData = {
             nombre,
@@ -90,7 +94,7 @@ async function updateCategEvento(id, nombre, descripcion, estado) {
 
 async function deleteCategEvento(id) {
     try {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('token');
 
         const response = await fetch(`${API_URL}CategEvento/${id}/`, {
             method: 'DELETE',

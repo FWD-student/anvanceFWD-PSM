@@ -2,10 +2,12 @@ const API_URL = 'http://127.0.0.1:8000/api/';
 
 async function getUbicaciones() {
     try {
+        const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}Ubicacion/`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             }
         });
 
@@ -19,10 +21,12 @@ async function getUbicaciones() {
 
 async function getUbicacionById(id) {
     try {
+        const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}Ubicacion/${id}/`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             }
         });
 
@@ -34,15 +38,9 @@ async function getUbicacionById(id) {
     }
 }
 
-async function createUbicacion(recinto, direccion, telefono_contacto) {
+async function createUbicacion(ubicacionData) {
     try {
-        const token = localStorage.getItem('access_token');
-        
-        const ubicacionData = {
-            recinto,
-            direccion,
-            telefono_contacto
-        };
+        const token = localStorage.getItem('token');
 
         const response = await fetch(`${API_URL}Ubicacion/`, {
             method: 'POST',
@@ -53,6 +51,11 @@ async function createUbicacion(recinto, direccion, telefono_contacto) {
             body: JSON.stringify(ubicacionData)
         });
 
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(JSON.stringify(errorData));
+        }
+
         return await response.json();
 
     } catch (error) {
@@ -61,15 +64,9 @@ async function createUbicacion(recinto, direccion, telefono_contacto) {
     }
 }
 
-async function updateUbicacion(id, recinto, direccion, telefono_contacto) {
+async function updateUbicacion(id, ubicacionData) {
     try {
-        const token = localStorage.getItem('access_token');
-
-        const ubicacionData = {
-            recinto,
-            direccion,
-            telefono_contacto
-        };
+        const token = localStorage.getItem('token');
 
         const response = await fetch(`${API_URL}Ubicacion/${id}/`, {
             method: 'PUT',
@@ -79,6 +76,11 @@ async function updateUbicacion(id, recinto, direccion, telefono_contacto) {
             },
             body: JSON.stringify(ubicacionData)
         });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(JSON.stringify(errorData));
+        }
 
         return await response.json();
 
@@ -90,7 +92,7 @@ async function updateUbicacion(id, recinto, direccion, telefono_contacto) {
 
 async function deleteUbicacion(id) {
     try {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('token');
 
         const response = await fetch(`${API_URL}Ubicacion/${id}/`, {
             method: 'DELETE',

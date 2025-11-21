@@ -1,0 +1,196 @@
+Implementación de Permisos de Seguridad - Completado
+Cambios Realizados
+Backend - Sistema de Permisos
+Archivo Nuevo: 
+permissions.py
+Creamos clases de permiso personalizadas:
+
+file:///c:/Users/Estudiantes/Desktop/PuntarenasSeMueve/Backend/PSM/api/permissions.py
+
+IsAdminUser
+:
+
+Requiere autenticación
+Permite GET/HEAD/OPTIONS a usuarios autenticados
+Permite POST/PUT/DELETE solo a usuarios del grupo 'admin'
+IsAdminOrReadOnly
+:
+
+Permite GET/HEAD/OPTIONS a todos (sin autenticación)
+Permite POST/PUT/DELETE solo a admins autenticados
+Archivo Modificado: 
+views.py
+file:///c:/Users/Estudiantes/Desktop/PuntarenasSeMueve/Backend/PSM/api/views.py
+
+Aplicamos permisos a todas las vistas según niveles de seguridad:
+
+Vistas Públicas (AllowAny):
+
+RegisterView
+ - Registro de usuarios
+CustomTokenObtainPairView
+ - Login
+ContactoListCreateView
+ - Mensajes de contacto
+Lectura Pública, Escritura Autenticada:
+
+EventoListCreateView
+ - Ver eventos (todos), crear eventos (solo admin)
+ResenaListCreateView
+ - Ver reseñas (todos), crear reseñas (autenticados)
+Solo Usuarios Autenticados (IsAuthenticated):
+
+InscripcionListCreateView
+ - Inscripciones
+Inscripcion DetailView - Detalles de inscripción
+ResenaDetailView
+ - Editar/eliminar reseñas
+Solo Administradores (
+IsAdminUser
+):
+
+UserListCreateView
+ - Gestión de usuarios
+UserDetailView
+ - Detalles de usuarios
+CategEventoListCreateView
+ - Gestión de categorías
+UbicacionListCreateView
+ - Gestión de ubicaciones
+EventoDetailView
+ - Editar/eliminar eventos
+UserGroupView
+ - Asignar roles
+Frontend - Validación de Roles
+Archivo Modificado: 
+SesionRegistro.jsx
+file:///c:/Users/Estudiantes/Desktop/PuntarenasSeMueve/Frontend/PSM/src/components/Sesion_registro/SesionRegistro.jsx
+
+Cambio clave (línea 74):
+
+const role = response.role || '';
+localStorage.setItem('userRole', role);  // Guardar rol para validación posterior
+Ahora el rol se guarda en localStorage después del login exitoso.
+
+Archivo Modificado: 
+PrivateRoute.jsx
+file:///c:/Users/Estudiantes/Desktop/PuntarenasSeMueve/Frontend/PSM/src/routes/PrivateRoute.jsx
+
+Cambio clave (líneas 24-27):
+
+const isAdmin = () => {
+  // Leer el rol desde localStorage (guardado durante el login)
+  const role = localStorage.getItem('userRole') || '';
+  return role.toLowerCase() === 'admin' || role.toLowerCase() === 'administrador';
+};
+Ya no intenta decodificar el JWT (que no contiene el rol), sino que lee directamente desde localStorage.
+
+Por Qué Estos Cambios
+Problema Original
+Backend sin protección: Todas las APIs estaban abiertas sin validación
+Rol no en JWT: El backend envía el rol en response.role, no en el token JWT
+Frontend buscaba en lugar incorrecto: 
+PrivateRoute
+ buscaba el rol en el JWT decodific ado
+Solución Implementada
+Protección en el backend: Ahora las APIs validan autenticación y permisos
+Guardar rol en localStorage: Después del login, guardamos response.role
+Leer desde localStorage: 
+PrivateRoute
+ lee de localStorage en lugar del JWT
+Instrucciones de Testing
+Testing con Postman
+1. Login y Obtención de Token
+POST http://localhost:8000/api/token/
+Content-Type: application/json
+{
+  "username": "admin_test",
+  "password": "adminpassword123"
+}
+Respuesta esperada:
+
+{
+  "refresh": "eyJ...",
+  "access": "eyJ...",  // ← Copiar este token
+  "role": "admin",
+  "id": 4,
+  "username": "admin_test",
+  "email": "admin@test.com"
+}
+2. Usar el Token en Requests Protegidos
+Para cualquier endpoint protegido, agregar header:
+
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+En Postman:
+
+Pestaña Headers
+Key: Authorization
+Value: Bearer <tu_token>
+3. Pruebas de Seguridad
+✅ Debe funcionar (público):
+
+GET http://localhost:8000/api/Evento/
+# Sin headers - lectura pública
+❌ Debe fallar (requiere autenticación):
+
+GET http://localhost:8000/api/User/
+# Sin headers - solo admin
+✅ Debe funcionar (con token admin):
+
+GET http://localhost:8000/api/User/
+Authorization: Bearer <admin_token>
+❌ Debe fallar (crear evento sin ser admin):
+
+POST http://localhost:8000/api/Evento/
+Authorization: Bearer <cliente_token>
+Content-Type: application/json
+{
+  "nombre": "Test"
+}
+Testing en el Frontend
+1. Login como Admin
+Abrir http://localhost:5173/sesion
+Iniciar sesión con admin_test / adminpassword123
+Verificar:
+✅ Debe redirigir a /admin
+✅ Debe mostrar el Dashboard de admin
+2. Login como Cliente
+Registrar un nuevo cliente o usar uno existente
+Iniciar sesión
+Verificar:
+✅ Debe redirigir a /home
+❌ No debe poder acceder a /admin (redirige a /home)
+3. Verificar localStorage
+Después del login, abrir DevTools (F12) → Console:
+
+localStorage.getItem('token')        // Debe tener un valor
+localStorage.getItem('refreshToken') // Debe tener un valor
+localStorage.getItem('userRole')     // Debe ser 'admin' o 'cliente'
+Resumen de Seguridad Implementada
+Endpoint	Sin Token	Token Cliente	Token Admin
+GET /api/Evento/	✅ Permitido	✅ Permitido	✅ Permitido
+POST /api/Evento/	❌ Negado	❌ Negado	✅ Permitido
+GET /api/User/	❌ Negado	✅ Solo ver	✅ Ver y editar
+POST /api/Inscripcion/	❌ Negado	✅ Permitido	✅ Permitido
+POST /api/register/	✅ Permitido	✅ Permitido	✅ Permitido
+POST /api/token/	✅ Permitido	✅ Permitido	✅ Permitido
+Notas Importantes
+IMPORTANT
+
+Los tokens expiran en 10 minutos (configurado en 
+settings.py
+)
+El refreshToken expira en 1 día
+Al cerrar sesión, recuerda limpiar localStorage
+WARNING
+
+Si modificas los permisos en el backend, reinicia el servidor Django
+Los cambios en 
+permissions.py
+ no se aplican en hot-reload
+TIP
+
+Para debugging, puedes ver logs en:
+
+Backend: Terminal donde corre Django
+Frontend: Browser DevTools Console (F12)
