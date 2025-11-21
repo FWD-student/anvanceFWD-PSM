@@ -1,8 +1,12 @@
 const API_URL = 'http://127.0.0.1:8000/api/';
 
-async function getResenas() {
+async function getResenas(noCache = false) {
     try {
-        const response = await fetch(`${API_URL}Resena/`, {
+        let url = `${API_URL}Resena/`;
+        if (noCache) {
+            url += `?t=${new Date().getTime()}`;
+        }
+        const response = await fetch(url, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -37,7 +41,7 @@ async function getResenaById(id) {
 async function createResena(usuario, evento, calificacion, comentario) {
     try {
         const token = localStorage.getItem('access_token');
-        
+
         const resenaData = {
             usuario,
             evento,

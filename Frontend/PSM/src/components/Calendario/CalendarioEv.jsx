@@ -1,28 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Calendar } from "react-big-calendar";
 import localizer from "../../utils/calendarlocalizer.js";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import EventoService from "../../services/EventoService";
 
+function CalendarioEv() {
+  const [eventos, setEventos] = useState([]);
 
-//testeo
-const eventosIniciales = [
-  {
-    title: "Reunion del equipo",
-    start: new Date(2025, 10, 13, 10, 0),
-    end: new Date(2025, 10, 13, 11, 0),
-  },
-  {
-    title: "Taller comunitario",
-    start: new Date(2025, 10, 15, 9, 0),
-    end: new Date(2025, 10, 15, 12, 0),
-  },
-]
+  useEffect(() => {
+    cargarEventos();
+  }, []);
 
- function CalendarioEv() {
-  const [eventos, setEventos] = useState(eventosIniciales);
+  const cargarEventos = async () => {
+    try {
+      // Fetch events using the service (now supports public access)
+      const data = await EventoService.getEventos(true); // Use cache busting to get fresh data
+
+      // Map backend data to calendar format
+      const eventosFormateados = data.map(evento => ({
+        title: evento.nombre,
+        start: new Date(evento.fecha_inicio),
+        end: new Date(evento.fecha_fin),
+        allDay: false, // Adjust based on your needs
+        resource: evento
+      }));
+
+      setEventos(eventosFormateados);
+    } catch (error) {
+      console.error("Error al cargar eventos para el calendario:", error);
+    }
+  };
 
   return (
-    <div>
+    <div className="p-4">
       <Calendar
         localizer={localizer}
         events={eventos}
@@ -32,9 +42,22 @@ const eventosIniciales = [
         views={["month", "week", "day"]}
         defaultView="month"
         popup
+        messages={{
+          next: "Siguiente",
+          previous: "Anterior",
+          today: "Hoy",
+          month: "Mes",
+          week: "Semana",
+          day: "Día",
+          agenda: "Agenda",
+          date: "Fecha",
+          time: "Hora",
+          event: "Evento",
+          noEventsInRange: "No hay eventos en este rango.",
+        }}
       />
     </div>
-  )
+  );
 }
 
 export default CalendarioEv;

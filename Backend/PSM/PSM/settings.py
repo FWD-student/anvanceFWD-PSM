@@ -32,10 +32,10 @@ REST_FRAMEWORK = {
 # hacer que la sesion expire por seguridad
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60), #funciona perfectamente
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True, # para evitar que si renuevo un token viejo
+    'BLACKLIST_AFTER_ROTATION': True, # para evitar que se renueve un token viejo
 }
 
 # INSTALAR: pip install djangorestframework-simplejwt

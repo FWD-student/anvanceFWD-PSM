@@ -39,4 +39,4 @@
             "path": "./tsconfig.node.json"
         }
     ]
-}
+} //necesaria para la libreria y poder hacerla compatible 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Calendar, MapPin, Users, MessageSquare } from 'lucide-react';
+import { Calendar, MapPin, Users, MessageSquare, RefreshCw } from 'lucide-react';
 import EventoService from '../../services/EventoService';
 import UbicacionService from '../../services/UbicacionService';
 import InscripcionService from '../../services/InscripcionService';
@@ -24,12 +24,14 @@ function Dashboard() {
     }, []);
 
     const cargarEstadisticas = async () => {
+        setLoading(true);
         try {
+            // cache busting concepto nuevo
             const [eventos, ubicaciones, inscripciones, resenas] = await Promise.all([
-                EventoService.getEventos(),
-                UbicacionService.getUbicaciones(),
-                InscripcionService.getInscripciones(),
-                ResenaService.getResenas()
+                EventoService.getEventos(true),
+                UbicacionService.getUbicaciones(true),
+                InscripcionService.getInscripciones(true),
+                ResenaService.getResenas(true)
             ]);
 
             setStats({
@@ -87,7 +89,7 @@ function Dashboard() {
             <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Cargando estadísticas...</p>
+                    <p className="mt-4 text-gray-600">Cargando estadisticas...</p>
                 </div>
             </div>
         );
@@ -95,9 +97,18 @@ function Dashboard() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                <p className="text-gray-600 mt-1">Resumen general del sistema</p>
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+                    <p className="text-gray-600 mt-1">Resumen general del sistema</p>
+                </div>
+                <button
+                    onClick={cargarEstadisticas}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                    <RefreshCw size={18} />
+                    Recargar Datos
+                </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
