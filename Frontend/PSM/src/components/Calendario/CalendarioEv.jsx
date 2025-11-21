@@ -21,7 +21,7 @@ function CalendarioEv() {
         title: evento.nombre,
         start: new Date(evento.fecha_inicio),
         end: new Date(evento.fecha_fin),
-        allDay: false, // Adjust based on your needs
+        allDay: false, 
         resource: evento
       }));
 
