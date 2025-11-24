@@ -1,65 +1,88 @@
-import axios from 'axios';
-
 const API_URL = 'http://127.0.0.1:8000/api/Inscripcion/';
 
 const getInscripciones = async (noCache = false) => {
     const token = localStorage.getItem('token');
-    const config = {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        },
-        params: {}
-    };
+    let url = API_URL;
 
     if (noCache) {
-        config.params.t = new Date().getTime();
+        url += `?t=${new Date().getTime()}`;
     }
 
-    const response = await axios.get(API_URL, config);
-    return response.data;
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+    }
+    return await response.json();
 };
 
 const getInscripcionById = async (id) => {
     const token = localStorage.getItem('token');
-    const config = {
+    const response = await fetch(`${API_URL}${id}/`, {
+        method: 'GET',
         headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
         }
-    };
-    const response = await axios.get(`${API_URL}${id}/`, config);
-    return response.data;
+    });
+
+    if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+    }
+    return await response.json();
 };
 
 const createInscripcion = async (inscripcionData, token) => {
-    const config = {
+    const response = await fetch(API_URL, {
+        method: 'POST',
         headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
-        }
-    };
-    const response = await axios.post(API_URL, inscripcionData, config);
-    return response.data;
+        },
+        body: JSON.stringify(inscripcionData)
+    });
+
+    if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+    }
+    return await response.json();
 };
 
 const updateInscripcion = async (id, inscripcionData, token) => {
-    const config = {
+    const response = await fetch(`${API_URL}${id}/`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(inscripcionData)
+    });
+
+    if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+    }
+    return await response.json();
+};
+
+const deleteInscripcion = async (id, token) => {
+    const response = await fetch(`${API_URL}${id}/`, {
+        method: 'DELETE',
         headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
         }
-    };
-    const response = await axios.put(`${API_URL}${id}/`, inscripcionData, config);
-    return response.data;
-};
+    });
 
-const deleteInscripcion = async (id, token) => {
-    const config = {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    };
-    const response = await axios.delete(`${API_URL}${id}/`, config);
-    return response.data;
+    if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+    }
+    return await response.json();
 };
 
 const inscripcionService = {

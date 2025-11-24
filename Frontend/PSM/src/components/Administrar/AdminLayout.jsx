@@ -41,10 +41,10 @@ function AdminLayout({ children }) {
             }
         };
 
-        // Check immediately
+        // actualizar al instante
         checkSession();
 
-        // Check every minute
+        // Chequear cada minuto
         const interval = setInterval(checkSession, 60000);
 
         return () => clearInterval(interval);
