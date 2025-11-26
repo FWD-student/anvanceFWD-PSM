@@ -1,0 +1,66 @@
+.profile-page {
+    min-height: calc(100vh - 56px);
+    padding: 2rem 1rem;
+    background: linear-gradient(to bottom, hsl(var(--background)), hsl(var(--secondary)));
+}
+
+.profile-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.profile-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.profile-title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: hsl(var(--foreground));
+    margin-bottom: 0.5rem;
+}
+
+.profile-subtitle {
+    font-size: 1.125rem;
+    color: hsl(var(--muted-foreground));
+}
+
+.profile-tabs {
+    margin-top: 2rem;
+}
+
+.inscripcion-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    background-color: hsl(var(--card));
+}
+
+.inscripcion-item h4 {
+    margin-bottom: 0.25rem;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .profile-title {
+        font-size: 2rem;
+    }
+
+    .profile-subtitle {
+        font-size: 1rem;
+    }
+
+    .inscripcion-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .inscripcion-item button {
+        width: 100%;
+    }
+}

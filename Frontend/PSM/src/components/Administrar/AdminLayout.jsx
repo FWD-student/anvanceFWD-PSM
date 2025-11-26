@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Calendar, MapPin, Users, MessageSquare, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Calendar, MapPin, Users, MessageSquare, LogOut, Menu, X, UserCog } from 'lucide-react';
 import { jwtDecode } from "jwt-decode";
 
 function AdminLayout({ children }) {
@@ -10,6 +10,7 @@ function AdminLayout({ children }) {
 
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
+        { id: 'usuarios', label: 'Usuarios', icon: UserCog, path: '/admin/usuarios' },
         { id: 'eventos', label: 'Eventos', icon: Calendar, path: '/admin/eventos' },
         { id: 'ubicaciones', label: 'Ubicaciones', icon: MapPin, path: '/admin/ubicaciones' },
         { id: 'inscripciones', label: 'Inscripciones', icon: Users, path: '/admin/inscripciones' },

@@ -1,0 +1,66 @@
+.deportes-section {
+    width: 100%;
+    padding: 3rem 1rem;
+    background-color: hsl(var(--background));
+}
+
+.deportes-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.deportes-title {
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 2rem;
+    color: hsl(var(--foreground));
+}
+
+.deportes-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+/* Tablet */
+@media screen and (min-width: 640px) {
+    .deportes-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Desktop */
+@media screen and (min-width: 1024px) {
+    .deportes-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.deporte-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.deporte-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.deporte-nombre {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: hsl(var(--primary));
+}
+
+.deporte-descripcion {
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+    line-height: 1.5;
+}
+
+.error-message {
+    text-align: center;
+    color: hsl(var(--destructive));
+    padding: 2rem;
+}

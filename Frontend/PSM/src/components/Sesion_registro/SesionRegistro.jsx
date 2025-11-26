@@ -4,14 +4,12 @@ import authService from '../../services/authService';
 import { jwtDecode } from "jwt-decode";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Terminal, AlertCircle, CheckCircle2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 const SesionRegistro = () => {
     const navigate = useNavigate();
+    const { toast } = useToast();
     const [tipoForm, setTipoForm] = useState('login'); // 'login' or 'registro'
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
     const [loading, setLoading] = useState(false);
 
     // inicio de sesion
@@ -31,6 +29,10 @@ const SesionRegistro = () => {
 
     const handleLoginChange = (e) => {
         setLoginData({ ...loginData, [e.target.name]: e.target.value });
+    };
+
+    const limpiarCampos = () => {
+        setLoginData({ username: '', password: '' });
     };
 
     const handleRegisterChange = (e) => {
@@ -55,8 +57,6 @@ const SesionRegistro = () => {
 
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
-        setError(null);
-        setSuccess(null);
         setLoading(true);
 
         try {
@@ -66,7 +66,12 @@ const SesionRegistro = () => {
             if (response.access) {
                 localStorage.setItem('token', response.access);
                 localStorage.setItem('refreshToken', response.refresh);
-                setSuccess("Inicio de sesión exitoso. Redirigiendo...");
+
+                toast({
+                    title: "Inicio de sesión exitoso",
+                    description: "Redirigiendo...",
+                    className: "bg-green-500 text-white",
+                });
 
                 // El rol viene en la respuesta del backend, no en el token JWT
                 const role = response.role || '';
@@ -77,11 +82,21 @@ const SesionRegistro = () => {
 
                 setTimeout(() => navigate(targetPath), 1500);
             } else {
-                setError("No se recibió el token de acceso.");
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "No se recibió el token de acceso.",
+                });
+                limpiarCampos();
             }
         } catch (err) {
             console.error("Login error:", err);
-            setError("Credenciales inválidas o error en el servidor.");
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Credenciales inválidas o error en el servidor.",
+            });
+            limpiarCampos();
         } finally {
             setLoading(false);
         }
@@ -89,13 +104,15 @@ const SesionRegistro = () => {
 
     const handleRegisterSubmit = async (e) => {
         e.preventDefault();
-        setError(null);
-        setSuccess(null);
         setLoading(true);
 
         // validacion simple
         if (registerData.password.length < 8) {
-            setError("La contraseña debe tener al menos 8 caracteres.");
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "La contraseña debe tener al menos 8 caracteres.",
+            });
             setLoading(false);
             return;
         }
@@ -103,7 +120,11 @@ const SesionRegistro = () => {
         // Validacion de telefono
         const numPermitido = /^[678]\d{7,15}$/;
         if (!numPermitido.test(registerData.telefono)) {
-            setError("El teléfono debe empezar con 6, 7 u 8 y tener entre 8 y 16 dígitos.");
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "El teléfono debe empezar con 6, 7 u 8 y tener entre 8 y 16 dígitos.",
+            });
             setLoading(false);
             return;
         }
@@ -111,6 +132,7 @@ const SesionRegistro = () => {
         try {
             await authService.register(
                 registerData.username,
+                registerData.nombre,
                 registerData.apellido,
                 registerData.email,
                 registerData.password,
@@ -119,14 +141,22 @@ const SesionRegistro = () => {
                 registerData.fecha_nacimiento
             );
 
-            setSuccess("Registro exitoso. Por favor inicia sesión.");
+            toast({
+                title: "Registro exitoso",
+                description: "Por favor inicia sesión.",
+                className: "bg-green-500 text-white",
+            });
             setTipoForm('login');
             setRegisterData({
                 username: '', email: '', password: '', nombre: '', apellido: '', telefono: '', edad: '', fecha_nacimiento: ''
             });
         } catch (err) {
             console.error("Register error:", err);
-            setError("Error al registrar. Verifica los datos o intenta más tarde.");
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Error al registrar. Verifica los datos o intenta más tarde.",
+            });
         } finally {
             setLoading(false);
         }
@@ -144,157 +174,142 @@ const SesionRegistro = () => {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-
-                    {error && (
-                        <Alert variant="destructive" className="mb-4">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Error</AlertTitle>
-                            <AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                    )}
-
-                    {success && (
-                        <Alert className="mb-4 border-green-500 text-green-600">
-                            <CheckCircle2 className="h-4 w-4 text-green-600" />
-                            <AlertTitle>Éxito</AlertTitle>
-                            <AlertDescription>{success}</AlertDescription>
-                        </Alert>
-                    )}
-
-                    {tipoForm === 'login' ? (
-                        <form onSubmit={handleLoginSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Usuario</label>
-                                <input
-                                    type="text"
-                                    name="username"
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    placeholder="Tu numero de cedula"
-                                    value={loginData.username}
-                                    onChange={handleLoginChange}
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Contraseña</label>
-                                <input
-                                    type="password"
-                                    name="password"
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    placeholder="••••••••"
-                                    value={loginData.password}
-                                    onChange={handleLoginChange}
-                                    required
-                                />
-                            </div>
-                            <Button type="submit" className="w-full" disabled={loading}>
-                                {loading ? "Cargando..." : "Ingresar"}
-                            </Button>
-                        </form>
-                    ) : (
-                        <form onSubmit={handleRegisterSubmit} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+                    {
+                        tipoForm === 'login' ? (
+                            <form onSubmit={handleLoginSubmit} className="space-y-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Cédula</label>
+                                    <label className="text-sm font-medium">Usuario</label>
                                     <input
                                         type="text"
                                         name="username"
                                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                        value={registerData.username}
-                                        onChange={handleRegisterChange}
+                                        placeholder="Tu numero de cedula"
+                                        value={loginData.username}
+                                        onChange={handleLoginChange}
                                         required
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Email</label>
+                                    <label className="text-sm font-medium">Contraseña</label>
                                     <input
-                                        type="email"
-                                        name="email"
+                                        type="password"
+                                        name="password"
                                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                        value={registerData.email}
+                                        placeholder="••••••••"
+                                        value={loginData.password}
+                                        onChange={handleLoginChange}
+                                        required
+                                    />
+                                </div>
+                                <Button type="submit" className="w-full" disabled={loading}>
+                                    {loading ? "Cargando..." : "Ingresar"}
+                                </Button>
+                            </form>
+                        ) : (
+                            <form onSubmit={handleRegisterSubmit} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Cédula</label>
+                                        <input
+                                            type="text"
+                                            name="username"
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            value={registerData.username}
+                                            onChange={handleRegisterChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Email</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            value={registerData.email}
+                                            onChange={handleRegisterChange}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Nombre</label>
+                                        <input
+                                            type="text"
+                                            name="nombre"
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            value={registerData.nombre}
+                                            onChange={handleRegisterChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Apellido</label>
+                                        <input
+                                            type="text"
+                                            name="apellido"
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            value={registerData.apellido}
+                                            onChange={handleRegisterChange}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Contraseña</label>
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={registerData.password}
                                         onChange={handleRegisterChange}
                                         required
                                     />
                                 </div>
-                            </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Nombre</label>
-                                    <input
-                                        type="text"
-                                        name="nombre"
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                        value={registerData.nombre}
-                                        onChange={handleRegisterChange}
-                                        required
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Teléfono</label>
+                                        <input
+                                            type="tel"
+                                            name="telefono"
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            value={registerData.telefono}
+                                            onChange={handleRegisterChange}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Edad</label>
+                                        <input
+                                            type="number"
+                                            name="edad"
+                                            value={registerData.edad}
+                                            readOnly
+                                            className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                        />
+                                    </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Apellido</label>
-                                    <input
-                                        type="text"
-                                        name="apellido"
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                        value={registerData.apellido}
-                                        onChange={handleRegisterChange}
-                                        required
-                                    />
-                                </div>
-                            </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Contraseña</label>
-                                <input
-                                    type="password"
-                                    name="password"
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    value={registerData.password}
-                                    onChange={handleRegisterChange}
-                                    required
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Teléfono</label>
+                                    <label className="text-sm font-medium">Fecha de Nacimiento</label>
                                     <input
-                                        type="tel"
-                                        name="telefono"
+                                        type="date"
+                                        name="fecha_nacimiento"
                                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                        value={registerData.telefono}
+                                        value={registerData.fecha_nacimiento}
                                         onChange={handleRegisterChange}
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Edad</label>
-                                    <input
-                                        type="number"
-                                        name="edad"
-                                        value={registerData.edad}
-                                        readOnly
-                                        className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                    />
-                                </div>
-                            </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Fecha de Nacimiento</label>
-                                <input
-                                    type="date"
-                                    name="fecha_nacimiento"
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    value={registerData.fecha_nacimiento}
-                                    onChange={handleRegisterChange}
-                                />
-                            </div>
-
-                            <Button type="submit" className="w-full" disabled={loading}>
-                                {loading ? "Registrando..." : "Registrarse"}
-                            </Button>
-                        </form>
-                    )}
-                </CardContent>
+                                <Button type="submit" className="w-full" disabled={loading}>
+                                    {loading ? "Registrando..." : "Registrarse"}
+                                </Button>
+                            </form>
+                        )
+                    }
+                </CardContent >
                 <CardFooter className="flex justify-center">
                     <p className="text-sm text-muted-foreground">
                         {tipoForm === 'login' ? (
@@ -314,8 +329,8 @@ const SesionRegistro = () => {
                         )}
                     </p>
                 </CardFooter>
-            </Card>
-        </div>
+            </Card >
+        </div >
     );
 };
 

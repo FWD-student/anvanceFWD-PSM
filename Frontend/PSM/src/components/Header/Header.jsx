@@ -1,16 +1,43 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Menu } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, User, LogOut } from "lucide-react";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import authService from '../../services/authService';
 
 function Header() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    const isAuth = authService.isAuthenticated();
+    setIsAuthenticated(isAuth);
+
+    if (isAuth) {
+      const currentUser = await authService.getCurrentUser();
+      setUser(currentUser);
+    }
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    setIsAuthenticated(false);
+    setUser(null);
+    navigate('/');
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full min-w-[375px] border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-14 items-center justify-between">
-          {/* Desktop Navigation */}
+          
           <div className="mr-4 hidden md:flex items-center">
             <Link to="/" className="mr-6 flex items-center space-x-2">
               <span className="font-bold text-base lg:text-lg whitespace-nowrap">
@@ -38,7 +65,6 @@ function Header() {
             </NavigationMenu>
           </div>
 
-          {/* Mobile Logo */}
           <div className="md:hidden flex-1">
             <Link to="/" className="flex items-center">
               <span className="font-bold text-sm whitespace-nowrap">
@@ -47,16 +73,40 @@ function Header() {
             </Link>
           </div>
 
-          {/* Desktop Auth Button */}
           <div className="hidden md:flex items-center">
-            <Link to="/sesion">
-              <Button variant="default" size="sm">
-                Iniciar Sesión
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="default" size="sm">
+                    <User className="h-4 w-4 mr-2" />
+                    {user?.username || 'Usuario'}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/perfil" className="cursor-pointer">
+                      <User className="h-4 w-4 mr-2" />
+                      Ver Perfil
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Cerrar Sesión
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link to="/sesion">
+                <Button variant="default" size="sm">
+                  Iniciar Sesión
+                </Button>
+              </Link>
+            )}
           </div>
 
-          {/* Mobile Menu Button */}
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
@@ -76,9 +126,30 @@ function Header() {
                   <Link to="/contacto" className="text-sm font-medium transition-colors hover:text-primary">
                     Contacto
                   </Link>
-                  <Link to="/sesion">
-                    <Button className="w-full">Iniciar Sesión</Button>
-                  </Link>
+
+                  {isAuthenticated ? (
+                    <>
+                      <div className="border-t pt-4 mt-4">
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Hola, {user?.username}
+                        </p>
+                        <Link to="/perfil" className="block">
+                          <Button variant="outline" className="w-full mb-2">
+                            <User className="h-4 w-4 mr-2" />
+                            Ver Perfil
+                          </Button>
+                        </Link>
+                        <Button variant="destructive" className="w-full" onClick={handleLogout}>
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Cerrar Sesión
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <Link to="/sesion">
+                      <Button className="w-full">Iniciar Sesión</Button>
+                    </Link>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>
