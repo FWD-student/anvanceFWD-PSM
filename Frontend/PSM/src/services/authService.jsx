@@ -6,7 +6,7 @@ async function register(username, nombre, apellido, email, password, telefono, e
             username,
             email,
             password,
-            first_name: nombre, //first_name: username,
+            first_name: nombre,
             last_name: apellido,
             telefono,
             edad,
@@ -21,7 +21,16 @@ async function register(username, nombre, apellido, email, password, telefono, e
             body: JSON.stringify(userData)
         });
 
-        return await response.json();
+        const data = await response.json();
+        
+        if (!response.ok) {
+            // Si hay errores de validación, mostrarlos
+            console.error('Errores de validación:', data);
+            const errorMsg = typeof data === 'object' ? JSON.stringify(data) : data;
+            throw new Error(errorMsg);
+        }
+        
+        return data;
 
     } catch (error) {
         console.error('Error al registrar user:', error);

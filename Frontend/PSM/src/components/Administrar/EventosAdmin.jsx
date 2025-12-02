@@ -37,6 +37,8 @@ function EventosAdmin() {
         edad_minima: '',
         edad_maxima: '',
         requisitos: '',
+        imagen: null,
+        imagen_url: '',
         estado: 'activo'
     });
 
@@ -77,6 +79,8 @@ function EventosAdmin() {
                 edad_minima: evento.edad_minima || '',
                 edad_maxima: evento.edad_maxima || '',
                 requisitos: evento.requisitos || '',
+                imagen: null,
+                imagen_url: '',
                 estado: evento.estado
             });
         } else {
@@ -94,6 +98,8 @@ function EventosAdmin() {
                 edad_minima: '',
                 edad_maxima: '',
                 requisitos: '',
+                imagen: null,
+                imagen_url: '',
                 estado: 'activo'
             });
         }
@@ -117,26 +123,21 @@ function EventosAdmin() {
             return;
         }
 
+        //Campo importante para que funcione el envio de archivos
+        const data = new FormData();
+        // Agregamos todos los campos al FormData
+        Object.keys(formData).forEach(key => {
+            if (formData[key] !== null && formData[key] !== undefined && formData[key] !== '') {
+                data.append(key, formData[key]);
+            }
+        });
+
         try {
             if (editando) {
-                await eventoService.updateEvento(editando.id, formData);
+                await eventoService.updateEvento(editando.id, data);
                 alert('Evento actualizado correctamente');
             } else {
-                await eventoService.createEvento(
-                    formData.nombre,
-                    formData.descripcion,
-                    formData.categoria,
-                    formData.ubicacion,
-                    formData.fecha_inicio,
-                    formData.fecha_fin,
-                    formData.horario,
-                    formData.cupo_maximo,
-                    formData.cupos_disponibles,
-                    formData.edad_minima,
-                    formData.edad_maxima,
-                    formData.requisitos,
-                    formData.estado
-                );
+                await eventoService.createEvento(data);
                 alert('Evento creado correctamente');
             }
             cerrarModal();
@@ -357,6 +358,16 @@ function EventosAdmin() {
                             <div className="col-span-2">
                                 <Label>Requisitos</Label>
                                 <Textarea value={formData.requisitos} onChange={(e) => handleChange('requisitos', e.target.value)} rows={2} />
+                            </div>
+
+                            <div className="col-span-2">
+                                <Label>Imagen (Subir archivo)</Label>
+                                <Input type="file" onChange={(e) => handleChange('imagen', e.target.files[0])} accept="image/*" />
+                            </div>
+
+                            <div className="col-span-2">
+                                <Label>Imagen (O URL)</Label>
+                                <Input value={formData.imagen_url} onChange={(e) => handleChange('imagen_url', e.target.value)} placeholder="https://ejemplo.com/imagen.jpg" />
                             </div>
 
                             <div>

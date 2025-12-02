@@ -2,10 +2,12 @@ const API_URL = 'http://127.0.0.1:8000/api/';
 
 async function getUsers() {
     try {
+        const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}User/`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             }
         });
 
@@ -19,7 +21,7 @@ async function getUsers() {
 
 async function getUserById(id) {
     try {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('token');
         
         const response = await fetch(`${API_URL}User/${id}/`, {
             method: 'GET',
@@ -39,7 +41,7 @@ async function getUserById(id) {
 
 async function updateUser(id, userData) {
     try {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('token');
 
         const response = await fetch(`${API_URL}User/${id}/`, {
             method: 'PUT',
@@ -60,7 +62,7 @@ async function updateUser(id, userData) {
 
 async function deleteUser(id) {
     try {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('token');
 
         const response = await fetch(`${API_URL}User/${id}/`, {
             method: 'DELETE',

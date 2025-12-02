@@ -1,6 +1,5 @@
 from rest_framework import permissions
 
-
 class IsAdminUser(permissions.BasePermission):
     """
     Permiso personalizado que verifica si el usuario pertenece al grupo 'admin'.

@@ -54,34 +54,31 @@ async function getEventoById(id) {
     }
 }
 
-async function createEvento(nombre, descripcion, categoria, ubicacion, fecha_inicio, fecha_fin, horario, cupo_maximo, cupos_disponibles, edad_minima, edad_maxima, requisitos, estado) {
+async function createEvento(eventoData) {
     try {
         const token = localStorage.getItem('token');
-
-        const eventoData = {
-            nombre,
-            descripcion,
-            categoria,
-            ubicacion,
-            fecha_inicio,
-            fecha_fin,
-            horario,
-            cupo_maximo,
-            cupos_disponibles,
-            edad_minima,
-            edad_maxima,
-            requisitos,
-            estado
+        const headers = {
+            'Authorization': `Bearer ${token}`
         };
+
+        // Si no es FormData, uno asume que es JSON y agregamos Content-Type
+        let body = eventoData;
+        if (!(eventoData instanceof FormData)) {
+            headers['Content-Type'] = 'application/json';
+            body = JSON.stringify(eventoData);
+        }
 
         const response = await fetch(`${API_URL}Evento/`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(eventoData)
+            headers: headers,
+            body: body
         });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server response:', errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`);
+        }
 
         return await response.json();
 
@@ -94,14 +91,21 @@ async function createEvento(nombre, descripcion, categoria, ubicacion, fecha_ini
 async function updateEvento(id, eventoData) {
     try {
         const token = localStorage.getItem('token');
+        const headers = {
+            'Authorization': `Bearer ${token}`
+        };
+
+        // Si no es FormData, asumimos que es JSON y agregamos Content-Type
+        let body = eventoData;
+        if (!(eventoData instanceof FormData)) {
+            headers['Content-Type'] = 'application/json';
+            body = JSON.stringify(eventoData);
+        }
 
         const response = await fetch(`${API_URL}Evento/${id}/`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(eventoData)
+            headers: headers,
+            body: body
         });
 
         return await response.json();
@@ -132,4 +136,9 @@ async function deleteEvento(id) {
     }
 }
 
-export default { getEventos, getEventoById, createEvento, updateEvento, deleteEvento }
+function getEventoImagenUrl(imagenId) {
+    if (!imagenId) return null;
+    return `${API_URL}Evento/imagen/${imagenId}/`;
+}
+
+export default { getEventos, getEventoById, createEvento, updateEvento, deleteEvento, getEventoImagenUrl };

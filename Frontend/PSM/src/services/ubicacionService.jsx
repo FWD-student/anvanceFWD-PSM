@@ -57,6 +57,7 @@ async function createUbicacion(ubicacionData) {
 
         if (!response.ok) {
             const errorData = await response.json();
+            console.error('Error del servidor:', errorData);
             throw new Error(JSON.stringify(errorData));
         }
 
@@ -83,6 +84,7 @@ async function updateUbicacion(id, ubicacionData) {
 
         if (!response.ok) {
             const errorData = await response.json();
+            console.error('Error del servidor:', errorData);
             throw new Error(JSON.stringify(errorData));
         }
 
@@ -109,7 +111,7 @@ async function deleteUbicacion(id) {
         return await response.json();
 
     } catch (error) {
-        console.error('Error borramdo ubicacion:', error);
+        console.error('Error borrando ubicacion:', error);
         throw error;
     }
 }

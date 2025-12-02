@@ -10,6 +10,9 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
 from .permissions import IsAdminUser, IsAdminOrReadOnly
 Usuario = get_user_model()
+# importes necesarios para evento
+from .mongo_utils import UtilidadesMongo
+from django.http import HttpResponse
 
 
 # Vistas User (autenticacion)
@@ -46,20 +49,7 @@ class UbicacionDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UbicacionSerializer
     permission_classes = [IsAdminUser]  # Solo admin puede gestionar ubicaciones
 
-
-# Vistas de Evento
-class EventoListCreateView(generics.ListCreateAPIView):
-    queryset = Evento.objects.all()
-    serializer_class = EventoSerializer
-    permission_classes = [IsAdminOrReadOnly]  # Lectura pública, escritura solo admin
-
-class EventoDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Evento.objects.all()
-    serializer_class = EventoSerializer
-    permission_classes = [IsAdminUser]  # Solo admin puede editar/eliminar eventos
-
-
-# Vistas de inscripcion
+# Vistas Inscripcion
 class InscripcionListCreateView(generics.ListCreateAPIView):
     queryset = Inscripcion.objects.all()
     serializer_class = InscripcionSerializer
@@ -110,3 +100,141 @@ class RegisterView(generics.CreateAPIView):
     queryset = Usuario.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]  # Cualquiera se puede registrar
+
+class EventoListCreateView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly] # Lectura publica, escritura autenticada
+
+    def get(self, request):
+        eventos = Evento.objects.all()
+        serializer = EventoSerializer(eventos, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        try:
+            # Verificar permisos (solo admin puede crear)
+            if not request.user.is_staff and not request.user.groups.filter(name='admin').exists():
+                 return Response({'error': 'No tienes permisos para crear eventos'}, status=403)
+
+            # Extraer imagen ANTES de copiar data
+            imagen = request.FILES.get('imagen')
+            imagen_url = request.data.get('imagen_url')
+            
+            # Copiar datos SIN la imagen (que ya está en FILES)
+            data = {}
+            for key in request.data:
+                if key not in ['imagen', 'imagen_url']:
+                    data[key] = request.data[key]
+            
+            print(f"=== PROCESANDO IMAGEN ===")
+            print(f"Tiene imagen (FILES): {imagen is not None}")
+            print(f"Tiene imagen_url: {imagen_url}")
+            
+            # Guardar imagen en MongoDB si existe
+            if imagen or imagen_url:
+                mongo_utils = UtilidadesMongo()
+                
+                if imagen:
+                    print(f"Guardando imagen en MongoDB...")
+                    imagen_id = mongo_utils.guardar_archivo(imagen)
+                    print(f"Imagen guardada con ID: {imagen_id}")
+                    data['imagen_id'] = str(imagen_id)
+                elif imagen_url:
+                    print(f"Descargando imagen desde URL...")
+                    imagen_id = mongo_utils.descargar_y_guardar_imagen(imagen_url)
+                    print(f"Imagen descargada con ID: {imagen_id}")
+                    data['imagen_id'] = str(imagen_id)
+                
+            print(f"===SERIALIZANDO EVENTO ===")
+            print(f"Data keys: {data.keys()}")
+            
+            serializer = EventoSerializer(data=data)
+            if serializer.is_valid():
+                print(f"Serializer válido, guardando...")
+                evento = serializer.save()
+                print(f"Evento guardado con ID: {evento.id}")
+                return Response(serializer.data, status=201)
+            else:
+                print(f"=== ERRORES DE VALIDACIÓN ===")
+                print(f"Errors: {serializer.errors}")
+                return Response(serializer.errors, status=400)
+        except Exception as e:
+            import traceback
+            print(f"=== ERROR INTERNO ===")
+            print(f"Error: {str(e)}")
+            traceback.print_exc()
+            return Response({'error': f'Error interno: {str(e)}'}, status=500)
+
+class EventoDetailView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_object(self, pk):
+        try:
+            return Evento.objects.get(pk=pk)
+        except Evento.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        evento = self.get_object(pk)
+        if not evento:
+            return Response({'error': 'Evento no encontrado'}, status=404)
+        serializer = EventoSerializer(evento)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        # Verificar permisos
+        if not request.user.is_staff and not request.user.groups.filter(name='admin').exists():
+             return Response({'error': 'No tienes permisos para editar eventos'}, status=403)
+             
+        evento = self.get_object(pk)
+        if not evento:
+            return Response({'error': 'Evento no encontrado'}, status=404)
+        
+        # Extraer imagen ANTES de copiar data
+        imagen = request.FILES.get('imagen')
+        imagen_url = request.data.get('imagen_url')
+        
+        # Copiar datos SIN la imagen
+        data = {}
+        for key in request.data:
+            if key not in ['imagen', 'imagen_url']:
+                data[key] = request.data[key]
+        
+        # Guardar imagen en MongoDB si existe
+        if imagen or imagen_url:
+            mongo_utils = UtilidadesMongo()
+            
+            if imagen:
+                imagen_id = mongo_utils.guardar_archivo(imagen)
+                data['imagen_id'] = str(imagen_id)
+            elif imagen_url:
+                imagen_id = mongo_utils.descargar_y_guardar_imagen(imagen_url)
+                data['imagen_id'] = str(imagen_id)
+                
+        serializer = EventoSerializer(evento, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def delete(self, request, pk):
+        # Verificar permisos
+        if not request.user.is_staff and not request.user.groups.filter(name='admin').exists():
+             return Response({'error': 'No tienes permisos para eliminar eventos'}, status=403)
+             
+        evento = self.get_object(pk)
+        if not evento:
+            return Response({'error': 'Evento no encontrado'}, status=404)
+        evento.delete()
+        return Response(status=204)
+
+class EventoImagenView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, imagen_id):
+        mongo_utils = UtilidadesMongo()
+        archivo = mongo_utils.obtener_archivo(imagen_id)
+        
+        if archivo:
+            response = HttpResponse(archivo.read(), content_type=archivo.content_type)
+            return response
+        return Response({'error': 'Imagen no encontrada'}, status=404)

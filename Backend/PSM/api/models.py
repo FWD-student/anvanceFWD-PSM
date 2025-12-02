@@ -52,6 +52,8 @@ class Evento(models.Model):
     edad_minima = models.IntegerField(blank=True, null=True)
     edad_maxima = models.IntegerField(blank=True, null=True)
     requisitos = models.TextField(blank=True)
+    # Campo para guardar el ID de la imagen en MongoDB
+    imagen_id = models.CharField(max_length=100, blank=True, null=True)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='activo')
     
     def __str__(self):

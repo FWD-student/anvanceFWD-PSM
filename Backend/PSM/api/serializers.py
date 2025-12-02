@@ -1,7 +1,6 @@
 from .models import *
 from rest_framework import serializers
-# from django.contrib.auth.models import User # importante para usar la tabla de Django, pero con el abstract ya no es necesario
-from django.contrib.auth.hashers import make_password # importante para encriptar la contraseña  
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -10,6 +9,8 @@ Usuario = get_user_model()
 userGroup = Usuario.groups.through
 
 class UserSerializer(serializers.ModelSerializer):
+    telefono = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    
     class Meta:
         model = Usuario
         fields = [
@@ -18,9 +19,9 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'email',
-            'telefono', #datos extra
-            'edad', #datos extra
-            'fecha_nacimiento', #datos extra
+            'telefono',
+            'edad',
+            'fecha_nacimiento',
             'password',
         ]
         extra_kwargs = {
@@ -46,8 +47,10 @@ class UserSerializer(serializers.ModelSerializer):
 
     def validate_telefono(self, value):
         import re
-        if not value:
+        # Si está vacío, permitirlo
+        if not value or value.strip() == '':
             return value
+        # Si tiene valor, validar formato
         if not re.match(r'^[678]\d{7,15}$', value):
             raise serializers.ValidationError("El teléfono debe empezar con 6, 7 u 8 y tener entre 8 y 16 dígitos.")
         return value
@@ -82,7 +85,6 @@ class ContactoSerializer(serializers.ModelSerializer):
         model = Contacto
         fields = '__all__'
 
-# Serializer para asignar grupos (roles) a usuarios
 class UserGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = userGroup
@@ -97,10 +99,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
         
-        # Obtengo el grupo o rol del usuario
         groups = self.user.groups.values_list('name', flat=True)
         
-        # Agregar informacion adicional al token
         data['role'] = groups[0] if groups else None
         data['id'] = self.user.id
         data['username'] = self.user.username
