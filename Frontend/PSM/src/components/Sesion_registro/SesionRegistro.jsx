@@ -117,16 +117,18 @@ const SesionRegistro = () => {
             return;
         }
 
-        // Validacion de telefono
-        const numPermitido = /^[678]\d{7,15}$/;
-        if (!numPermitido.test(registerData.telefono)) {
-            toast({
-                variant: "destructive",
-                title: "Error",
-                description: "El teléfono debe empezar con 6, 7 u 8 y tener entre 8 y 16 dígitos.",
-            });
-            setLoading(false);
-            return;
+        // Validacion de telefono (opcional)
+        if (registerData.telefono && registerData.telefono.trim() !== '') {
+            const numPermitido = /^[678]\d{7,15}$/;
+            if (!numPermitido.test(registerData.telefono)) {
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "El teléfono debe empezar con 6, 7 u 8 y tener entre 8 y 16 dígitos.",
+                });
+                setLoading(false);
+                return;
+            }
         }
 
         try {
