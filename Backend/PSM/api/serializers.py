@@ -1,6 +1,6 @@
 from .models import *
 from rest_framework import serializers
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password # from django.contrib.auth.models import User # importante para usar la tabla de Django, pero con el abstract ya no es necesario
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -19,9 +19,9 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'email',
-            'telefono',
-            'edad',
-            'fecha_nacimiento',
+            'telefono', #datos extra
+            'edad', #datos extra
+            'fecha_nacimiento', #datos extra
             'password',
         ]
         extra_kwargs = {

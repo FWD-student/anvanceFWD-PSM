@@ -4,6 +4,8 @@ import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Star, Trash2, Calendar } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 import ResenaService from '../../services/resenaService';
 import EventoService from '../../services/eventoService';
 
@@ -11,7 +13,10 @@ function ResenasAdmin() {
     const [resenas, setResenas] = useState([]);
     const [eventos, setEventos] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+    const [resenaAEliminar, setResenaAEliminar] = useState(null);
     const navigate = useNavigate();
+    const { toast } = useToast();
 
     useEffect(() => {
         cargarDatos();
@@ -32,17 +37,33 @@ function ResenasAdmin() {
         }
     };
 
-    const eliminarResena = async (id) => {
-        if (!confirm('¿Estas seguro de eliminar esta reseña?')) return;
+    const abrirConfirmacionEliminar = (resena) => {
+        setResenaAEliminar(resena);
+        setConfirmDeleteOpen(true);
+    };
+
+    const eliminarResena = async () => {
+        if (!resenaAEliminar) return;
 
         const token = localStorage.getItem('token');
         try {
-            await ResenaService.deleteResena(id, token);
-            setResenas(prev => prev.filter(r => r.id !== id));
-            alert('Reseña eliminada correctamente');
+            await ResenaService.deleteResena(resenaAEliminar.id, token);
+            setResenas(prev => prev.filter(r => r.id !== resenaAEliminar.id));
+            toast({
+                title: "Reseña eliminada",
+                description: "La reseña se eliminó correctamente.",
+                className: "bg-green-500 text-white",
+            });
         } catch (error) {
             console.error('Error al eliminar reseña:', error);
-            alert('Error al eliminar la reseña');
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Error al eliminar la reseña. Intenta nuevamente.",
+            });
+        } finally {
+            setConfirmDeleteOpen(false);
+            setResenaAEliminar(null);
         }
     };
 
@@ -143,7 +164,7 @@ function ResenasAdmin() {
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    onClick={() => eliminarResena(resena.id)}
+                                                    onClick={() => abrirConfirmacionEliminar(resena)}
                                                     className="text-red-600 hover:text-red-700"
                                                 >
                                                     <Trash2 size={16} />
@@ -157,6 +178,22 @@ function ResenasAdmin() {
                     </Table>
                 </CardContent>
             </Card>
+
+            {/* Dialog de confirmación para eliminar */}
+            <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirmar eliminación</DialogTitle>
+                        <DialogDescription>
+                            ¿Estás seguro de que deseas eliminar esta reseña? Esta acción no se puede deshacer.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setConfirmDeleteOpen(false)}>Cancelar</Button>
+                        <Button variant="destructive" onClick={eliminarResena}>Eliminar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

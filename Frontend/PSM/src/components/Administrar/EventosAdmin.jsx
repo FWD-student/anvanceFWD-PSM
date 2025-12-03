@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import eventoService from '../../services/eventoService';
 import ubicacionService from '../../services/ubicacionService';
 import categoriaService from '../../services/categoriaService';
@@ -22,7 +23,10 @@ function EventosAdmin() {
     const [modalOpen, setModalOpen] = useState(false);
     const [editando, setEditando] = useState(null);
     const [filtroEstado, setFiltroEstado] = useState('todos');
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+    const [eventoAEliminar, setEventoAEliminar] = useState(null);
     const navigate = useNavigate();
+    const { toast } = useToast();
 
     const [formData, setFormData] = useState({
         nombre: '',
@@ -119,8 +123,57 @@ function EventosAdmin() {
         e.preventDefault();
 
         if (!formData.nombre || !formData.descripcion || !formData.categoria || !formData.ubicacion) {
-            alert('Por favor completa todos los campos obligatorios');
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Por favor completa todos los campos obligatorios.",
+            });
             return;
+        }
+
+        // Validación de fechas: fecha_inicio debe ser antes de fecha_fin
+        if (formData.fecha_inicio && formData.fecha_fin) {
+            const fechaInicio = new Date(formData.fecha_inicio);
+            const fechaFin = new Date(formData.fecha_fin);
+            
+            if (fechaInicio >= fechaFin) {
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "La fecha de inicio debe ser anterior a la fecha de finalización.",
+                });
+                return;
+            }
+        }
+
+        // Validación de edades: edad_minima debe ser menor que edad_maxima
+        if (formData.edad_minima && formData.edad_maxima) {
+            const edadMin = parseInt(formData.edad_minima);
+            const edadMax = parseInt(formData.edad_maxima);
+            
+            if (edadMin >= edadMax) {
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "La edad mínima debe ser menor que la edad máxima.",
+                });
+                return;
+            }
+        }
+
+        // Validación de cupos: cupos_disponibles no puede ser mayor que cupo_maximo
+        if (formData.cupos_disponibles && formData.cupo_maximo) {
+            const cuposDisp = parseInt(formData.cupos_disponibles);
+            const cupoMax = parseInt(formData.cupo_maximo);
+            
+            if (cuposDisp > cupoMax) {
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Los cupos disponibles no pueden ser mayores que el cupo máximo.",
+                });
+                return;
+            }
         }
 
         //Campo importante para que funcione el envio de archivos
@@ -135,29 +188,57 @@ function EventosAdmin() {
         try {
             if (editando) {
                 await eventoService.updateEvento(editando.id, data);
-                alert('Evento actualizado correctamente');
+                toast({
+                    title: "Evento actualizado",
+                    description: "El evento se actualizó correctamente.",
+                    className: "bg-green-500 text-white",
+                });
             } else {
                 await eventoService.createEvento(data);
-                alert('Evento creado correctamente');
+                toast({
+                    title: "Evento creado",
+                    description: "El evento se creó correctamente.",
+                    className: "bg-green-500 text-white",
+                });
             }
             cerrarModal();
             cargarDatos();
         } catch (error) {
             console.error('Error al guardar evento:', error);
-            alert('Error al guardar el evento');
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Error al guardar el evento. Intenta nuevamente.",
+            });
         }
     };
 
-    const eliminarEvento = async (id) => {
-        if (!confirm('¿Estás seguro de eliminar este evento?')) return;
+    const abrirConfirmacionEliminar = (evento) => {
+        setEventoAEliminar(evento);
+        setConfirmDeleteOpen(true);
+    };
+
+    const eliminarEvento = async () => {
+        if (!eventoAEliminar) return;
 
         try {
-            await eventoService.deleteEvento(id);
-            alert('Evento eliminado correctamente');
+            await eventoService.deleteEvento(eventoAEliminar.id);
+            toast({
+                title: "Evento eliminado",
+                description: "El evento se eliminó correctamente.",
+                className: "bg-green-500 text-white",
+            });
             cargarDatos();
         } catch (error) {
             console.error('Error al eliminar evento:', error);
-            alert('Error al eliminar el evento');
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Error al eliminar el evento. Intenta nuevamente.",
+            });
+        } finally {
+            setConfirmDeleteOpen(false);
+            setEventoAEliminar(null);
         }
     };
 
@@ -264,7 +345,7 @@ function EventosAdmin() {
                                                 <Button variant="outline" size="sm" onClick={() => abrirModal(evento)}>
                                                     <Pencil size={16} />
                                                 </Button>
-                                                <Button variant="outline" size="sm" onClick={() => eliminarEvento(evento.id)} className="text-red-600">
+                                                <Button variant="outline" size="sm" onClick={() => abrirConfirmacionEliminar(evento)} className="text-red-600">
                                                     <Trash2 size={16} />
                                                 </Button>
                                             </div>
@@ -390,6 +471,22 @@ function EventosAdmin() {
                             </Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog de confirmación para eliminar */}
+            <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirmar eliminación</DialogTitle>
+                        <DialogDescription>
+                            ¿Estás seguro de que deseas eliminar el evento "{eventoAEliminar?.nombre}"? Esta acción no se puede deshacer.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setConfirmDeleteOpen(false)}>Cancelar</Button>
+                        <Button variant="destructive" onClick={eliminarEvento}>Eliminar</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>

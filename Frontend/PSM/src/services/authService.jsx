@@ -6,7 +6,7 @@ async function register(username, nombre, apellido, email, password, telefono, e
             username,
             email,
             password,
-            first_name: nombre,
+            first_name: nombre, //first_name: username,
             last_name: apellido,
             telefono,
             edad,

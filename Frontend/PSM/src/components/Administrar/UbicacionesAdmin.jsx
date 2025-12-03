@@ -7,6 +7,7 @@ import { Label } from '../ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Plus, Pencil, Trash2, MapPin } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import UbicacionService from '../../services/ubicacionService';
 
 function UbicacionesAdmin() {
@@ -14,7 +15,10 @@ function UbicacionesAdmin() {
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [editando, setEditando] = useState(null);
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+    const [ubicacionAEliminar, setUbicacionAEliminar] = useState(null);
     const navigate = useNavigate();
+    const { toast } = useToast();
 
     const [formData, setFormData] = useState({
         recinto: '',
@@ -65,36 +69,68 @@ function UbicacionesAdmin() {
         e.preventDefault();
 
         if (!formData.recinto || !formData.direccion) {
-            alert('Por favor completa todos los campos obligatorios');
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Por favor completa todos los campos obligatorios.",
+            });
             return;
         }
 
         try {
             if (editando) {
                 await UbicacionService.updateUbicacion(editando.id, formData);
-                alert('Ubicación actualizada correctamente');
+                toast({
+                    title: "Ubicación actualizada",
+                    description: "La ubicación se actualizó correctamente.",
+                    className: "bg-green-500 text-white",
+                });
             } else {
                 await UbicacionService.createUbicacion(formData);
-                alert('Ubicación creada correctamente');
+                toast({
+                    title: "Ubicación creada",
+                    description: "La ubicación se creó correctamente.",
+                    className: "bg-green-500 text-white",
+                });
             }
             cerrarModal();
             cargarUbicaciones();
         } catch (error) {
             console.error('Error al guardar ubicación:', error);
-            alert('Error al guardar la ubicación');
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Error al guardar la ubicación. Intenta nuevamente.",
+            });
         }
     };
 
-    const eliminarUbicacion = async (id) => {
-        if (!confirm('¿Estás seguro de eliminar esta ubicación?')) return;
+    const abrirConfirmacionEliminar = (ubicacion) => {
+        setUbicacionAEliminar(ubicacion);
+        setConfirmDeleteOpen(true);
+    };
+
+    const eliminarUbicacion = async () => {
+        if (!ubicacionAEliminar) return;
 
         try {
-            await UbicacionService.deleteUbicacion(id);
-            alert('Ubicación eliminada correctamente');
+            await UbicacionService.deleteUbicacion(ubicacionAEliminar.id);
+            toast({
+                title: "Ubicación eliminada",
+                description: "La ubicación se eliminó correctamente.",
+                className: "bg-green-500 text-white",
+            });
             cargarUbicaciones();
         } catch (error) {
             console.error('Error al eliminar ubicación:', error);
-            alert('Error al eliminar la ubicación');
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Error al eliminar la ubicación. Intenta nuevamente.",
+            });
+        } finally {
+            setConfirmDeleteOpen(false);
+            setUbicacionAEliminar(null);
         }
     };
 
@@ -171,7 +207,7 @@ function UbicacionesAdmin() {
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    onClick={() => eliminarUbicacion(ubicacion.id)}
+                                                    onClick={() => abrirConfirmacionEliminar(ubicacion)}
                                                     className="text-red-600 hover:text-red-700"
                                                 >
                                                     <Trash2 size={16} />
@@ -244,6 +280,22 @@ function UbicacionesAdmin() {
                             </Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog de confirmacion para eliminar */}
+            <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirmar eliminación</DialogTitle>
+                        <DialogDescription>
+                            ¿Estás seguro de que deseas eliminar la ubicación "{ubicacionAEliminar?.recinto}"? Esta acción no se puede deshacer.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setConfirmDeleteOpen(false)}>Cancelar</Button>
+                        <Button variant="destructive" onClick={eliminarUbicacion}>Eliminar</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>

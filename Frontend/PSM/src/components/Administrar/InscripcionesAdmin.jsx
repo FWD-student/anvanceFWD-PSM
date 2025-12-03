@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from '../ui/badge';
 import { Label } from '../ui/label';
 import { Users, Calendar, MapPin, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 import InscripcionService from '../../services/inscripcionService';
 import EventoService from '../../services/eventoService';
 
@@ -15,7 +17,10 @@ function InscripcionesAdmin() {
     const [eventos, setEventos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filtroEstado, setFiltroEstado] = useState('todas');
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+    const [inscripcionAEliminar, setInscripcionAEliminar] = useState(null);
     const navigate = useNavigate();
+    const { toast } = useToast();
 
     useEffect(() => {
         cargarDatos();
@@ -43,24 +48,48 @@ function InscripcionesAdmin() {
             setInscripciones(prev =>
                 prev.map(ins => ins.id === id ? { ...ins, estado: nuevoEstado } : ins)
             );
-            alert('Estado actualizado correctamente');
+            toast({
+                title: "Estado actualizado",
+                description: "El estado de la inscripción se actualizó correctamente.",
+                className: "bg-green-500 text-white",
+            });
         } catch (error) {
             console.error('Error al actualizar estado:', error);
-            alert('Error al actualizar el estado');
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Error al actualizar el estado. Intenta nuevamente.",
+            });
         }
     };
 
-    const eliminarInscripcion = async (id) => {
-        if (!confirm('¿Estás seguro de eliminar esta inscripción?')) return;
+    const abrirConfirmacionEliminar = (inscripcion) => {
+        setInscripcionAEliminar(inscripcion);
+        setConfirmDeleteOpen(true);
+    };
+
+    const eliminarInscripcion = async () => {
+        if (!inscripcionAEliminar) return;
 
         const token = localStorage.getItem('token');
         try {
-            await InscripcionService.deleteInscripcion(id, token);
-            setInscripciones(prev => prev.filter(ins => ins.id !== id));
-            alert('Inscripción eliminada correctamente');
+            await InscripcionService.deleteInscripcion(inscripcionAEliminar.id, token);
+            setInscripciones(prev => prev.filter(ins => ins.id !== inscripcionAEliminar.id));
+            toast({
+                title: "Inscripción eliminada",
+                description: "La inscripción se eliminó correctamente.",
+                className: "bg-green-500 text-white",
+            });
         } catch (error) {
             console.error('Error al eliminar inscripción:', error);
-            alert('Error al eliminar la inscripción');
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Error al eliminar la inscripción. Intenta nuevamente.",
+            });
+        } finally {
+            setConfirmDeleteOpen(false);
+            setInscripcionAEliminar(null);
         }
     };
 
@@ -183,7 +212,7 @@ function InscripcionesAdmin() {
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    onClick={() => eliminarInscripcion(inscripcion.id)}
+                                                    onClick={() => abrirConfirmacionEliminar(inscripcion)}
                                                     className="text-red-600 hover:text-red-700"
                                                 >
                                                     <Trash2 size={16} />
@@ -197,6 +226,22 @@ function InscripcionesAdmin() {
                     </Table>
                 </CardContent>
             </Card>
+
+            {/* Dialog de confirmación para eliminar */}
+            <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirmar eliminación</DialogTitle>
+                        <DialogDescription>
+                            ¿Estás seguro de que deseas eliminar esta inscripción? Esta acción no se puede deshacer.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setConfirmDeleteOpen(false)}>Cancelar</Button>
+                        <Button variant="destructive" onClick={eliminarInscripcion}>Eliminar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
