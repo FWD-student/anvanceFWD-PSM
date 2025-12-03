@@ -6,7 +6,7 @@ import Contacto from '../pages/Contacto'
 import Sesion from '../pages/Sesion'
 import Admin from '../pages/Admin'
 import { AdminRoute } from './PrivateRoute'
-/* import Preguntas from '../pages/Preguntas' */
+import Preguntas from '../pages/Preguntas'
 
 function Routing() {
   return (
@@ -18,7 +18,7 @@ function Routing() {
           <Route path='/calendario' element={<Calendario />} />
           <Route path='/contacto' element={<Contacto />} />
           <Route path='/sesion' element={<Sesion />} />
-          {/* <Route path='/preguntas' element={<Preguntas />} /> */}
+          <Route path='/preguntas' element={<Preguntas />} />
           <Route path='/admin/*' element={
             <AdminRoute>
               <Admin />

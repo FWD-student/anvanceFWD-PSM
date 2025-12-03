@@ -46,6 +46,13 @@ function EventosAdmin() {
         estado: 'activo'
     });
 
+    // Estado para errores de validación en tiempo real
+    const [erroresCampos, setErroresCampos] = useState({
+        fecha_fin: '',
+        edad_maxima: '',
+        cupos_disponibles: ''
+    });
+
     useEffect(() => {
         cargarDatos();
     }, []);
@@ -68,6 +75,8 @@ function EventosAdmin() {
     };
 
     const abrirModal = (evento = null) => {
+        setErroresCampos({ fecha_fin: '', edad_maxima: '', cupos_disponibles: '' });
+        
         if (evento) {
             setEditando(evento);
             setFormData({
@@ -113,10 +122,55 @@ function EventosAdmin() {
     const cerrarModal = () => {
         setModalOpen(false);
         setEditando(null);
+        setErroresCampos({ fecha_fin: '', edad_maxima: '', cupos_disponibles: '' });
     };
 
-    const handleChange = (name, value) => {
-        setFormData(prev => ({ ...prev, [name]: value }));
+    const manejarCambio = (name, value) => {
+        setFormData(prev => {
+            const newData = { ...prev, [name]: value };
+            
+            // Validaciones en tiempo real
+            const nuevosErrores = { ...erroresCampos };
+
+            // Validación de fechas
+            if (name === 'fecha_inicio' || name === 'fecha_fin') {
+                const inicio = name === 'fecha_inicio' ? value : newData.fecha_inicio;
+                const fin = name === 'fecha_fin' ? value : newData.fecha_fin;
+                
+                if (inicio && fin && new Date(inicio) >= new Date(fin)) {
+                    nuevosErrores.fecha_fin = 'La fecha final debe ser posterior a la inicial';
+                } else {
+                    nuevosErrores.fecha_fin = '';
+                }
+            }
+
+            // Validación de edades
+            if (name === 'edad_minima' || name === 'edad_maxima') {
+                const min = name === 'edad_minima' ? parseInt(value) : parseInt(newData.edad_minima || 0);
+                const max = name === 'edad_maxima' ? parseInt(value) : parseInt(newData.edad_maxima || 0);
+                
+                if (min && max && min >= max) {
+                    nuevosErrores.edad_maxima = 'La edad máxima debe ser mayor a la mínima';
+                } else {
+                    nuevosErrores.edad_maxima = '';
+                }
+            }
+
+            // Validación de cupos
+            if (name === 'cupos_disponibles' || name === 'cupo_maximo') {
+                const disp = name === 'cupos_disponibles' ? parseInt(value) : parseInt(newData.cupos_disponibles || 0);
+                const max = name === 'cupo_maximo' ? parseInt(value) : parseInt(newData.cupo_maximo || 0);
+                
+                if (disp && max && disp > max) {
+                    nuevosErrores.cupos_disponibles = 'Los cupos disponibles no pueden exceder el máximo';
+                } else {
+                    nuevosErrores.cupos_disponibles = '';
+                }
+            }
+
+            setErroresCampos(nuevosErrores);
+            return newData;
+        });
     };
 
     const guardarEvento = async (e) => {
@@ -131,49 +185,14 @@ function EventosAdmin() {
             return;
         }
 
-        // Validación de fechas: fecha_inicio debe ser antes de fecha_fin
-        if (formData.fecha_inicio && formData.fecha_fin) {
-            const fechaInicio = new Date(formData.fecha_inicio);
-            const fechaFin = new Date(formData.fecha_fin);
-            
-            if (fechaInicio >= fechaFin) {
-                toast({
-                    variant: "destructive",
-                    title: "Error",
-                    description: "La fecha de inicio debe ser anterior a la fecha de finalización.",
-                });
-                return;
-            }
-        }
-
-        // Validación de edades: edad_minima debe ser menor que edad_maxima
-        if (formData.edad_minima && formData.edad_maxima) {
-            const edadMin = parseInt(formData.edad_minima);
-            const edadMax = parseInt(formData.edad_maxima);
-            
-            if (edadMin >= edadMax) {
-                toast({
-                    variant: "destructive",
-                    title: "Error",
-                    description: "La edad mínima debe ser menor que la edad máxima.",
-                });
-                return;
-            }
-        }
-
-        // Validación de cupos: cupos_disponibles no puede ser mayor que cupo_maximo
-        if (formData.cupos_disponibles && formData.cupo_maximo) {
-            const cuposDisp = parseInt(formData.cupos_disponibles);
-            const cupoMax = parseInt(formData.cupo_maximo);
-            
-            if (cuposDisp > cupoMax) {
-                toast({
-                    variant: "destructive",
-                    title: "Error",
-                    description: "Los cupos disponibles no pueden ser mayores que el cupo máximo.",
-                });
-                return;
-            }
+        // Verificar si hay errores de validación pendientes
+        if (erroresCampos.fecha_fin || erroresCampos.edad_maxima || erroresCampos.cupos_disponibles) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Por favor corrige los errores antes de guardar.",
+            });
+            return;
         }
 
         //Campo importante para que funcione el envio de archivos
@@ -369,17 +388,17 @@ function EventosAdmin() {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="col-span-2">
                                 <Label>Nombre *</Label>
-                                <Input value={formData.nombre} onChange={(e) => handleChange('nombre', e.target.value)} required />
+                                <Input value={formData.nombre} onChange={(e) => manejarCambio('nombre', e.target.value)} required />
                             </div>
 
                             <div className="col-span-2">
                                 <Label>Descripción *</Label>
-                                <Textarea value={formData.descripcion} onChange={(e) => handleChange('descripcion', e.target.value)} rows={3} required />
+                                <Textarea value={formData.descripcion} onChange={(e) => manejarCambio('descripcion', e.target.value)} rows={3} required />
                             </div>
 
                             <div>
                                 <Label>Categoría *</Label>
-                                <Select value={formData.categoria.toString()} onValueChange={(value) => handleChange('categoria', parseInt(value))}>
+                                <Select value={formData.categoria.toString()} onValueChange={(value) => manejarCambio('categoria', parseInt(value))}>
                                     <SelectTrigger><SelectValue placeholder="Selecciona" /></SelectTrigger>
                                     <SelectContent>
                                         {categorias.map((cat) => (
@@ -391,7 +410,7 @@ function EventosAdmin() {
 
                             <div>
                                 <Label>Ubicación *</Label>
-                                <Select value={formData.ubicacion.toString()} onValueChange={(value) => handleChange('ubicacion', parseInt(value))}>
+                                <Select value={formData.ubicacion.toString()} onValueChange={(value) => manejarCambio('ubicacion', parseInt(value))}>
                                     <SelectTrigger><SelectValue placeholder="Selecciona" /></SelectTrigger>
                                     <SelectContent>
                                         {ubicaciones.map((ubi) => (
@@ -403,57 +422,72 @@ function EventosAdmin() {
 
                             <div>
                                 <Label>Fecha Inicio *</Label>
-                                <Input type="date" value={formData.fecha_inicio} onChange={(e) => handleChange('fecha_inicio', e.target.value)} required />
+                                <Input type="date" value={formData.fecha_inicio} onChange={(e) => manejarCambio('fecha_inicio', e.target.value)} required />
                             </div>
 
                             <div>
                                 <Label>Fecha Fin *</Label>
-                                <Input type="date" value={formData.fecha_fin} onChange={(e) => handleChange('fecha_fin', e.target.value)} required />
+                                <Input 
+                                    type="date" 
+                                    value={formData.fecha_fin} 
+                                    onChange={(e) => manejarCambio('fecha_fin', e.target.value)} 
+                                    min={formData.fecha_inicio}
+                                    required 
+                                />
+                                {erroresCampos.fecha_fin && (
+                                    <p className="text-red-500 text-sm mt-1">{erroresCampos.fecha_fin}</p>
+                                )}
                             </div>
 
                             <div className="col-span-2">
                                 <Label>Horario *</Label>
-                                <Input value={formData.horario} onChange={(e) => handleChange('horario', e.target.value)} placeholder="Ej: Lunes a Viernes 3:00-5:00 PM" required />
+                                <Input value={formData.horario} onChange={(e) => manejarCambio('horario', e.target.value)} placeholder="Ej: Lunes a Viernes 3:00-5:00 PM" required />
                             </div>
 
                             <div>
                                 <Label>Cupo Máximo *</Label>
-                                <Input type="number" value={formData.cupo_maximo} onChange={(e) => handleChange('cupo_maximo', parseInt(e.target.value))} required />
+                                <Input type="number" value={formData.cupo_maximo} onChange={(e) => manejarCambio('cupo_maximo', parseInt(e.target.value))} required />
                             </div>
 
                             <div>
                                 <Label>Cupos Disponibles *</Label>
-                                <Input type="number" value={formData.cupos_disponibles} onChange={(e) => handleChange('cupos_disponibles', parseInt(e.target.value))} required />
+                                <Input type="number" value={formData.cupos_disponibles} onChange={(e) => manejarCambio('cupos_disponibles', parseInt(e.target.value))} required />
+                                {erroresCampos.cupos_disponibles && (
+                                    <p className="text-red-500 text-sm mt-1">{erroresCampos.cupos_disponibles}</p>
+                                )}
                             </div>
 
                             <div>
                                 <Label>Edad Mínima</Label>
-                                <Input type="number" value={formData.edad_minima} onChange={(e) => handleChange('edad_minima', e.target.value ? parseInt(e.target.value) : '')} />
+                                <Input type="number" value={formData.edad_minima} onChange={(e) => manejarCambio('edad_minima', e.target.value ? parseInt(e.target.value) : '')} />
                             </div>
 
                             <div>
                                 <Label>Edad Máxima</Label>
-                                <Input type="number" value={formData.edad_maxima} onChange={(e) => handleChange('edad_maxima', e.target.value ? parseInt(e.target.value) : '')} />
+                                <Input type="number" value={formData.edad_maxima} onChange={(e) => manejarCambio('edad_maxima', e.target.value ? parseInt(e.target.value) : '')} />
+                                {erroresCampos.edad_maxima && (
+                                    <p className="text-red-500 text-sm mt-1">{erroresCampos.edad_maxima}</p>
+                                )}
                             </div>
 
                             <div className="col-span-2">
                                 <Label>Requisitos</Label>
-                                <Textarea value={formData.requisitos} onChange={(e) => handleChange('requisitos', e.target.value)} rows={2} />
+                                <Textarea value={formData.requisitos} onChange={(e) => manejarCambio('requisitos', e.target.value)} rows={2} />
                             </div>
 
                             <div className="col-span-2">
                                 <Label>Imagen (Subir archivo)</Label>
-                                <Input type="file" onChange={(e) => handleChange('imagen', e.target.files[0])} accept="image/*" />
+                                <Input type="file" onChange={(e) => manejarCambio('imagen', e.target.files[0])} accept="image/*" />
                             </div>
 
                             <div className="col-span-2">
                                 <Label>Imagen (O URL)</Label>
-                                <Input value={formData.imagen_url} onChange={(e) => handleChange('imagen_url', e.target.value)} placeholder="https://ejemplo.com/imagen.jpg" />
+                                <Input value={formData.imagen_url} onChange={(e) => manejarCambio('imagen_url', e.target.value)} placeholder="https://ejemplo.com/imagen.jpg" />
                             </div>
 
                             <div>
                                 <Label>Estado *</Label>
-                                <Select value={formData.estado} onValueChange={(value) => handleChange('estado', value)}>
+                                <Select value={formData.estado} onValueChange={(value) => manejarCambio('estado', value)}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="activo">Activo</SelectItem>
@@ -466,7 +500,11 @@ function EventosAdmin() {
 
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={cerrarModal}>Cancelar</Button>
-                            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                            <Button 
+                                type="submit" 
+                                className="bg-blue-600 hover:bg-blue-700"
+                                disabled={!!erroresCampos.fecha_fin || !!erroresCampos.edad_maxima || !!erroresCampos.cupos_disponibles}
+                            >
                                 {editando ? 'Actualizar' : 'Crear'}
                             </Button>
                         </DialogFooter>
