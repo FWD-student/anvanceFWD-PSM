@@ -7,6 +7,7 @@ import Sesion from '../pages/Sesion'
 import Admin from '../pages/Admin'
 import { AdminRoute } from './PrivateRoute'
 import Preguntas from '../pages/Preguntas'
+import PerfilUsuario from '../pages/PerfilUsuario'
 
 function Routing() {
   return (
@@ -19,7 +20,8 @@ function Routing() {
           <Route path='/contacto' element={<Contacto />} />
           <Route path='/sesion' element={<Sesion />} />
           <Route path='/preguntas' element={<Preguntas />} />
-          <Route path='/admin/*' element={
+          <Route path='/perfil' element={<PerfilUsuario />} />
+          <Route path='/admin/*' element={ 
             <AdminRoute>
               <Admin />
             </AdminRoute>

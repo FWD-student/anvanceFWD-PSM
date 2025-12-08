@@ -8,7 +8,7 @@ from .serializers import *
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
-from .permissions import IsAdminUser, IsAdminOrReadOnly
+from .permissions import IsAdminUser, IsAdminOrReadOnly, IsAdminOrSelf
 Usuario = get_user_model()
 # importes necesarios para evento
 from .mongo_utils import UtilidadesMongo
@@ -25,7 +25,7 @@ class UserListCreateView(generics.ListCreateAPIView):
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Usuario.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAdminUser]  # Solo admin puede ver/editar/eliminar usuarios
+    permission_classes = [IsAdminOrSelf]  # Admin o el propio usuario
 
 # Vistas CategEvento 
 class CategEventoListCreateView(generics.ListCreateAPIView):

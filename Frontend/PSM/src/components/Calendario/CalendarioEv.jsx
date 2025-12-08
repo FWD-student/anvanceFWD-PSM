@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Calendar } from "react-big-calendar";
+import React, { useState, useEffect, useCallback } from "react";
+import { Calendar, Views } from "react-big-calendar";
 import localizer from "../../utils/calendarlocalizer.js";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./calendarioEv.css";
@@ -47,6 +47,8 @@ const parsearHorario = (horario) => {
 function CalendarioEv() {
   const [eventos, setEventos] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [view, setView] = useState(Views.MONTH);
+  const [date, setDate] = useState(new Date());
 
   useEffect(() => {
     cargarEventos();
@@ -56,7 +58,7 @@ function CalendarioEv() {
     try {
       const data = await EventoService.getEventos(true);
 
-      // Map al backend data to calendar format con horarios parseados
+      // Map backend data to calendar format con horarios parseados
       const eventosFormateados = data.map(evento => {
         const { horaInicio, minInicio, horaFin, minFin } = parsearHorario(evento.horario);
         
@@ -121,6 +123,9 @@ function CalendarioEv() {
     setSelectedEvent(event);
   };
 
+  const onView = useCallback((newView) => setView(newView), [setView]);
+  const onNavigate = useCallback((newDate) => setDate(newDate), [setDate]);
+
   return (
     <div className="p-4">
       <Calendar
@@ -129,8 +134,11 @@ function CalendarioEv() {
         startAccessor="start"
         endAccessor="end"
         style={{ height: 600 }}
-        views={["month", "week", "day", "agenda"]}
-        defaultView="month"
+        views={[Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA]}
+        view={view}
+        date={date}
+        onView={onView}
+        onNavigate={onNavigate}
         popup
         showMultiDayTimes
         step={30}

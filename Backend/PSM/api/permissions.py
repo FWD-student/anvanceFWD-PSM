@@ -36,3 +36,20 @@ class IsAdminOrReadOnly(permissions.BasePermission):
             return False
             
         return request.user.groups.filter(name='admin').exists()
+
+
+class IsAdminOrSelf(permissions.BasePermission):
+    """
+    Permite acceso a administradores o al propio usuario dueño del objeto.
+    """
+    def has_object_permission(self, request, view, obj):
+        # Si no está autenticado, denegar
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        # Si es admin o staff, permitir todo
+        if request.user.groups.filter(name='admin').exists() or request.user.is_staff:
+            return True
+
+        # Si es el propio usuario, permitir
+        return obj == request.user

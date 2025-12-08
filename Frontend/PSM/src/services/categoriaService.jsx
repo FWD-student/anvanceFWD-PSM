@@ -1,132 +1,121 @@
 const API_URL = 'http://127.0.0.1:8000/api/';
 
 async function getCategEventos() {
-    try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}CategEvento/`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}CategEvento/`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    });
 
-        return await response.json();
-
-    } catch (error) {
-        console.error('Error obteniendo categorias:', error);
-        throw error;
+    if (!response.ok) {
+        throw new Error('Error obteniendo categorias');
     }
+
+    return await response.json();
 }
 
 async function getCategEventoById(id) {
-    try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}CategEvento/${id}/`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}CategEvento/${id}/`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    });
 
-        return await response.json();
-
-    } catch (error) {
-        console.error('Error al obtener por ID categoria:', error);
-        throw error;
+    if (!response.ok) {
+        throw new Error('Error al obtener por ID categoria');
     }
+
+    return await response.json();
 }
 
 async function createCategEvento(nombre, descripcion, estado) {
-    try {
-        const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token');
 
-        const categData = {
-            nombre,
-            descripcion,
-            estado
-        };
+    const categData = {
+        nombre,
+        descripcion,
+        estado
+    };
 
-        const response = await fetch(`${API_URL}CategEvento/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(categData)
-        });
+    const response = await fetch(`${API_URL}CategEvento/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(categData)
+    });
 
-        return await response.json();
-
-    } catch (error) {
-        console.error('Error creando categoria:', error);
-        throw error;
+    if (!response.ok) {
+        throw new Error('Error creando categoria');
     }
+
+    return await response.json();
 }
 
 async function updateCategEvento(id, nombre, descripcion, estado) {
-    try {
-        const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token');
 
-        const categData = {
-            nombre,
-            descripcion,
-            estado
-        };
+    const categData = {
+        nombre,
+        descripcion,
+        estado
+    };
 
-        const response = await fetch(`${API_URL}CategEvento/${id}/`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(categData)
-        });
+    const response = await fetch(`${API_URL}CategEvento/${id}/`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(categData)
+    });
 
-        return await response.json();
-
-    } catch (error) {
-        console.error('Error al actualizar categoria:', error);
-        throw error;
+    if (!response.ok) {
+        throw new Error('Error al actualizar categoria');
     }
+
+    return await response.json();
 }
 
 async function deleteCategEvento(id) {
-    try {
-        const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token');
 
-        const response = await fetch(`${API_URL}CategEvento/${id}/`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
+    const response = await fetch(`${API_URL}CategEvento/${id}/`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    });
 
-        return await response.json();
-
-    } catch (error) {
-        console.error('Error borrando categoria:', error);
-        throw error;
+    if (!response.ok) {
+        throw new Error('Error borrando categoria');
     }
+
+    return await response.json();
 }
 
 // Obtener las categorias mas populares (con mas eventos)
 async function getCategoriasPopulares() {
-    try {
-        const response = await fetch(`${API_URL}CategEvento/populares/`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+    const response = await fetch(`${API_URL}CategEvento/populares/`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
 
-        return await response.json();
-
-    } catch (error) {
-        console.error('Error obteniendo categorias populares:', error);
-        throw error;
+    if (!response.ok) {
+        throw new Error('Error obteniendo categorias populares');
     }
+
+    return await response.json();
 }
+
 export default { getCategEventos, getCategEventoById, createCategEvento, updateCategEvento, deleteCategEvento, getCategoriasPopulares }

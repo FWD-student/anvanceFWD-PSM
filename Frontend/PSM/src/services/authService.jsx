@@ -1,64 +1,56 @@
 const API_URL = 'http://127.0.0.1:8000/api/';
 
 async function register(username, nombre, apellido, email, password, telefono, edad, fecha_nacimiento) {
-    try {
-        const userData = {
-            username,
-            email,
-            password,
-            first_name: nombre, //first_name: username,
-            last_name: apellido,
-            telefono,
-            edad,
-            fecha_nacimiento
-        };
+    const userData = {
+        username,
+        email,
+        password,
+        first_name: nombre, //first_name: username,
+        last_name: apellido,
+        telefono,
+        edad,
+        fecha_nacimiento
+    };
 
-        const response = await fetch(`${API_URL}register/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(userData)
-        });
+    const response = await fetch(`${API_URL}register/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userData)
+    });
 
-        const data = await response.json();
-        
-        if (!response.ok) {
-            // Si hay errores de validación, mostrarlos
-            console.error('Errores de validación:', data);
-            const errorMsg = typeof data === 'object' ? JSON.stringify(data) : data;
-            throw new Error(errorMsg);
-        }
-        
-        return data;
-
-    } catch (error) {
-        console.error('Error al registrar user:', error);
-        throw error;
+    const data = await response.json();
+    
+    if (!response.ok) {
+        // Si hay errores de validación, mostrarlos
+        console.error('Errores de validación:', data);
+        const errorMsg = typeof data === 'object' ? JSON.stringify(data) : data;
+        throw new Error(errorMsg);
     }
+    
+    return data;
 }
 
 async function login(username, password) {
-    try {
-        const credentials = {
-            username,
-            password
-        };
+    const credentials = {
+        username,
+        password
+    };
 
-        const response = await fetch(`${API_URL}token/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(credentials)
-        });
+    const response = await fetch(`${API_URL}token/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(credentials)
+    });
 
-        return await response.json();
-
-    } catch (error) {
-        console.error('Error acceder in:', error);
-        throw error;
+    if (!response.ok) {
+        throw new Error('Error al iniciar sesión');
     }
+
+    return await response.json();
 }
 
 // Cerrar la sesion y limpiar localStorage
@@ -81,36 +73,49 @@ function isAuthenticated() {
 
 // Obtener la informacion del usuario actual desde el token
 async function getCurrentUser() {
-    try {
-        const token = getToken();
-        if (!token) {
-            return null;
-        }
-
-        // Decodificar el token JWT para obtener el user_id
-        const jwtDecode = (await import('jwt-decode')).default;
-        const decoded = jwtDecode(token);
-        const userId = decoded.user_id;
-
-        // Obtener la informacion completa del usuario desde el backend
-        const response = await fetch(`${API_URL}User/${userId}/`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Error al obtener usuario');
-        }
-
-        return await response.json();
-
-    } catch (error) {
-        console.error('Error obteniendo usuario actual:', error);
+    const token = getToken();
+    if (!token) {
         return null;
     }
+
+    // Decodificar el token JWT para obtener el user_id
+    const jwtDecode = (await import('jwt-decode')).default;
+    const decoded = jwtDecode(token);
+    const userId = decoded.user_id;
+
+    // Obtener la informacion completa del usuario desde el backend
+    const response = await fetch(`${API_URL}User/${userId}/`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error('Error al obtener usuario');
+    }
+
+    return await response.json();
 }
 
-export default { register, login, logout, getToken, isAuthenticated, getCurrentUser }
+async function updateProfile(userId, userData) {
+    const token = getToken();
+    const response = await fetch(`${API_URL}User/${userId}/`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(userData)
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(JSON.stringify(errorData));
+    }
+
+    return await response.json();
+}
+
+export default { register, login, logout, getToken, isAuthenticated, getCurrentUser, updateProfile }

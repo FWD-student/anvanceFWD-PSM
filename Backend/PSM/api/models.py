@@ -9,6 +9,7 @@ class Usuario(AbstractUser): #una correccion con el nombramiento de
     telefono = models.CharField(max_length=20, blank=True, null=True)
     edad = models.IntegerField(blank=True, null=True)
     fecha_nacimiento = models.DateField(blank=True, null=True)
+    intereses = models.ManyToManyField('CategEvento', blank=True, related_name='interesados')
 
     def __str__(self):
         return self.username
