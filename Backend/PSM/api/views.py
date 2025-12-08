@@ -13,6 +13,7 @@ Usuario = get_user_model()
 # importes necesarios para evento
 from .mongo_utils import UtilidadesMongo
 from django.http import HttpResponse
+from django.db.models import Count
 
 
 # Vistas User (autenticacion)
@@ -238,3 +239,29 @@ class EventoImagenView(APIView):
             response = HttpResponse(archivo.read(), content_type=archivo.content_type)
             return response
         return Response({'error': 'Imagen no encontrada'}, status=404)
+
+# Vista para obtener las categorías mas populares (o sea con mas eventos)
+class CategEventoPopularesView(APIView):
+    permission_classes = [AllowAny]  # Acceso publico para mostrar en el home
+
+    def get(self, request):
+        # Obtener las categorias con conteo de eventos, ordenadas por la cantidad de eventos de mayor a menor
+        categorias = CategEvento.objects.annotate(
+            cantidad_eventos=Count('eventos')
+        ).filter(
+            estado=True,
+            cantidad_eventos__gt=0
+        ).order_by('-cantidad_eventos')[:5]
+        
+        # Serializar manualmente para incluir cantidad_eventos
+        data = []
+        for categoria in categorias:
+            data.append({
+                'id': categoria.id,
+                'nombre': categoria.nombre,
+                'descripcion': categoria.descripcion,
+                'estado': categoria.estado,
+                'cantidad_eventos': categoria.cantidad_eventos
+            })
+        
+        return Response(data)

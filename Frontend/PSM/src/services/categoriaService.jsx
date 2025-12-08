@@ -112,4 +112,21 @@ async function deleteCategEvento(id) {
     }
 }
 
-export default { getCategEventos, getCategEventoById, createCategEvento, updateCategEvento, deleteCategEvento }
+// Obtener las categorias mas populares (con mas eventos)
+async function getCategoriasPopulares() {
+    try {
+        const response = await fetch(`${API_URL}CategEvento/populares/`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        return await response.json();
+
+    } catch (error) {
+        console.error('Error obteniendo categorias populares:', error);
+        throw error;
+    }
+}
+export default { getCategEventos, getCategEventoById, createCategEvento, updateCategEvento, deleteCategEvento, getCategoriasPopulares }

@@ -15,6 +15,7 @@ urlpatterns = [
     # categEvento
     path('CategEvento/', CategEventoListCreateView.as_view(), name="crear y listar categorias"),
     path('CategEvento/<int:pk>/', CategEventoDetailView.as_view(), name="actualizar y eliminar categoria"),
+    path('CategEvento/populares/', CategEventoPopularesView.as_view(), name="categorias populares"),
     path('Resena/', ResenaListCreateView.as_view(), name="crear y listar resenhas"),
     path('Resena/<int:pk>/', ResenaDetailView.as_view(), name="actualizar y eliminar resena"),
 

@@ -1,0 +1,62 @@
+.categorias-populares-section {
+  padding: 2rem 1rem;
+  background-color: var(--background);
+}
+
+.categorias-populares-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.categorias-populares-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--foreground);
+}
+
+.categorias-populares-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.categoria-popular-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.categoria-popular-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.categoria-popular-nombre {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.categoria-popular-descripcion {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  line-clamp: 2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.categoria-popular-badge {
+  margin-top: 0.5rem;
+}
+
+.error-message {
+  color: var(--destructive);
+  text-align: center;
+}
+
+.loading-message {
+  text-align: center;
+  color: var(--muted-foreground);
+}
