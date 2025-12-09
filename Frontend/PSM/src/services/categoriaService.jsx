@@ -2,12 +2,16 @@ const API_URL = 'http://127.0.0.1:8000/api/';
 
 async function getCategEventos() {
     const token = localStorage.getItem('token');
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_URL}CategEvento/`, {
         method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        }
+        headers: headers
     });
 
     if (!response.ok) {
@@ -19,12 +23,16 @@ async function getCategEventos() {
 
 async function getCategEventoById(id) {
     const token = localStorage.getItem('token');
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_URL}CategEvento/${id}/`, {
         method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        }
+        headers: headers
     });
 
     if (!response.ok) {

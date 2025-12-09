@@ -17,6 +17,9 @@ function Routing() {
           <Route path='/' element={<Navigate to='/home'/>}/>
           <Route path='/home' element={<Home/>}/>
           <Route path='/calendario' element={<Calendario/>}/>
+          <Route path='/eventos' element={<Calendario/>}/>
+          <Route path='/eventos/proximos' element={<Calendario/>}/>
+          <Route path='/eventos/pasados' element={<Calendario/>}/>
           <Route path='/contacto' element={<Contacto/>}/>
           <Route path='/sesion' element={<Sesion/>}/>
           <Route path='/preguntas' element={<Preguntas/>}/>

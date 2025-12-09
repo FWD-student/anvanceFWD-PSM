@@ -36,28 +36,28 @@ function Header() {
   return (
     <header className="sticky top-0 z-50 w-full min-w-[375px] border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-14 items-center justify-between">
+        <div className="flex h-20 items-center justify-between">
           
           <div className="mr-4 hidden md:flex items-center">
             <Link to="/" className="mr-6 flex items-center space-x-2">
-              <span className="font-bold text-base lg:text-lg whitespace-nowrap">
+              <span className="font-bold text-xl lg:text-2xl whitespace-nowrap">
                 Puntarenas Se Mueve
               </span>
             </Link>
             <NavigationMenu>
               <NavigationMenuList>
                 <NavigationMenuItem>
-                  <Link to="/" className={navigationMenuTriggerStyle()}>
+                  <Link to="/" className={`${navigationMenuTriggerStyle()} text-base`}>
                     Inicio
                   </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <Link to="/calendario" className={navigationMenuTriggerStyle()}>
+                  <Link to="/calendario" className={`${navigationMenuTriggerStyle()} text-base`}>
                     Calendario
                   </Link>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <Link to="/contacto" className={navigationMenuTriggerStyle()}>
+                  <Link to="/contacto" className={`${navigationMenuTriggerStyle()} text-base`}>
                     Contacto
                   </Link>
                 </NavigationMenuItem>
@@ -67,7 +67,7 @@ function Header() {
 
           <div className="md:hidden flex-1">
             <Link to="/" className="flex items-center">
-              <span className="font-bold text-sm whitespace-nowrap">
+              <span className="font-bold text-base whitespace-nowrap">
                 Puntarenas Se Mueve
               </span>
             </Link>
@@ -77,8 +77,8 @@ function Header() {
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="default" size="sm">
-                    <User className="h-4 w-4 mr-2" />
+                  <Button variant="default" size="lg" className="bg-[#F25C05] hover:bg-[#D94D04] text-base">
+                    <User className="h-5 w-5 mr-2" />
                     {user?.username || 'Usuario'}
                   </Button>
                 </DropdownMenuTrigger>
@@ -100,7 +100,7 @@ function Header() {
               </DropdownMenu>
             ) : (
               <Link to="/sesion">
-                <Button variant="default" size="sm">
+                <Button variant="default" size="lg" className="bg-[#F25C05] hover:bg-[#D94D04] text-base">
                   Iniciar Sesión
                 </Button>
               </Link>
@@ -111,43 +111,43 @@ function Header() {
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
-                  <Menu className="h-5 w-5" />
+                  <Menu className="h-6 w-6" />
                   <span className="sr-only">Toggle Menu</span>
                 </Button>
               </SheetTrigger>
               <SheetContent side="right">
                 <div className="flex flex-col space-y-4 mt-4">
-                  <Link to="/" className="text-sm font-medium transition-colors hover:text-primary">
+                  <Link to="/" className="text-base font-medium transition-colors hover:text-primary">
                     Inicio
                   </Link>
-                  <Link to="/calendario" className="text-sm font-medium transition-colors hover:text-primary">
+                  <Link to="/calendario" className="text-base font-medium transition-colors hover:text-primary">
                     Calendario
                   </Link>
-                  <Link to="/contacto" className="text-sm font-medium transition-colors hover:text-primary">
+                  <Link to="/contacto" className="text-base font-medium transition-colors hover:text-primary">
                     Contacto
                   </Link>
 
                   {isAuthenticated ? (
                     <>
                       <div className="border-t pt-4 mt-4">
-                        <p className="text-xs text-muted-foreground mb-2">
+                        <p className="text-sm text-muted-foreground mb-2">
                           Hola, {user?.username}
                         </p>
                         <Link to="/perfil" className="block">
-                          <Button variant="outline" className="w-full mb-2">
-                            <User className="h-4 w-4 mr-2" />
+                          <Button variant="outline" className="w-full mb-2" size="lg">
+                            <User className="h-5 w-5 mr-2" />
                             Ver Perfil
                           </Button>
                         </Link>
-                        <Button variant="destructive" className="w-full" onClick={handleLogout}>
-                          <LogOut className="h-4 w-4 mr-2" />
+                        <Button className="w-full bg-[#F25C05] hover:bg-[#D94D04]" onClick={handleLogout} size="lg">
+                          <LogOut className="h-5 w-5 mr-2" />
                           Cerrar Sesión
                         </Button>
                       </div>
                     </>
                   ) : (
                     <Link to="/sesion">
-                      <Button className="w-full">Iniciar Sesión</Button>
+                      <Button className="w-full bg-[#F25C05] hover:bg-[#D94D04]" size="lg">Iniciar Sesión</Button>
                     </Link>
                   )}
                 </div>

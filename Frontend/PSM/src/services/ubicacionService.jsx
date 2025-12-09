@@ -7,12 +7,16 @@ async function getUbicaciones(noCache = false) {
         if (noCache) {
             url += `?t=${new Date().getTime()}`;
         }
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
         const response = await fetch(url, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
+            headers: headers
         });
 
         return await response.json();
@@ -26,12 +30,16 @@ async function getUbicaciones(noCache = false) {
 async function getUbicacionById(id) {
     try {
         const token = localStorage.getItem('token');
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${API_URL}Ubicacion/${id}/`, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
+            headers: headers
         });
 
         return await response.json();

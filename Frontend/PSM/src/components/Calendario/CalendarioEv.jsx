@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useLocation } from 'react-router-dom';
 import { Calendar, Views } from "react-big-calendar";
 import localizer from "../../utils/calendarlocalizer.js";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -54,10 +55,11 @@ function CalendarioEv() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [view, setView] = useState(Views.MONTH);
   const [date, setDate] = useState(new Date());
+  const location = useLocation();
 
   useEffect(() => {
     cargarDatos();
-  }, []);
+  }, [location.pathname]); // Recargar/Refiltrar si cambia la URL
 
   const cargarDatos = async () => {
     try {
@@ -78,10 +80,28 @@ function CalendarioEv() {
       const ubicacionesMap = {};
       ubicacionesData.forEach(ubi => { ubicacionesMap[ubi.id] = ubi; });
 
+      // Filtrar eventos según la URL
+      const now = new Date();
+      now.setHours(0, 0, 0, 0); // Normalizar a medianoche para comparaciones de fechas
+
+      let eventosFiltrados = eventosData;
+
+      if (location.pathname.includes('/eventos/proximos')) {
+          eventosFiltrados = eventosData.filter(e => {
+              const fechaFin = new Date(e.fecha_fin + 'T00:00:00');
+              return fechaFin >= now;
+          });
+      } else if (location.pathname.includes('/eventos/pasados')) {
+          eventosFiltrados = eventosData.filter(e => {
+              const fechaFin = new Date(e.fecha_fin + 'T00:00:00');
+              return fechaFin < now;
+          });
+      }
+
       // Map backend data to calendar format con horarios parseados
       const eventosFormateados = [];
       
-      eventosData.forEach(evento => {
+      eventosFiltrados.forEach(evento => {
         const { hora: horaInicio, min: minInicio } = parsearHora(evento.hora_inicio);
         const { hora: horaFin, min: minFin } = parsearHora(evento.hora_fin);
         
