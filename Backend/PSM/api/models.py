@@ -47,7 +47,11 @@ class Evento(models.Model):
     ubicacion = models.ForeignKey(Ubicacion, on_delete=models.CASCADE, related_name="eventos")
     fecha_inicio = models.DateField(blank=False, null=False)
     fecha_fin = models.DateField(blank=False, null=False)
-    horario = models.CharField(max_length=100, blank=False, null=False)
+    # Dias de la semana en que se realiza el evento (array JSON: ["lunes", "martes", ...])
+    dias_semana = models.JSONField(default=list, blank=True)
+    # Hora de inicio y fin del evento
+    hora_inicio = models.TimeField(blank=False, null=False)
+    hora_fin = models.TimeField(blank=False, null=False)
     cupo_maximo = models.IntegerField(blank=False, null=False)
     cupos_disponibles = models.IntegerField(blank=False, null=False)
     edad_minima = models.IntegerField(blank=True, null=True)

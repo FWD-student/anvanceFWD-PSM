@@ -9,11 +9,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
+import { Checkbox } from '../ui/checkbox';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import eventoService from '../../services/eventoService';
-import ubicacionService from '../../services/ubicacionService';
-import categoriaService from '../../services/categoriaService';
+import eventoService from '../../services/eventoService.jsx';
+import ubicacionService from '../../services/ubicacionService.jsx';
+import categoriaService from '../../services/categoriaService.jsx';
+
+// Constante para los días de la semana
+const DIAS_SEMANA = [
+    { id: 'lunes', label: 'Lunes' },
+    { id: 'martes', label: 'Martes' },
+    { id: 'miercoles', label: 'Miércoles' },
+    { id: 'jueves', label: 'Jueves' },
+    { id: 'viernes', label: 'Viernes' },
+    { id: 'sabado', label: 'Sábado' },
+    { id: 'domingo', label: 'Domingo' }
+];
 
 function EventosAdmin() {
     const [eventos, setEventos] = useState([]);
@@ -35,7 +47,9 @@ function EventosAdmin() {
         ubicacion: '',
         fecha_inicio: '',
         fecha_fin: '',
-        horario: '',
+        dias_semana: [],
+        hora_inicio: '',
+        hora_fin: '',
         cupo_maximo: '',
         cupos_disponibles: '',
         edad_minima: '',
@@ -86,7 +100,9 @@ function EventosAdmin() {
                 ubicacion: evento.ubicacion,
                 fecha_inicio: evento.fecha_inicio,
                 fecha_fin: evento.fecha_fin,
-                horario: evento.horario,
+                dias_semana: evento.dias_semana || [],
+                hora_inicio: evento.hora_inicio || '',
+                hora_fin: evento.hora_fin || '',
                 cupo_maximo: evento.cupo_maximo,
                 cupos_disponibles: evento.cupos_disponibles,
                 edad_minima: evento.edad_minima || '',
@@ -105,7 +121,9 @@ function EventosAdmin() {
                 ubicacion: '',
                 fecha_inicio: '',
                 fecha_fin: '',
-                horario: '',
+                dias_semana: [],
+                hora_inicio: '',
+                hora_fin: '',
                 cupo_maximo: '',
                 cupos_disponibles: '',
                 edad_minima: '',
@@ -200,7 +218,12 @@ function EventosAdmin() {
         // Agregamos todos los campos al FormData
         Object.keys(formData).forEach(key => {
             if (formData[key] !== null && formData[key] !== undefined && formData[key] !== '') {
-                data.append(key, formData[key]);
+                // Si es dias_semana (array), convertir a JSON string
+                if (key === 'dias_semana' && Array.isArray(formData[key])) {
+                    data.append(key, JSON.stringify(formData[key]));
+                } else {
+                    data.append(key, formData[key]);
+                }
             }
         });
 
@@ -439,9 +462,62 @@ function EventosAdmin() {
                                 )}
                             </div>
 
+                            {/* Sección de Días de la Semana */}
                             <div className="col-span-2">
-                                <Label>Horario *</Label>
-                                <Input value={formData.horario} onChange={(e) => manejarCambio('horario', e.target.value)} placeholder="Ej: Lunes a Viernes 3:00-5:00 PM" required />
+                                <Label className="mb-3 block">Días de la Semana *</Label>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Checkbox
+                                        id="todos-los-dias"
+                                        checked={formData.dias_semana.length === 7}
+                                        onCheckedChange={(checked) => {
+                                            if (checked) {
+                                                manejarCambio('dias_semana', DIAS_SEMANA.map(d => d.id));
+                                            } else {
+                                                manejarCambio('dias_semana', []);
+                                            }
+                                        }}
+                                    />
+                                    <Label htmlFor="todos-los-dias" className="cursor-pointer font-semibold">Todos los días</Label>
+                                </div>
+                                <div className="grid grid-cols-4 gap-3">
+                                    {DIAS_SEMANA.map((dia) => (
+                                        <div key={dia.id} className="flex items-center gap-2">
+                                            <Checkbox
+                                                id={`dia-${dia.id}`}
+                                                checked={formData.dias_semana.includes(dia.id)}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) {
+                                                        manejarCambio('dias_semana', [...formData.dias_semana, dia.id]);
+                                                    } else {
+                                                        manejarCambio('dias_semana', formData.dias_semana.filter(d => d !== dia.id));
+                                                    }
+                                                }}
+                                            />
+                                            <Label htmlFor={`dia-${dia.id}`} className="cursor-pointer text-sm">{dia.label}</Label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Sección de Horario */}
+                            <div>
+                                <Label>Hora Inicio *</Label>
+                                <Input 
+                                    type="time" 
+                                    value={formData.hora_inicio} 
+                                    onChange={(e) => manejarCambio('hora_inicio', e.target.value)} 
+                                    required 
+                                />
+                            </div>
+
+                            <div>
+                                <Label>Hora Fin *</Label>
+                                <Input 
+                                    type="time" 
+                                    value={formData.hora_fin} 
+                                    onChange={(e) => manejarCambio('hora_fin', e.target.value)} 
+                                    required 
+                                />
                             </div>
 
                             <div>
