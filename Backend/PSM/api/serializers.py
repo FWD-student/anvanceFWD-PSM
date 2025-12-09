@@ -49,7 +49,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def validate_telefono(self, value):
         import re
-        # Si está vacío, permitirlo
+        # Si esta vacio, permitirlo
         if not value or value.strip() == '':
             return value
         # Si tiene valor, validar formato

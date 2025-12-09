@@ -8,7 +8,7 @@ from .serializers import *
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
-from .permissions import IsAdminUser, IsAdminOrReadOnly, IsAdminOrSelf
+from .permissions import IsAdminUser, IsAdminOrReadOnly, IsAdminOrSelf # chequeo 
 Usuario = get_user_model()
 # importes necesarios para evento
 from .mongo_utils import UtilidadesMongo
@@ -31,12 +31,12 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
 class CategEventoListCreateView(generics.ListCreateAPIView):
     queryset = CategEvento.objects.all()
     serializer_class = CategEventoSerializer
-    permission_classes = [IsAdminUser]  # Solo admin puede gestionar categorías
+    permission_classes = [IsAdminUser]  # Solo admin puede gestionar categorias
 
 class CategEventoDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = CategEvento.objects.all()
     serializer_class = CategEventoSerializer
-    permission_classes = [IsAdminUser]  # Solo admin puede gestionar categorías
+    permission_classes = [IsAdminUser]  # Solo admin puede gestionar categorias
 
 
 # Vistas Ubicacion
@@ -66,7 +66,7 @@ class InscripcionDetailView(generics.RetrieveUpdateDestroyAPIView):
 class ResenaListCreateView(generics.ListCreateAPIView):
     queryset = Resena.objects.all()
     serializer_class = ResenaSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]  # Lectura pública, escritura autenticada
+    permission_classes = [IsAuthenticatedOrReadOnly]  # Lectura publica, escritura autenticada
 
 class ResenaDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Resena.objects.all()
@@ -120,7 +120,7 @@ class EventoListCreateView(APIView):
             imagen = request.FILES.get('imagen')
             imagen_url = request.data.get('imagen_url')
             
-            # Copiar datos SIN la imagen (que ya está en FILES)
+            # Copiar datos SIN la imagen (que ya esta en FILES)
             data = {}
             for key in request.data:
                 if key not in ['imagen', 'imagen_url']:

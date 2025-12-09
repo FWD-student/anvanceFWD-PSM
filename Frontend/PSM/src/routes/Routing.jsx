@@ -14,13 +14,13 @@ function Routing() {
     <div>
       <Router>
         <Routes>
-          <Route path='/' element={<Navigate to='/home' />} />
-          <Route path='/home' element={<Home />} />
-          <Route path='/calendario' element={<Calendario />} />
-          <Route path='/contacto' element={<Contacto />} />
-          <Route path='/sesion' element={<Sesion />} />
-          <Route path='/preguntas' element={<Preguntas />} />
-          <Route path='/perfil' element={<PerfilUsuario />} />
+          <Route path='/' element={<Navigate to='/home'/>}/>
+          <Route path='/home' element={<Home/>}/>
+          <Route path='/calendario' element={<Calendario/>}/>
+          <Route path='/contacto' element={<Contacto/>}/>
+          <Route path='/sesion' element={<Sesion/>}/>
+          <Route path='/preguntas' element={<Preguntas/>}/>
+          <Route path='/perfil' element={<PerfilUsuario/>}/>
           <Route path='/admin/*' element={ 
             <AdminRoute>
               <Admin />

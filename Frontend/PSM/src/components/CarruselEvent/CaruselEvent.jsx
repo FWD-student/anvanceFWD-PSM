@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import eventoService from '../../services/eventoService';
-import authService from '../../services/authService';
-import inscripcionService from '../../services/inscripcionService';
+import eventoService from '../../services/eventoService.jsx';
+import authService from '../../services/authService.jsx';
+import inscripcionService from '../../services/inscripcionService.jsx';
 import './carruselEvent.css';
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"

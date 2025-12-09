@@ -79,7 +79,7 @@ async function getCurrentUser() {
     }
 
     // Decodificar el token JWT para obtener el user_id
-    const jwtDecode = (await import('jwt-decode')).default;
+    const { jwtDecode } = await import('jwt-decode');
     const decoded = jwtDecode(token);
     const userId = decoded.user_id;
 
