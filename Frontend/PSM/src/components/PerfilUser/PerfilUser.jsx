@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import authService from '../../services/authService.jsx';
 import categoriaService from '../../services/categoriaService.jsx';
+import inscripcionService from '../../services/inscripcionService.jsx';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,17 +9,36 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Calendar, MapPin, Clock, X } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+
+// Función para calcular edad a partir de fecha de nacimiento
+const calcularEdad = (fechaNacimiento) => {
+    if (!fechaNacimiento) return '';
+    const hoy = new Date();
+    const nacimiento = new Date(fechaNacimiento);
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const mes = hoy.getMonth() - nacimiento.getMonth();
+    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+        edad--;
+    }
+    return edad;
+};
 
 function PerfilUser() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [categorias, setCategorias] = useState([]);
+    const [inscripciones, setInscripciones] = useState([]);
+    const [loadingInscripciones, setLoadingInscripciones] = useState(true);
+    const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
+    const [inscripcionACancelar, setInscripcionACancelar] = useState(null);
     const { toast } = useToast();
 
     // Estado del formulario
     const [formData, setFormData] = useState({
+        email: '',
         telefono: '',
         edad: '',
         fecha_nacimiento: '',
@@ -26,48 +46,68 @@ function PerfilUser() {
     });
 
     useEffect(() => {
-        const loadData = async () => {
-            try {
-                const currentUser = await authService.getCurrentUser();
-                if (!currentUser) {
-                    // Redirigir o mostrar mensaje si no hay usuario
-                    setLoading(false);
-                    return;
-                }
-                setUser(currentUser);
-
-                // Cargar categorías para intereses
-                const cats = await categoriaService.getCategEventos();
-                setCategorias(cats);
-
-                // Inicializar formulario
-                setFormData({
-                    telefono: currentUser.telefono || '',
-                    edad: currentUser.edad || '',
-                    fecha_nacimiento: currentUser.fecha_nacimiento || '',
-                    intereses: currentUser.intereses || []
-                });
-
-            } catch (error) {
-                console.error("Error cargando perfil:", error);
-                toast({
-                    title: "Error",
-                    description: "No se pudo cargar la información del perfil",
-                    variant: "destructive"
-                });
-            }
-            setLoading(false);
-        };
-
         loadData();
     }, []);
 
+    const loadData = async () => {
+        try {
+            const currentUser = await authService.getCurrentUser();
+            if (!currentUser) {
+                setLoading(false);
+                return;
+            }
+            setUser(currentUser);
+
+            // Cargar categorías para intereses
+            const cats = await categoriaService.getCategEventos();
+            setCategorias(cats);
+
+            // Inicializar formulario
+            setFormData({
+                email: currentUser.email || '',
+                telefono: currentUser.telefono || '',
+                edad: currentUser.edad || calcularEdad(currentUser.fecha_nacimiento),
+                fecha_nacimiento: currentUser.fecha_nacimiento || '',
+                intereses: currentUser.intereses || []
+            });
+
+            // Cargar inscripciones del usuario
+            try {
+                const insc = await inscripcionService.getMisInscripciones();
+                setInscripciones(insc);
+            } catch (error) {
+                console.error("Error cargando inscripciones:", error);
+            }
+            setLoadingInscripciones(false);
+
+        } catch (error) {
+            console.error("Error cargando perfil:", error);
+            toast({
+                title: "Error",
+                description: "No se pudo cargar la información del perfil",
+                variant: "destructive"
+            });
+        }
+        setLoading(false);
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        
+        // Si cambia la fecha de nacimiento, calcular edad automáticamente
+        if (name === 'fecha_nacimiento') {
+            const edadCalculada = calcularEdad(value);
+            setFormData(prev => ({
+                ...prev,
+                fecha_nacimiento: value,
+                edad: edadCalculada
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
     };
 
     const handleInteresChange = (categoriaId) => {
@@ -89,6 +129,13 @@ function PerfilUser() {
             // Validaciones simples (frontend)
             if (formData.edad && (formData.edad < 0 || formData.edad > 120)) {
                 toast({ title: "Error", description: "La edad debe ser válida", variant: "destructive" });
+                setSaving(false);
+                return;
+            }
+
+            // Validar email
+            if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+                toast({ title: "Error", description: "El correo electrónico no es válido", variant: "destructive" });
                 setSaving(false);
                 return;
             }
@@ -116,6 +163,60 @@ function PerfilUser() {
         }
     };
 
+    const abrirConfirmacionCancelar = (inscripcion) => {
+        setInscripcionACancelar(inscripcion);
+        setConfirmCancelOpen(true);
+    };
+
+    const cancelarInscripcion = async () => {
+        if (!inscripcionACancelar) return;
+
+        try {
+            const token = authService.getToken();
+            await inscripcionService.deleteInscripcion(inscripcionACancelar.id, token);
+            
+            toast({
+                title: "Inscripción cancelada",
+                description: `Te has dado de baja del evento "${inscripcionACancelar.evento_nombre}"`
+            });
+            
+            // Recargar inscripciones
+            const insc = await inscripcionService.getMisInscripciones();
+            setInscripciones(insc);
+            
+        } catch (error) {
+            console.error("Error cancelando inscripción:", error);
+            toast({
+                title: "Error",
+                description: "No se pudo cancelar la inscripción",
+                variant: "destructive"
+            });
+        } finally {
+            setConfirmCancelOpen(false);
+            setInscripcionACancelar(null);
+        }
+    };
+
+    // Formatear hora para mostrar
+    const formatearHora = (horaStr) => {
+        if (!horaStr) return '';
+        const partes = horaStr.split(':');
+        const hora = parseInt(partes[0]);
+        const min = partes[1];
+        const periodo = hora >= 12 ? 'PM' : 'AM';
+        const hora12 = hora > 12 ? hora - 12 : (hora === 0 ? 12 : hora);
+        return `${hora12}:${min} ${periodo}`;
+    };
+
+    const getEstadoBadge = (estado) => {
+        const variants = {
+            pendiente: 'bg-yellow-100 text-yellow-800',
+            confirmada: 'bg-green-100 text-green-800',
+            cancelada: 'bg-red-100 text-red-800'
+        };
+        return variants[estado] || variants.pendiente;
+    };
+
     if (loading) {
         return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>;
     }
@@ -125,12 +226,12 @@ function PerfilUser() {
     }
 
     return (
-        <div className="container mx-auto py-8 px-4 max-w-4xl">
+        <div className="container mx-auto py-8 px-4 max-w-5xl">
             <h1 className="text-3xl font-bold mb-8 text-center">Mi Perfil</h1>
             
-            <div className="grid gap-6 md:grid-cols-2">
-                {/* Datos Personales (Solo lectura y Editables) */}
-                <Card>
+            <div className="grid gap-6 lg:grid-cols-3">
+                {/* Columna 1: Datos Personales */}
+                <Card className="lg:col-span-1">
                     <CardHeader>
                         <CardTitle>Información Personal</CardTitle>
                         <CardDescription>Gestiona tus datos de contacto</CardDescription>
@@ -140,17 +241,24 @@ function PerfilUser() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>Nombre</Label>
-                                    <Input value={user.first_name} disabled className="bg-muted" />
+                                    <Input value={user.first_name || ''} disabled className="bg-muted" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Apellido</Label>
-                                    <Input value={user.last_name} disabled className="bg-muted" />
+                                    <Input value={user.last_name || ''} disabled className="bg-muted" />
                                 </div>
                             </div>
                             
                             <div className="space-y-2">
-                                <Label>Correo Electrónico</Label>
-                                <Input value={user.email} disabled className="bg-muted" />
+                                <Label htmlFor="email">Correo Electrónico</Label>
+                                <Input 
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    placeholder="correo@ejemplo.com"
+                                />
                             </div>
 
                             <div className="space-y-2">
@@ -166,16 +274,6 @@ function PerfilUser() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="edad">Edad</Label>
-                                    <Input 
-                                        id="edad" 
-                                        name="edad" 
-                                        type="number" 
-                                        value={formData.edad} 
-                                        onChange={handleChange} 
-                                    />
-                                </div>
-                                <div className="space-y-2">
                                     <Label htmlFor="fecha_nacimiento">Fecha de Nacimiento</Label>
                                     <Input 
                                         id="fecha_nacimiento" 
@@ -183,6 +281,15 @@ function PerfilUser() {
                                         type="date" 
                                         value={formData.fecha_nacimiento} 
                                         onChange={handleChange} 
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Edad</Label>
+                                    <Input 
+                                        value={formData.edad} 
+                                        disabled 
+                                        className="bg-muted"
+                                        placeholder="Se calcula automáticamente"
                                     />
                                 </div>
                             </div>
@@ -195,14 +302,14 @@ function PerfilUser() {
                     </CardContent>
                 </Card>
 
-                {/* Intereses Deportivos */}
-                <Card>
+                {/* Columna 2: Intereses */}
+                <Card className="lg:col-span-1">
                     <CardHeader>
                         <CardTitle>Mis Intereses</CardTitle>
                         <CardDescription>Selecciona los deportes que te interesan</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-1 gap-4">
+                        <div className="space-y-3 max-h-64 overflow-y-auto">
                             {categorias.map(categoria => (
                                 <div key={categoria.id} className="flex items-center space-x-2 border p-3 rounded-md hover:bg-accent transition-colors">
                                     <Checkbox 
@@ -220,8 +327,8 @@ function PerfilUser() {
                             ))}
                             {categorias.length === 0 && <p className="text-muted-foreground">No hay categorías disponibles.</p>}
                         </div>
-                        <div className="mt-6">
-                            <h4 className="text-sm font-semibold mb-2">Tus intereses seleccionados:</h4>
+                        <div className="mt-4">
+                            <h4 className="text-sm font-semibold mb-2">Tus intereses:</h4>
                             <div className="flex flex-wrap gap-2">
                                 {formData.intereses.length > 0 ? (
                                     formData.intereses.map(id => {
@@ -233,9 +340,84 @@ function PerfilUser() {
                                 )}
                             </div>
                         </div>
+                        <Button type="button" onClick={handleSubmit} disabled={saving} className="w-full mt-4">
+                            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Guardar Intereses
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                {/* Columna 3: Mis Inscripciones */}
+                <Card className="lg:col-span-1">
+                    <CardHeader>
+                        <CardTitle>Mis Inscripciones</CardTitle>
+                        <CardDescription>Eventos en los que estás inscrito</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {loadingInscripciones ? (
+                            <div className="flex justify-center p-4">
+                                <Loader2 className="h-6 w-6 animate-spin" />
+                            </div>
+                        ) : inscripciones.length === 0 ? (
+                            <p className="text-muted-foreground text-center py-4">No tienes inscripciones activas.</p>
+                        ) : (
+                            <div className="space-y-3 max-h-80 overflow-y-auto">
+                                {inscripciones.map(inscripcion => (
+                                    <div key={inscripcion.id} className="border rounded-lg p-3 hover:bg-accent/50 transition-colors">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h4 className="font-semibold text-sm">{inscripcion.evento_nombre}</h4>
+                                            <Badge className={getEstadoBadge(inscripcion.estado)}>
+                                                {inscripcion.estado}
+                                            </Badge>
+                                        </div>
+                                        
+                                        <div className="text-xs text-muted-foreground space-y-1">
+                                            <div className="flex items-center gap-1">
+                                                <Calendar className="h-3 w-3" />
+                                                <span>{inscripcion.evento_fecha_inicio}</span>
+                                            </div>
+                                            {inscripcion.evento_hora_inicio && (
+                                                <div className="flex items-center gap-1">
+                                                    <Clock className="h-3 w-3" />
+                                                    <span>{formatearHora(inscripcion.evento_hora_inicio)} - {formatearHora(inscripcion.evento_hora_fin)}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        {inscripcion.estado !== 'cancelada' && (
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="w-full mt-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                onClick={() => abrirConfirmacionCancelar(inscripcion)}
+                                            >
+                                                <X className="h-3 w-3 mr-1" />
+                                                Cancelar inscripción
+                                            </Button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Dialog de confirmación para cancelar inscripción */}
+            <Dialog open={confirmCancelOpen} onOpenChange={setConfirmCancelOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirmar cancelación</DialogTitle>
+                        <DialogDescription>
+                            ¿Estás seguro de que deseas cancelar tu inscripción al evento "{inscripcionACancelar?.evento_nombre}"? Esta acción no se puede deshacer.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setConfirmCancelOpen(false)}>No, mantener</Button>
+                        <Button variant="destructive" onClick={cancelarInscripcion}>Sí, cancelar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

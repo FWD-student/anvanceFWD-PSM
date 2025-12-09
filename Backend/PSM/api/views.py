@@ -61,6 +61,32 @@ class InscripcionDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = InscripcionSerializer
     permission_classes = [IsAuthenticated]  # Solo usuarios autenticados
 
+# Vista para obtener inscripciones del usuario actual
+class MisInscripcionesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Obtener inscripciones del usuario autenticado
+        inscripciones = Inscripcion.objects.filter(usuario=request.user).select_related('evento')
+        
+        # Serializar con información del evento
+        data = []
+        for inscripcion in inscripciones:
+            data.append({
+                'id': inscripcion.id,
+                'evento_id': inscripcion.evento.id,
+                'evento_nombre': inscripcion.evento.nombre,
+                'evento_fecha_inicio': inscripcion.evento.fecha_inicio,
+                'evento_fecha_fin': inscripcion.evento.fecha_fin,
+                'evento_hora_inicio': str(inscripcion.evento.hora_inicio) if inscripcion.evento.hora_inicio else None,
+                'evento_hora_fin': str(inscripcion.evento.hora_fin) if inscripcion.evento.hora_fin else None,
+                'fecha_inscripcion': inscripcion.fecha_inscripcion,
+                'estado': inscripcion.estado,
+                'comentarios': inscripcion.comentarios
+            })
+        
+        return Response(data)
+
 
 # Vista de reseña
 class ResenaListCreateView(generics.ListCreateAPIView):

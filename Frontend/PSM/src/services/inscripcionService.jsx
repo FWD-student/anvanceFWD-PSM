@@ -82,6 +82,27 @@ const deleteInscripcion = async (id, token) => {
     if (!response.ok) {
         throw new Error(`Error: ${response.status}`);
     }
+    // DELETE puede no devolver contenido
+    if (response.status === 204) {
+        return { success: true };
+    }
+    return await response.json();
+};
+
+// Obtener inscripciones del usuario actual
+const getMisInscripciones = async () => {
+    const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+    const response = await fetch(`${API_URL}mis-inscripciones/`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+    }
     return await response.json();
 };
 
@@ -90,7 +111,8 @@ const inscripcionService = {
     getInscripcionById,
     createInscripcion,
     updateInscripcion,
-    deleteInscripcion
+    deleteInscripcion,
+    getMisInscripciones
 };
 
 export default inscripcionService;

@@ -29,6 +29,7 @@ urlpatterns = [
     # Inscripcion
     path('Inscripcion/', InscripcionListCreateView.as_view(), name="crear y listar inscripciones"),
     path('Inscripcion/<int:pk>/', InscripcionDetailView.as_view(), name="actualizar y eliminar inscripcion"),
+    path('Inscripcion/mis-inscripciones/', MisInscripcionesView.as_view(), name="mis inscripciones"),
 
     # Eventos
     path('Evento/', EventoListCreateView.as_view(), name="crear y listar eventos"),
