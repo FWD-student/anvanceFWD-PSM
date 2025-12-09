@@ -13,14 +13,45 @@ function CaruselEvent() {
     const [eventos, setEventos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [userInterests, setUserInterests] = useState([]);
     const { toast } = useToast();
 
     useEffect(() => {
-        const fetchEventos = async () => {
+        const loadData = async () => {
             try {
+                // Verificar autenticación y cargar usuario si aplica
+                const isAuth = authService.isAuthenticated();
+                setIsAuthenticated(isAuth);
+                
+                let intereses = [];
+                if (isAuth) {
+                    try {
+                        const user = await authService.getCurrentUser();
+                        if (user && user.intereses) {
+                            intereses = user.intereses;
+                            setUserInterests(intereses);
+                        }
+                    } catch (e) {
+                        console.error("Error cargando usuario para intereses:", e);
+                    }
+                }
+
+                // Cargar eventos
                 const data = await eventoService.getEventos();
-                // Filtrar solo los eventos activos si es necesario
-                setEventos(data);
+                
+                // Si hay intereses, ordenar: primero los de intereses
+                if (intereses.length > 0) {
+                    const sortedData = [...data].sort((a, b) => {
+                        const aMatch = intereses.includes(a.categoria);
+                        const bMatch = intereses.includes(b.categoria);
+                        if (aMatch && !bMatch) return -1;
+                        if (!aMatch && bMatch) return 1;
+                        return 0;
+                    });
+                    setEventos(sortedData);
+                } else {
+                    setEventos(data);
+                }
             } catch (error) {
                 console.error("Error cargando eventos para el carrusel:", error);
             } finally {
@@ -28,12 +59,7 @@ function CaruselEvent() {
             }
         };
 
-        const checkAuth = () => {
-            setIsAuthenticated(authService.isAuthenticated());
-        };
-
-        fetchEventos();
-        checkAuth();
+        loadData();
     }, []);
 
     const handleInscribirse = async (eventoId, eventoNombre) => {
@@ -94,8 +120,13 @@ function CaruselEvent() {
                                 <CarouselItem key={evento.id} className="md:basis-1/2 lg:basis-1/3">
                                     <div className="p-1">
                                         <Card>
-                                            <CardContent className="flex flex-col aspect-square items-center justify-center p-6 text-center">
-                                                <h3 className="text-xl font-semibold mb-2">{evento.nombre}</h3>
+                                            <CardContent className="flex flex-col aspect-square items-center justify-center p-6 text-center relative">
+                                                {userInterests.includes(evento.categoria) && (
+                                                    <div className="absolute top-2 right-2 bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-0.5 rounded-full">
+                                                        Recomendado
+                                                    </div>
+                                                )}
+                                                <h3 className="text-xl font-semibold mb-2 mt-4">{evento.nombre}</h3>
                                                 <p className="text-sm text-gray-500 mb-4">{new Date(evento.fecha_inicio).toLocaleDateString()}</p>
                                                 <p className="text-sm line-clamp-3 mb-4">{evento.descripcion}</p>
                                                 {isAuthenticated && (

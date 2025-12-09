@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import authService from '../../services/authService.jsx';
 import categoriaService from '../../services/categoriaService.jsx';
 import inscripcionService from '../../services/inscripcionService.jsx';
+import configService from '../../services/configService.jsx';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +37,16 @@ function PerfilUser() {
     const [inscripcionACancelar, setInscripcionACancelar] = useState(null);
     const { toast } = useToast();
 
+    // Estado para la configuración de campos editables
+    const [config, setConfig] = useState({
+        nombre_editable: true,
+        apellido_editable: true,
+        telefono_editable: true,
+        fecha_nacimiento_editable: true,
+        email_editable: true,
+        intereses_editable: true
+    });
+
     // Estado del formulario
     const [formData, setFormData] = useState({
         email: '',
@@ -51,6 +62,16 @@ function PerfilUser() {
 
     const loadData = async () => {
         try {
+            // Cargar configuracion global PRIMERO
+            try {
+                const configData = await configService.getConfig();
+                if (configData) setConfig(configData);
+            } catch (err) {
+
+
+                console.warn("No se pudo cargar config, usando defaults", err);
+            }
+
             const currentUser = await authService.getCurrentUser();
             if (!currentUser) {
                 setLoading(false);
@@ -126,7 +147,7 @@ function PerfilUser() {
         setSaving(true);
 
         try {
-            // Validaciones simples (frontend)
+            // Validaciones simples
             if (formData.edad && (formData.edad < 0 || formData.edad > 120)) {
                 toast({ title: "Error", description: "La edad debe ser válida", variant: "destructive" });
                 setSaving(false);
@@ -241,11 +262,21 @@ function PerfilUser() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>Nombre</Label>
-                                    <Input value={user.first_name || ''} disabled className="bg-muted" />
+                                    <Input 
+                                        value={user.first_name || ''} 
+                                        // Siempre deshabilitado o segun config
+                                        disabled={!config.nombre_editable} 
+                                        className={!config.nombre_editable ? "bg-muted" : ""}
+                                    />
+                                    {!config.nombre_editable && <span className="text-xs text-muted-foreground">No editable</span>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Apellido</Label>
-                                    <Input value={user.last_name || ''} disabled className="bg-muted" />
+                                    <Input 
+                                        value={user.last_name || ''} 
+                                        disabled={!config.apellido_editable} 
+                                        className={!config.apellido_editable ? "bg-muted" : ""}
+                                    />
                                 </div>
                             </div>
                             
@@ -257,7 +288,8 @@ function PerfilUser() {
                                     type="email"
                                     value={formData.email}
                                     onChange={handleChange}
-                                    placeholder="correo@ejemplo.com"
+                                    disabled={!config.email_editable}
+                                    className={!config.email_editable ? "bg-muted" : ""}
                                 />
                             </div>
 
@@ -269,6 +301,8 @@ function PerfilUser() {
                                     value={formData.telefono} 
                                     onChange={handleChange} 
                                     placeholder="Ej: 88888888"
+                                    disabled={!config.telefono_editable}
+                                    className={!config.telefono_editable ? "bg-muted" : ""}
                                 />
                             </div>
 
@@ -281,6 +315,8 @@ function PerfilUser() {
                                         type="date" 
                                         value={formData.fecha_nacimiento} 
                                         onChange={handleChange} 
+                                        disabled={!config.fecha_nacimiento_editable}
+                                        className={!config.fecha_nacimiento_editable ? "bg-muted" : ""}
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -294,6 +330,7 @@ function PerfilUser() {
                                 </div>
                             </div>
 
+                            {/* Mostrar botón solo si hay al menos un campo editable relevante (opcional, por ahora mostrar siempre) */}
                             <Button type="submit" disabled={saving} className="w-full">
                                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                 Guardar Cambios
@@ -306,7 +343,10 @@ function PerfilUser() {
                 <Card className="lg:col-span-1">
                     <CardHeader>
                         <CardTitle>Mis Intereses</CardTitle>
-                        <CardDescription>Selecciona los deportes que te interesan</CardDescription>
+                        <CardDescription>
+                            Selecciona los deportes que te interesan
+                            {!config.intereses_editable && <span className="block text-red-500 text-xs mt-1">(Edición desactivada por admin)</span>}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-3 max-h-64 overflow-y-auto">
@@ -316,6 +356,7 @@ function PerfilUser() {
                                         id={`cat-${categoria.id}`} 
                                         checked={formData.intereses.includes(categoria.id)}
                                         onCheckedChange={() => handleInteresChange(categoria.id)}
+                                        disabled={!config.intereses_editable}
                                     />
                                     <Label 
                                         htmlFor={`cat-${categoria.id}`} 
@@ -340,7 +381,7 @@ function PerfilUser() {
                                 )}
                             </div>
                         </div>
-                        <Button type="button" onClick={handleSubmit} disabled={saving} className="w-full mt-4">
+                        <Button type="button" onClick={handleSubmit} disabled={saving || !config.intereses_editable} className="w-full mt-4">
                             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                             Guardar Intereses
                         </Button>

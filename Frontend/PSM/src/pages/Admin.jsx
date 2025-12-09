@@ -6,6 +6,7 @@ import EventosAdmin from '../components/Administrar/EventosAdmin'
 import UbicacionesAdmin from '../components/Administrar/UbicacionesAdmin'
 import InscripcionesAdmin from '../components/Administrar/InscripcionesAdmin'
 import ResenasAdmin from '../components/Administrar/ResenasAdmin'
+import ConfiguracionAdmin from '../components/Administrar/ConfiguracionAdmin'
 import AdminLayout from '../components/Administrar/AdminLayout'
 
 function Admin() {
@@ -18,6 +19,7 @@ function Admin() {
         <Route path="ubicaciones" element={<UbicacionesAdmin />} />
         <Route path="inscripciones" element={<InscripcionesAdmin />} />
         <Route path="resenas" element={<ResenasAdmin />} />
+        <Route path="configuracion" element={<ConfiguracionAdmin />} />
         <Route path="*" element={<Navigate to="" replace />} />
       </Routes>
     </AdminLayout>

@@ -34,5 +34,10 @@ urlpatterns = [
     # Eventos
     path('Evento/', EventoListCreateView.as_view(), name="crear y listar eventos"),
     path('Evento/<int:pk>/', EventoDetailView.as_view(), name="detalle evento"),
+    path('Evento/', EventoListCreateView.as_view(), name="crear y listar eventos"),
+    path('Evento/<int:pk>/', EventoDetailView.as_view(), name="detalle evento"),
     path('Evento/imagen/<str:imagen_id>/', EventoImagenView.as_view(), name="ver imagen evento"),
+
+    # Configuracion Global
+    path('configuracion/perfil/', ConfiguracionPerfilView.as_view(), name="configuracion perfil"),
 ]

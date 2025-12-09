@@ -52,6 +52,12 @@ function UsuariosAdmin() {
         }
     };
 
+    const [editingId, setEditingId] = useState(null);
+
+    // ... (useEffect remains same)
+
+    // ... (obtenerUsuarios remains same)
+
     const manejarCambioInput = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -67,8 +73,41 @@ function UsuariosAdmin() {
         }));
     };
 
+    const iniciarEdicion = (user) => {
+        setEditingId(user.id);
+        setFormData({
+            username: user.username,
+            email: user.email,
+            password: '', // No cargar password, de esta manera se mantiene la contraseña actual
+            nombre: user.first_name || '',
+            apellido: user.last_name || '',
+            telefono: user.telefono || '',
+            edad: user.edad || '',
+            fecha_nacimiento: user.fecha_nacimiento || '',
+            role: user.is_staff ? 'admin' : 'user' // Asumiendo que is_staff determina admin por ahora, o verificar lógica de roles
+        });
+        setIsDialogOpen(true);
+    };
+
+    const limpiarFormulario = () => {
+        setFormData({
+            username: '',
+            email: '',
+            password: '',
+            nombre: '',
+            apellido: '',
+            telefono: '',
+            edad: '',
+            fecha_nacimiento: '',
+            role: 'user'
+        });
+        setEditingId(null);
+        setIsDialogOpen(false);
+    };
+
     const validarRegistro = () => {
-        if (!formData.username || !formData.email || !formData.password || !formData.nombre || !formData.apellido) {
+        // Campos obligatorios basicos
+        if (!formData.username || !formData.email || !formData.nombre || !formData.apellido) {
             toast({
                 variant: "destructive",
                 title: "Error de validación",
@@ -76,8 +115,10 @@ function UsuariosAdmin() {
             });
             return false;
         }
-        if (formData.password.length < 6) {
-            toast({
+        
+        // Validar password solo si es creacion o si se escribio algo (cambio de pass)
+        if ((!editingId || formData.password) && formData.password.length < 6) {
+             toast({
                 variant: "destructive",
                 title: "Error de validación",
                 description: "La contraseña debe tener al menos 6 caracteres.",
@@ -87,49 +128,72 @@ function UsuariosAdmin() {
         return true;
     };
 
-    const crearUsuario = async () => {
+    const guardarUsuario = async () => {
         if (!validarRegistro()) return;
 
         setCreating(true);
         try {
-            // Registro de usuario
-            const newUser = await AuthService.register(
-                formData.username,
-                formData.nombre,
-                formData.apellido,
-                formData.email,
-                formData.password,
-                formData.telefono,
-                formData.edad,
-                formData.fecha_nacimiento
-            );
-
-            // Asignar el rol si es admin
-            if (formData.role === 'admin') {
-                if (newUser && newUser.id) {
-                    await UserGroupService.asignarRole(newUser.id, 1); // 1 para Admin 0 cliente
-                } else if (newUser && newUser.user && newUser.user.id) {
-                    await UserGroupService.asignarRole(newUser.user.id, 1);
+            if (editingId) {
+                // ACTUALIZAR USUARIO EXISTENTE
+                const updateData = {
+                    username: formData.username,
+                    email: formData.email,
+                    first_name: formData.nombre,
+                    last_name: formData.apellido,
+                    telefono: formData.telefono,
+                    edad: formData.edad,
+                    fecha_nacimiento: formData.fecha_nacimiento,
+                    //El backend debe soportar el manejo de roles
+                };
+                
+                // Solo enviar password si se cambio
+                if (formData.password) {
+                    updateData.password = formData.password;
                 }
+
+                await UserService.updateUser(editingId, updateData);
+                
+                // Actualizar rol si hubo un cambio
+                // Nota: Esto depende de cómo el backend maneje roles. Si es por UserGroup, llamamos al servicio.
+                if (formData.role === 'admin') {
+                     await UserGroupService.asignarRole(editingId, 1);
+                } else {
+                     await UserGroupService.asignarRole(editingId, 0); // 0 cliente
+                }
+
+                toast({
+                    title: "Éxito",
+                    description: "Usuario actualizado correctamente.",
+                });
+
+            } else {
+                // CREAR NUEVO USUARIO
+                const newUser = await AuthService.register(
+                    formData.username,
+                    formData.nombre,
+                    formData.apellido,
+                    formData.email,
+                    formData.password,
+                    formData.telefono,
+                    formData.edad,
+                    formData.fecha_nacimiento
+                );
+
+                // Asignar el rol si es admin
+                if (formData.role === 'admin') {
+                    const userId = newUser.id || (newUser.user && newUser.user.id);
+                    if (userId) {
+                        await UserGroupService.asignarRole(userId, 1);
+                    }
+                }
+
+                toast({
+                    title: "Éxito",
+                    description: "Usuario creado correctamente.",
+                });
             }
 
-            toast({
-                title: "Éxito",
-                description: "Usuario creado correctamente.",
-            });
-
-            setIsDialogOpen(false);
-            setFormData({
-                username: '',
-                email: '',
-                password: '',
-                nombre: '',
-                apellido: '',
-                telefono: '',
-                edad: '',
-                fecha_nacimiento: '',
-                role: 'user'
-            });
+            limpiarFormulario();
             obtenerUsuarios();
 
         } catch (error) {
@@ -137,12 +201,13 @@ function UsuariosAdmin() {
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: "No se pudo crear el usuario. Verifique los datos.",
+                description: "No se pudo guardar el usuario. Verifique los datos o si el usuario ya existe.",
             });
         } finally {
             setCreating(false);
         }
     };
+
 
     const filteredUsers = users.filter(user =>
         user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -165,9 +230,9 @@ function UsuariosAdmin() {
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle>Crear Nuevo Usuario</DialogTitle>
+                            <DialogTitle>{editingId ? 'Editar Usuario' : 'Crear Nuevo Usuario'}</DialogTitle>
                             <DialogDescription>
-                                Ingrese los datos del nuevo usuario. Seleccione el rol correspondiente.
+                                {editingId ? 'Modifique los datos del usuario.' : 'Ingrese los datos del nuevo usuario.'}
                             </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
@@ -192,8 +257,15 @@ function UsuariosAdmin() {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="password">Contraseña *</Label>
-                                <Input id="password" name="password" type="password" value={formData.password} onChange={manejarCambioInput} />
+                                <Label htmlFor="password">Contraseña {editingId ? '(Opcional)' : '*'}</Label>
+                                <Input 
+                                    id="password" 
+                                    name="password" 
+                                    type="password" 
+                                    value={formData.password} 
+                                    onChange={manejarCambioInput} 
+                                    placeholder={editingId ? "Dejar en blanco para mantener actual" : ""}
+                                />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
@@ -211,7 +283,7 @@ function UsuariosAdmin() {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="role">Rol de Usuario</Label>
-                                <Select onValueChange={manejarCambioRol} defaultValue={formData.role}>
+                                <Select onValueChange={manejarCambioRol} value={formData.role}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Seleccione un rol" />
                                     </SelectTrigger>
@@ -223,13 +295,14 @@ function UsuariosAdmin() {
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                            <Button onClick={crearUsuario} disabled={creating} className="bg-blue-600 hover:bg-blue-700">
+                            <Button variant="outline" onClick={limpiarFormulario}>Cancelar</Button>
+                            <Button onClick={guardarUsuario} disabled={creating} className="bg-blue-600 hover:bg-blue-700">
                                 {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Crear Usuario
+                                {editingId ? 'Guardar Cambios' : 'Crear Usuario'}
                             </Button>
                         </DialogFooter>
                     </DialogContent>
+
                 </Dialog>
             </div>
 
@@ -285,10 +358,11 @@ function UsuariosAdmin() {
                                         <TableCell>{`${user.first_name || ''} ${user.last_name || ''}`}</TableCell>
                                         <TableCell>{user.telefono || '-'}</TableCell>
                                         <TableCell>
-                                            <Button variant="ghost" size="sm">
+                                            <Button variant="ghost" size="sm" onClick={() => iniciarEdicion(user)}>
                                                 Editar
                                             </Button>
                                         </TableCell>
+
                                     </TableRow>
                                 ))
                             )}

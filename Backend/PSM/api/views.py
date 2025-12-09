@@ -289,5 +289,33 @@ class CategEventoPopularesView(APIView):
                 'estado': categoria.estado,
                 'cantidad_eventos': categoria.cantidad_eventos
             })
-        
         return Response(data)
+
+
+# Vista para la Configuración Global del Perfil
+class ConfiguracionPerfilView(APIView):
+    # GET: Publico (o autenticado) para que el front sepa que campo bloquear
+    # PUT: Solo Admin
+    
+    def get_permissions(self):
+        if self.request.method == 'PUT':
+            return [IsAdminUser()]
+        return [AllowAny()] # Permitir que cualquiera lea la config (necesario para login/registro/perfil)
+
+    def get_object(self):
+        # Obtener la unica instancia o crearla si no existe
+        config, created = ConfiguracionPerfil.objects.get_or_create(id=1)
+        return config
+
+    def get(self, request):
+        config = self.get_object()
+        serializer = ConfiguracionPerfilSerializer(config)
+        return Response(serializer.data)
+
+    def put(self, request):
+        config = self.get_object()
+        serializer = ConfiguracionPerfilSerializer(config, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)

@@ -99,3 +99,22 @@ class Contacto(models.Model):
     telefono = models.CharField(max_length=20, blank=True)
     mensaje = models.TextField()
     fecha_envio = models.DateTimeField(auto_now_add=True)
+
+# Configuracion Global del Perfil
+class ConfiguracionPerfil(models.Model):
+    # Singleton: solo debe haber 1 registro. Lo controlaremos en la vista.
+    nombre_editable = models.BooleanField(default=True)
+    apellido_editable = models.BooleanField(default=True)
+    telefono_editable = models.BooleanField(default=True)
+    fecha_nacimiento_editable = models.BooleanField(default=True)
+    intereses_editable = models.BooleanField(default=True)
+    email_editable = models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        # Garantizar que solo exista una instanci
+        if not self.pk and ConfiguracionPerfil.objects.exists():
+             raise Exception('Solo puede haber una configuración global.')
+        return super(ConfiguracionPerfil, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return "Configuración Global de Perfil"

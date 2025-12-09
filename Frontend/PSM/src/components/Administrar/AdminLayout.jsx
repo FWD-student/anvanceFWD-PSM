@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Calendar, MapPin, Users, MessageSquare, LogOut, Menu, X, UserCog } from 'lucide-react';
+import { LayoutDashboard, Calendar, MapPin, Users, MessageSquare, LogOut, Menu, X, UserCog, ShieldAlert } from 'lucide-react';
 import { jwtDecode } from "jwt-decode";
 
 function AdminLayout({ children }) {
@@ -15,7 +15,9 @@ function AdminLayout({ children }) {
         { id: 'ubicaciones', label: 'Ubicaciones', icon: MapPin, path: '/admin/ubicaciones' },
         { id: 'inscripciones', label: 'Inscripciones', icon: Users, path: '/admin/inscripciones' },
         { id: 'resenas', label: 'Reseñas', icon: MessageSquare, path: '/admin/resenas' },
+        { id: 'configuracion', label: 'Configuración', icon: ShieldAlert, path: '/admin/configuracion' }, // Usando ShieldAlert temporalmente o importar Settings si existe
     ];
+
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -71,7 +73,7 @@ function AdminLayout({ children }) {
                 <nav className="flex-1 p-4 space-y-2">
                     {menuItems.map((item) => {
                         const Icon = item.icon;
-                        // Verificar si la ruta actual coincide con el path del item
+                        /* Verificar si la ruta actual coincide con el path del item */
                         const isActive = item.path === '/admin'
                             ? location.pathname === '/admin' || location.pathname === '/admin/'
                             : location.pathname.startsWith(item.path);

@@ -43,7 +43,17 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def validate_email(self, value):
-        if Usuario.objects.filter(email=value).exists():
+        # Obtener el ID del usuario actual si es una actualización
+        user_id = self.instance.id if self.instance else None
+        
+        # Filtrar usuarios con ese email
+        query = Usuario.objects.filter(email=value)
+        
+        # Excluir al usuario actual de la busqueda si estamos editando
+        if user_id:
+            query = query.exclude(id=user_id)
+            
+        if query.exists():
             raise serializers.ValidationError("Este correo ya esta registrado")
         return value
 
@@ -109,3 +119,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['email'] = self.user.email
         
         return data
+
+class ConfiguracionPerfilSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConfiguracionPerfil
+        fields = '__all__'
