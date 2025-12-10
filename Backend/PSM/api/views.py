@@ -8,7 +8,7 @@ from .serializers import *
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
-from .permissions import IsAdminUser, IsAdminOrReadOnly, IsAdminOrSelf # chequeo 
+from .permissions import IsAdminUser, IsAdminOrReadOnly, IsAdminOrSelf, IsOwnerOrAdmin # chequeo 
 Usuario = get_user_model()
 # importes necesarios para evento
 from .mongo_utils import UtilidadesMongo
@@ -61,6 +61,57 @@ class InscripcionDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = InscripcionSerializer
     permission_classes = [IsAuthenticated]  # Solo usuarios autenticados
 
+    # METODO PARA ACTUALIZAR INSCRIPCION (Lógica de Cupos)
+    def perform_update(self, serializer):
+        # 1. Obtener la instancia actual antes de guardar cambios
+        instance = self.get_object()
+        # 2. Obtener el nuevo estado que se intenta guardar
+        nuevo_estado = serializer.validated_data.get('estado', instance.estado)
+        evento = instance.evento
+        
+        print(f"--- PROCESANDO ACTUALIZACION CUPOS ---")
+        print(f"Estado anterior: {instance.estado}")
+        print(f"Nuevo estado: {nuevo_estado}")
+        print(f"Cupos actuales: {evento.cupos_disponibles}")
+
+        # 3. Lógica para reducir cupos (Pendiente/Cancelada -> Confirmada)
+        if instance.estado != 'confirmada' and nuevo_estado == 'confirmada':
+            # Verificar si hay cupos
+            if evento.cupos_disponibles > 0:
+                evento.cupos_disponibles -= 1
+                evento.save()
+                print("Cupo reducido -1")
+            else:
+                # Si no hay cupos, lanzar error de validación
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError({"error": "No hay cupos disponibles. No se puede confirmar la inscripción."})
+        
+        # 4. Lógica para liberar cupos (Confirmada -> Cancelada/Pendiente)
+        elif instance.estado == 'confirmada' and nuevo_estado != 'confirmada':
+            # Solo sumar si no excede el maximo (opcional, pero buena practica por integridad)
+            if evento.cupos_disponibles < evento.cupo_maximo:
+                evento.cupos_disponibles += 1
+                evento.save()
+                print("Cupo incrementado +1")
+            else:
+                 print("Intento de sumar cupo pero ya esta lleno (consistencia de datos)")
+
+        # 5. Guardar el cambio de estado
+        serializer.save()
+
+    # METODO PARA ELIMINAR INSCRIPCION (Lógica de Cupos)
+    def perform_destroy(self, instance):
+        # Si se borra una inscripción que estaba confirmada, liberar el cupo
+        if instance.estado == 'confirmada':
+            evento = instance.evento
+            if evento.cupos_disponibles < evento.cupo_maximo:
+                evento.cupos_disponibles += 1
+                evento.save()
+                print("Inscripcion borrada. Cupo incrementado +1")
+        
+        # Ejecutar borrado
+        instance.delete()
+
 # Vista para obtener inscripciones del usuario actual
 class MisInscripcionesView(APIView):
     permission_classes = [IsAuthenticated]
@@ -97,7 +148,7 @@ class ResenaListCreateView(generics.ListCreateAPIView):
 class ResenaDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Resena.objects.all()
     serializer_class = ResenaSerializer
-    permission_classes = [IsAuthenticated]  # Solo usuarios autenticados
+    permission_classes = [IsOwnerOrAdmin]  # Dueño o Admin
 
 
 # Vista de Contacto

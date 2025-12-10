@@ -55,10 +55,23 @@ function InscripcionesAdmin() {
             });
         } catch (error) {
             console.error('Error al actualizar estado:', error);
+            // Intentar obtener mensaje de error del backend
+            let mensajeError = "Error al actualizar el estado. Intenta nuevamente.";
+            if (error.message && error.message.includes('error')) {
+                 try {
+                     // Si el error viene como string JSON en el message (comun en fetch wrappers simples)
+                     const errorObj = JSON.parse(error.message);
+                     mensajeError = errorObj.error || mensajeError;
+                 } catch (e) {
+                     // Si no es JSON, usar el mensaje tal cual si es legible
+                     mensajeError = error.message;
+                 }
+            }
+            
             toast({
                 variant: "destructive",
-                title: "Error",
-                description: "Error al actualizar el estado. Intenta nuevamente.",
+                title: "Error de Validación",
+                description: mensajeError,
             });
         }
     };

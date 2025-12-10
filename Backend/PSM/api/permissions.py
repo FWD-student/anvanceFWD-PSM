@@ -53,3 +53,32 @@ class IsAdminOrSelf(permissions.BasePermission):
 
         # Si es el propio usuario, permitir
         return obj == request.user
+
+class IsOwnerOrAdmin(permissions.BasePermission):
+    """
+    Permiso personalizado que permite:
+    - Lectura a cualquiera (o autenticado, depende de la vista).
+    - Escritura a Administradores.
+    - Escritura al Dueño del objeto (campo 'usuario' del modelo).
+    """
+    
+    def has_object_permission(self, request, view, obj):
+        # 1. Si es metodo seguro (GET, OPTIONS, HEAD), permitir (si pasa authenticacion de la vista)
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        # 2. Si el usuario no esta autenticado, denegar
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        # 3. Si es Admin, permitir TODO
+        if request.user.groups.filter(name='admin').exists() or request.user.is_staff:
+            return True
+
+        # 4. Si es el dueño del objeto, permitir.
+        #    Verificamos si el objeto tiene atributo 'usuario' (comun en Resena, Inscripcion)
+        if hasattr(obj, 'usuario'):
+            return obj.usuario == request.user
+            
+        #    Si el objeto es el Usuario mismo
+        return obj == request.user
