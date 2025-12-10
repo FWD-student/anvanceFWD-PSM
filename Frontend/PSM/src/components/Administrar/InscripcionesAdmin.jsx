@@ -168,6 +168,7 @@ function InscripcionesAdmin() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Usuario</TableHead>
+                                <TableHead>Imagen</TableHead>
                                 <TableHead>Evento</TableHead>
                                 <TableHead>Fecha Inscripción</TableHead>
                                 <TableHead>Estado</TableHead>
@@ -189,6 +190,18 @@ function InscripcionesAdmin() {
                                         <TableRow key={inscripcion.id}>
                                             <TableCell className="font-medium">
                                                 Usuario #{inscripcion.usuario}
+                                            </TableCell>
+                                            <TableCell>
+                                                {evento?.imagen_id ? (
+                                                     <img 
+                                                        src={EventoService.getEventoImagenUrl(evento.imagen_id)} 
+                                                        alt="Miniatura" 
+                                                        className="w-10 h-10 object-cover rounded-md"
+                                                        onError={(e) => { e.target.style.display = 'none'; }}
+                                                     />
+                                                ) : (
+                                                    <div className="w-10 h-10 bg-gray-200 rounded-md flex items-center justify-center text-xs">Sin img</div>
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">

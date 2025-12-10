@@ -126,8 +126,27 @@ function CaruselEvent() {
                                                         Recomendado
                                                     </div>
                                                 )}
-                                                <h3 className="text-xl font-semibold mb-2 mt-4">{evento.nombre}</h3>
-                                                <p className="text-sm text-gray-500 mb-4">{new Date(evento.fecha_inicio).toLocaleDateString()}</p>
+                                                {evento.imagen_id ? (
+                                                    <div className="w-full h-48 mb-4 overflow-hidden rounded-md">
+                                                        <img 
+                                                            src={eventoService.getEventoImagenUrl(evento.imagen_id)} 
+                                                            alt={evento.nombre}
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                e.target.onerror = null; 
+                                                                e.target.src = 'https://via.placeholder.com/400x200?text=Sin+Imagen';
+                                                            }}
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-full h-48 mb-4 bg-gray-200 flex items-center justify-center rounded-md text-gray-400">
+                                                        <span className="text-4xl">📷</span>
+                                                    </div>
+                                                )}
+                                                <h3 className="text-xl font-semibold mb-2">{evento.nombre}</h3>
+                                                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                                                    <span> {new Date(evento.fecha_inicio).toLocaleDateString()}</span>
+                                                </div>
                                                 <p className="text-sm line-clamp-3 mb-4">{evento.descripcion}</p>
                                                 {isAuthenticated && (
                                                     <Button

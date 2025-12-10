@@ -86,6 +86,7 @@ class InscripcionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inscripcion
         fields = '__all__'
+        read_only_fields = ['id', 'fecha_inscripcion', 'usuario']
 
 class ResenaSerializer(serializers.ModelSerializer):
     class Meta:

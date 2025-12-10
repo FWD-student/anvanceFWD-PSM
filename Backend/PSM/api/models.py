@@ -77,6 +77,7 @@ class Inscripcion(models.Model):
     fecha_inscripcion = models.DateTimeField(auto_now_add=True)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
     comentarios = models.TextField(blank=True)
+    asistio = models.BooleanField(default=False) # Campo para control de asistencia
     
     def __str__(self):
         return f"{self.usuario.username} - {self.evento.nombre}"

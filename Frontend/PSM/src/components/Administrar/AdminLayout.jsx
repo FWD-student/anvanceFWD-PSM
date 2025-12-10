@@ -14,6 +14,7 @@ function AdminLayout({ children }) {
         { id: 'eventos', label: 'Eventos', icon: Calendar, path: '/admin/eventos' },
         { id: 'ubicaciones', label: 'Ubicaciones', icon: MapPin, path: '/admin/ubicaciones' },
         { id: 'inscripciones', label: 'Inscripciones', icon: Users, path: '/admin/inscripciones' },
+        { id: 'asistencia', label: 'Asistencia', icon: Users, path: '/admin/asistencia' }, // Nuevo item
         { id: 'resenas', label: 'Reseñas', icon: MessageSquare, path: '/admin/resenas' },
         { id: 'configuracion', label: 'Configuración', icon: ShieldAlert, path: '/admin/configuracion' }, // Usando ShieldAlert temporalmente o importar Settings si existe
     ];

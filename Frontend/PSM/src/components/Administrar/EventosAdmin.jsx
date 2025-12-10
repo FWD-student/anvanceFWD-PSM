@@ -345,6 +345,7 @@ function EventosAdmin() {
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead>Imagen</TableHead>
                                 <TableHead>Nombre</TableHead>
                                 <TableHead>Categoría</TableHead>
                                 <TableHead>Ubicación</TableHead>
@@ -364,6 +365,18 @@ function EventosAdmin() {
                             ) : (
                                 eventosFiltrados.map((evento) => (
                                     <TableRow key={evento.id}>
+                                         <TableCell>
+                                            {evento.imagen_id ? (
+                                                 <img 
+                                                    src={eventoService.getEventoImagenUrl(evento.imagen_id)} 
+                                                    alt="Miniatura" 
+                                                    className="w-12 h-12 object-cover rounded-md"
+                                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                                 />
+                                            ) : (
+                                                <div className="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center text-xs">Sin img</div>
+                                            )}
+                                        </TableCell>
                                         <TableCell className="font-medium">{evento.nombre}</TableCell>
                                         <TableCell>
                                             {categorias.find(c => c.id === evento.categoria)?.nombre || 'N/A'}
