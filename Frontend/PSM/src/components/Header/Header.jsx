@@ -100,7 +100,7 @@ function Header() {
               </DropdownMenu>
             ) : (
               <Link to="/sesion">
-                <Button variant="default" size="lg" className="bg-[#F25C05] hover:bg-[#D94D04] text-base">
+                <Button variant="default" size="md" className="bg-[#F25C05] hover:bg-[#D94D04] text-base">
                   Iniciar Sesión
                 </Button>
               </Link>

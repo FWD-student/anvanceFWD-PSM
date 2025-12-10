@@ -31,24 +31,24 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
 class CategEventoListCreateView(generics.ListCreateAPIView):
     queryset = CategEvento.objects.all()
     serializer_class = CategEventoSerializer
-    permission_classes = [IsAdminUser]  # Solo admin puede gestionar categorias
+    permission_classes = [IsAdminOrReadOnly]  # Publico lectura, admin escritura
 
 class CategEventoDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = CategEvento.objects.all()
     serializer_class = CategEventoSerializer
-    permission_classes = [IsAdminUser]  # Solo admin puede gestionar categorias
+    permission_classes = [IsAdminOrReadOnly]  # Publico lectura, admin escritura
 
 
 # Vistas Ubicacion
 class UbicacionListCreateView(generics.ListCreateAPIView):
     queryset = Ubicacion.objects.all()
     serializer_class = UbicacionSerializer
-    permission_classes = [IsAdminUser]  # Solo admin puede gestionar ubicaciones
+    permission_classes = [IsAdminOrReadOnly]  # Publico lectura, admin escritura
 
 class UbicacionDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Ubicacion.objects.all()
     serializer_class = UbicacionSerializer
-    permission_classes = [IsAdminUser]  # Solo admin puede gestionar ubicaciones
+    permission_classes = [IsAdminOrReadOnly]  # Publico lectura, admin escritura
 
 # Vistas Inscripcion
 class InscripcionListCreateView(generics.ListCreateAPIView):
