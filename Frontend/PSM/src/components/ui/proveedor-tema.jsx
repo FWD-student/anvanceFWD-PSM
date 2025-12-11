@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react"
 
+//seccion de configuracion del tema
+
 const EstadoInicial = {
   tema: "sistema",
   setTema: () => null,

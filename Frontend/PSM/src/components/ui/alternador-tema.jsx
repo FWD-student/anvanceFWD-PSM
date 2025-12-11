@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useTema } from "./proveedor-tema"
 
+//seccion de seleccion de temas
+
 export function AlternadorTema() {
   const { setTema } = useTema()
 
