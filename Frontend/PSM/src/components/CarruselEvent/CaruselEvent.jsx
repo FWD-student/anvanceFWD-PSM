@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import eventoService from '../../services/eventoService.jsx';
 import authService from '../../services/authService.jsx';
 import inscripcionService from '../../services/inscripcionService.jsx';
-import './carruselEvent.css';
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Carousel,CarouselContent,CarouselItem,CarouselNext,CarouselPrevious} from "@/components/ui/carousel"
@@ -100,13 +99,13 @@ function CaruselEvent() {
     };
 
     if (loading) {
-        return <div className="carrusel-container"><p>Cargando eventos...</p></div>;
+        return <div className="w-full flex justify-center py-10 dark:text-white"><p>Cargando eventos...</p></div>;
     }
 
     return (
-        <section className="carrusel-section">
-            <div className="carrusel-container">
-                <h2 className="carrusel-title">Próximos Eventos</h2>
+        <section className="w-full flex justify-center py-10 bg-[#f8f9fa] dark:bg-background transition-colors duration-300">
+            <div className="w-[90%] max-w-[1200px] flex flex-col items-center">
+                <h2 className="text-3xl font-bold text-center mb-8 text-[#333] dark:text-foreground">Próximos Eventos</h2>
 
                 {eventos.length > 0 ? (
                     <Carousel

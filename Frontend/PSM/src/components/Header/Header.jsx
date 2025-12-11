@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import authService from '../../services/authService.jsx';
+import { AlternadorTema } from '../ui/alternador-tema.jsx';
 
 function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -73,7 +74,8 @@ function Header() {
             </Link>
           </div>
 
-          <div className="hidden md:flex items-center">
+          <div className="hidden md:flex items-center gap-4">
+            <AlternadorTema />
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -130,9 +132,12 @@ function Header() {
                   {isAuthenticated ? (
                     <>
                       <div className="border-t pt-4 mt-4">
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Hola, {user?.username}
-                        </p>
+                        <div className="flex justify-between items-center mb-4">
+                          <p className="text-sm text-muted-foreground">
+                            Hola, {user?.username}
+                          </p>
+                          <AlternadorTema />
+                        </div>
                         <Link to="/perfil" className="block">
                           <Button variant="outline" className="w-full mb-2" size="lg">
                             <User className="h-5 w-5 mr-2" />
@@ -146,9 +151,15 @@ function Header() {
                       </div>
                     </>
                   ) : (
-                    <Link to="/sesion">
-                      <Button className="w-full bg-[#F25C05] hover:bg-[#D94D04]" size="lg">Iniciar Sesión</Button>
-                    </Link>
+                    <>
+                      <div className="flex justify-between items-center mt-4 mb-2">
+                        <span className="text-sm font-medium">Tema</span>
+                        <AlternadorTema />
+                      </div>
+                      <Link to="/sesion">
+                        <Button className="w-full bg-[#F25C05] hover:bg-[#D94D04]" size="lg">Iniciar Sesión</Button>
+                      </Link>
+                    </>
                   )}
                 </div>
               </SheetContent>

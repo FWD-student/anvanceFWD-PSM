@@ -1,14 +1,17 @@
 import Routing from './routes/Routing.jsx'
 import { Toaster } from "@/components/ui/toaster"
+import { ProveedorTema } from "./components/ui/proveedor-tema.jsx"
 
 function App() {
 
   return (
     <>
-      <div>
-        <Routing/>
-        <Toaster/> {/* Notificaciones para el uso del componente Toast */}
-      </div>
+      <ProveedorTema temaPorDefecto="sistema" claveAlmacenamiento="tema-ui-psm">
+        <div>
+          <Routing/>
+          <Toaster/> {/* Notificaciones para el uso del componente Toast */}
+        </div>
+      </ProveedorTema>
     </>
   )
 }
