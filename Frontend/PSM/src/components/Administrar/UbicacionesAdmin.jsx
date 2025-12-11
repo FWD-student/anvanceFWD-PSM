@@ -146,10 +146,10 @@ function UbicacionesAdmin() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Gestión de Ubicaciones</h1>
-                    <p className="text-gray-600 mt-1">Administra los recintos deportivos</p>
+                    <h1 className="text-3xl font-bold text-foreground">Gestión de Ubicaciones</h1>
+                    <p className="text-muted-foreground mt-1">Administra los recintos deportivos</p>
                 </div>
-                <Button onClick={() => abrirModal()} className="bg-green-600 hover:bg-green-700">
+                <Button onClick={() => abrirModal()} className="bg-green-600 hover:bg-green-700 text-white">
                     <Plus size={20} className="mr-2" />
                     Nueva Ubicación
                 </Button>
@@ -169,7 +169,7 @@ function UbicacionesAdmin() {
                         <TableBody>
                             {ubicaciones.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                                         No hay ubicaciones registradas
                                     </TableCell>
                                 </TableRow>
@@ -255,7 +255,7 @@ function UbicacionesAdmin() {
                                 placeholder="https://maps.google.com/..."
                                 required
                             />
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                                 Copia el enlace desde Google Maps
                             </p>
                         </div>
@@ -275,7 +275,7 @@ function UbicacionesAdmin() {
                             <Button type="button" variant="outline" onClick={cerrarModal}>
                                 Cancelar
                             </Button>
-                            <Button type="submit" className="bg-green-600 hover:bg-green-700">
+                            <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
                                 {editando ? 'Actualizar' : 'Crear'} Ubicación
                             </Button>
                         </DialogFooter>

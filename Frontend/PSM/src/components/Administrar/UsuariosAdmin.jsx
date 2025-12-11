@@ -218,12 +218,12 @@ function UsuariosAdmin() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
-                    <p className="text-gray-600 mt-1">Administra los usuarios y sus permisos</p>
+                    <h1 className="text-3xl font-bold text-foreground">Gestión de Usuarios</h1>
+                    <p className="text-muted-foreground mt-1">Administra los usuarios y sus permisos</p>
                 </div>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button className="bg-blue-600 hover:bg-blue-700">
+                        <Button className="bg-green-600 hover:bg-green-700 text-white">
                             <Plus className="mr-2 h-4 w-4" />
                             Nuevo Usuario
                         </Button>
@@ -296,7 +296,7 @@ function UsuariosAdmin() {
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={limpiarFormulario}>Cancelar</Button>
-                            <Button onClick={guardarUsuario} disabled={creating} className="bg-blue-600 hover:bg-blue-700">
+                            <Button onClick={guardarUsuario} disabled={creating} className="bg-green-600 hover:bg-green-700 text-white">
                                 {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 {editingId ? 'Guardar Cambios' : 'Crear Usuario'}
                             </Button>

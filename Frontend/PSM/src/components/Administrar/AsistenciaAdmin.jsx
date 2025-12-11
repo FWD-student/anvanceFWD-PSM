@@ -87,8 +87,8 @@ function AsistenciaAdmin() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold text-gray-900">Control de Asistencia</h1>
-                <p className="text-gray-600 mt-1">Marca los usuarios que concluyeron el evento</p>
+                <h1 className="text-3xl font-bold text-foreground">Control de Asistencia</h1>
+                <p className="text-muted-foreground mt-1">Marca los usuarios que concluyeron el evento</p>
             </div>
 
             <Card>
@@ -121,7 +121,7 @@ function AsistenciaAdmin() {
                             <TableBody>
                                 {inscripciones.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                                        <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
                                             No hay inscripciones para este evento
                                         </TableCell>
                                     </TableRow>

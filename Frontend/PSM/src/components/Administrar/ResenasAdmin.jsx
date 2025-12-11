@@ -102,13 +102,13 @@ function ResenasAdmin() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold text-gray-900">Gestión de Reseñas</h1>
-                <p className="text-gray-600 mt-1">Modera las reseñas de los eventos</p>
+                <h1 className="text-3xl font-bold text-foreground">Gestión de Reseñas</h1>
+                <p className="text-muted-foreground mt-1">Modera las reseñas de los eventos</p>
             </div>
 
             <Card>
                 <CardContent className="pt-6">
-                    <div className="mb-4 text-sm text-gray-600">
+                    <div className="mb-4 text-sm text-muted-foreground">
                         Total de reseñas: {resenas.length}
                     </div>
 
@@ -126,7 +126,7 @@ function ResenasAdmin() {
                         <TableBody>
                             {resenas.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                                         No hay reseñas registradas
                                     </TableCell>
                                 </TableRow>
@@ -147,13 +147,13 @@ function ResenasAdmin() {
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     {renderEstrellas(resena.calificacion)}
-                                                    <span className="text-sm text-gray-600">
+                                                    <span className="text-sm text-muted-foreground">
                                                         ({resena.calificacion}/5)
                                                     </span>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="max-w-md">
-                                                <p className="text-sm text-gray-700 line-clamp-2">
+                                                <p className="text-sm text-foreground/80 line-clamp-2">
                                                     {resena.comentario || 'Sin comentario'}
                                                 </p>
                                             </TableCell>

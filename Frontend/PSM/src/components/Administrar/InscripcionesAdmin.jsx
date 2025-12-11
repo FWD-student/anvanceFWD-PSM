@@ -140,8 +140,8 @@ function InscripcionesAdmin() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold text-gray-900">Gestión de Inscripciones</h1>
-                <p className="text-gray-600 mt-1">Administra las inscripciones a eventos</p>
+                <h1 className="text-3xl font-bold text-foreground">Gestión de Inscripciones</h1>
+                <p className="text-muted-foreground mt-1">Administra las inscripciones a eventos</p>
             </div>
 
             <Card>
@@ -179,7 +179,7 @@ function InscripcionesAdmin() {
                         <TableBody>
                             {inscripcionesFiltradas.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                                         No hay inscripciones registradas
                                     </TableCell>
                                 </TableRow>

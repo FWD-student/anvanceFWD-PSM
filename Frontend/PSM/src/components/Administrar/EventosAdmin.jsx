@@ -309,10 +309,10 @@ function EventosAdmin() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Gestión de Eventos</h1>
-                    <p className="text-gray-600 mt-1">Administra los eventos deportivos</p>
+                    <h1 className="text-3xl font-bold text-foreground">Gestión de Eventos</h1>
+                    <p className="text-muted-foreground mt-1">Administra los eventos deportivos</p>
                 </div>
-                <Button onClick={() => abrirModal()} className="bg-blue-600 hover:bg-blue-700">
+                <Button onClick={() => abrirModal()} className="bg-green-600 hover:bg-green-700 text-white">
                     <Plus size={20} className="mr-2" />
                     Nuevo Evento
                 </Button>
@@ -333,7 +333,7 @@ function EventosAdmin() {
                                 <SelectItem value="finalizado">Finalizados</SelectItem>
                             </SelectContent>
                         </Select>
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-muted-foreground">
                             {eventosFiltrados.length} evento(s)
                         </span>
                     </div>
@@ -358,7 +358,7 @@ function EventosAdmin() {
                         <TableBody>
                             {eventosFiltrados.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                                         No hay eventos registrados
                                     </TableCell>
                                 </TableRow>
@@ -591,7 +591,7 @@ function EventosAdmin() {
                             <Button type="button" variant="outline" onClick={cerrarModal}>Cancelar</Button>
                             <Button 
                                 type="submit" 
-                                className="bg-blue-600 hover:bg-blue-700"
+                                className="bg-green-600 hover:bg-green-700 text-white"
                                 disabled={!!erroresCampos.fecha_fin || !!erroresCampos.edad_maxima || !!erroresCampos.cupos_disponibles}
                             >
                                 {editando ? 'Actualizar' : 'Crear'}

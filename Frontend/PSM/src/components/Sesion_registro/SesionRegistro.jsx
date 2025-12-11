@@ -1,16 +1,26 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import authService from '../../services/authService';
 import { jwtDecode } from "jwt-decode";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
+import { Home } from 'lucide-react';
 
 const SesionRegistro = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { toast } = useToast();
     const [tipoForm, setTipoForm] = useState('login'); // 'login' or 'registro'
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (searchParams.get('view') === 'registro') {
+            setTipoForm('registro');
+        }
+    }, [searchParams]);
+
+    // ... (resto de funciones handleLogin, handleRegister sin cambios)
 
     // inicio de sesion
     const [loginData, setLoginData] = useState({ username: '', password: '' });
@@ -147,7 +157,7 @@ const SesionRegistro = () => {
                 title: "Registro exitoso",
                 description: "Por favor inicia sesión.",
                 className: "bg-green-500 text-white",
-            });
+                });
             setTipoForm('login');
             setRegisterData({
                 username: '', email: '', password: '', nombre: '', apellido: '', telefono: '', edad: '', fecha_nacimiento: ''
@@ -165,17 +175,37 @@ const SesionRegistro = () => {
     };
 
     return (
-        <div className="flex justify-center items-center min-h-[80vh] bg-background p-4">
-            <Card className="w-full max-w-md shadow-xl">
+        <div className="flex justify-center items-center min-h-[80vh] bg-background p-4 relative bg-[url('/path/to/pattern.svg')]">
+                <Card className="w-full max-w-md shadow-2xl bg-card/90 backdrop-blur-md border-border/50 transition-all duration-300 relative">
+                
+                {/* Botón Flotante Volver */}
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-2 left-2 text-muted-foreground hover:text-primary transition-colors"
+                    onClick={() => navigate('/')}
+                >
+                    <Home className="h-5 w-5" />
+                </Button>
+
                 <CardHeader>
                     <CardTitle className="text-2xl font-bold text-center text-primary">
                         {tipoForm === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta'}
                     </CardTitle>
-                    <CardDescription className="text-center">
+                    <CardDescription className="text-center text-muted-foreground">
                         {tipoForm === 'login' ? 'Bienvenido de vuelta' : 'Únete a la comunidad deportiva'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
+                    <div key={tipoForm} className="animate-[fadeIn_0.4s_ease-out]">
+                        <style>
+                            {`
+                                @keyframes fadeIn {
+                                    from { opacity: 0; transform: translateY(10px); }
+                                    to { opacity: 1; transform: translateY(0); }
+                                }
+                            `}
+                        </style>
                     {
                         tipoForm === 'login' ? (
                             <form onSubmit={handleLoginSubmit} className="space-y-4">
@@ -311,6 +341,7 @@ const SesionRegistro = () => {
                             </form>
                         )
                     }
+                    </div>
                 </CardContent >
                 <CardFooter className="flex justify-center">
                     <p className="text-sm text-muted-foreground">

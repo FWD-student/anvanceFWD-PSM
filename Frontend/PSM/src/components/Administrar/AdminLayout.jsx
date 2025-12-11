@@ -55,7 +55,7 @@ function AdminLayout({ children }) {
     }, [navigate]);
 
     return (
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen bg-gray-50 dark:bg-background transition-colors duration-300">
 
             <aside
                 className={`${sidebarOpen ? 'w-64' : 'w-20'
@@ -71,7 +71,7 @@ function AdminLayout({ children }) {
                     </button>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-2">
+                <nav className="flex-1 p-4 space-y-1">
                     {menuItems.map((item) => {
                         const Icon = item.icon;
                         /* Verificar si la ruta actual coincide con el path del item */
