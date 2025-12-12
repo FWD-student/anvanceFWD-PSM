@@ -1,6 +1,6 @@
 const API_URL = 'http://127.0.0.1:8000/api/';
 
-async function register(username, nombre, apellido, email, password, telefono, edad, fecha_nacimiento) {
+async function register(username, nombre, apellido, email, password, telefono, edad, fecha_nacimiento, nacionalidad) {
     const userData = {
         username,
         email,
@@ -9,7 +9,8 @@ async function register(username, nombre, apellido, email, password, telefono, e
         last_name: apellido,
         telefono,
         edad,
-        fecha_nacimiento
+        fecha_nacimiento,
+        nacionalidad // nuevo campo necesario para la validaciones futuras o nuevos features
     };
 
     const response = await fetch(`${API_URL}register/`, {

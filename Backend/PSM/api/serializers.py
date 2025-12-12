@@ -22,12 +22,14 @@ class UserSerializer(serializers.ModelSerializer):
             'telefono', #datos extra
             'edad', #datos extra
             'fecha_nacimiento', #datos extra
+            'nacionalidad', #datos TSE
             'password',
             'intereses',
         ]
         extra_kwargs = {
             'password': {'write_only': True},
-            'intereses': {'required': False}
+            'intereses': {'required': False},
+            'nacionalidad': {'required': False}
         }
 
     def create(self, validated_data):

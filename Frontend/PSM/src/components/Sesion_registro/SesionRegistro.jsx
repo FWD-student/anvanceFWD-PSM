@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import authService from '../../services/authService';
+import tseService from '../../services/tseService';
 import { jwtDecode } from "jwt-decode";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-import { Home } from 'lucide-react';
+import { Home, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 
 const SesionRegistro = () => {
     const navigate = useNavigate();
@@ -13,14 +14,17 @@ const SesionRegistro = () => {
     const { toast } = useToast();
     const [tipoForm, setTipoForm] = useState('login'); // 'login' or 'registro'
     const [loading, setLoading] = useState(false);
+    
+    // Estados para validación TSE
+    const [validandoTSE, setValidandoTSE] = useState(false);
+    const [cedulaValidada, setCedulaValidada] = useState(false);
+    const [tseError, setTseError] = useState('');
 
     useEffect(() => {
         if (searchParams.get('view') === 'registro') {
             setTipoForm('registro');
         }
     }, [searchParams]);
-
-    // ... (resto de funciones handleLogin, handleRegister sin cambios)
 
     // inicio de sesion
     const [loginData, setLoginData] = useState({ username: '', password: '' });
@@ -34,7 +38,8 @@ const SesionRegistro = () => {
         apellido: '', // last_name
         telefono: '',
         edad: '',
-        fecha_nacimiento: ''
+        fecha_nacimiento: '',
+        nacionalidad: '' // Campo para TSE o EXTRANJERO
     });
 
     const handleLoginChange = (e) => {
@@ -46,7 +51,15 @@ const SesionRegistro = () => {
     };
 
     const handleRegisterChange = (e) => {
-        const { name, value } = e.target;
+        let { name, value } = e.target;
+        
+        // Es cedula, solo permitir numeros
+        if (name === 'username') {
+            value = value.replace(/[^0-9]/g, '');
+            setCedulaValidada(false);
+            setTseError('');
+        }
+        
         setRegisterData(prev => {
             const newData = { ...prev, [name]: value };
 
@@ -63,6 +76,85 @@ const SesionRegistro = () => {
             }
             return newData;
         });
+    };
+
+    // Validar cedula con TSE cuando el usuario sale del campo
+    const handleCedulaBlur = async () => {
+        const cedula = registerData.username.trim();
+        
+        // Si la cedula esta vacia o tiene menos de 9 caracteres, no validar
+        if (!cedula || cedula.replace(/[^0-9]/g, '').length < 9) {
+            return;
+        }
+        
+        // Si ya esta validada, no volver a validar
+        if (cedulaValidada) {
+            return;
+        }
+        
+        setValidandoTSE(true);
+        setTseError('');
+        
+        try {
+            const resultado = await tseService.validarCedula(cedula);
+            
+            if (resultado.success) {
+                // Para autocompletar campos con datos del TSE
+                const fechaNac = resultado.data.fechaNacimiento;
+                let edadCalculada = '';
+                
+                // Calcular edad desde fecha de nacimiento
+                if (fechaNac) {
+                    const birthDate = new Date(fechaNac);
+                    const today = new Date();
+                    let age = today.getFullYear() - birthDate.getFullYear();
+                    const m = today.getMonth() - birthDate.getMonth();
+                    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                        age--;
+                    }
+                    edadCalculada = age >= 0 ? age : '';
+                }
+                
+                setRegisterData(prev => ({
+                    ...prev,
+                    nombre: resultado.data.nombre || '',
+                    apellido: `${resultado.data.primerApellido} ${resultado.data.segundoApellido}`.trim(),
+                    fecha_nacimiento: fechaNac || '',
+                    edad: edadCalculada,
+                    nacionalidad: resultado.data.nacionalidad || 'COSTARRICENSE'
+                }));
+                
+                setCedulaValidada(true);
+                toast({
+                    title: "Cédula validada",
+                    description: `Datos obtenidos del TSE para ${resultado.data.nombreCompleto}`,
+                    className: "bg-green-500 text-white",
+                });
+            } else {
+                // Cedula no encontrada en TSE, permitir registro como EXTRANJERO
+                setRegisterData(prev => ({
+                    ...prev,
+                    nacionalidad: 'EXTRANJERO'
+                }));
+                setCedulaValidada(false); // Permitir edicion manual
+                setTseError(''); // Limpiar error, no es un error o solo no se encontro
+                toast({
+                    title: "Cédula no encontrada en TSE",
+                    description: "Complete los datos manualmente. Se registrará como EXTRANJERO.",
+                    className: "bg-yellow-500 text-white",
+                });
+            }
+        } catch (error) {
+            console.error('Error validando cédula:', error);
+            // En caso de error de conexion, permitir registro manual
+            toast({
+                variant: "destructive",
+                title: "Error de conexión",
+                description: "No se pudo conectar con el TSE. Complete los datos manualmente.",
+            });
+        } finally {
+            setValidandoTSE(false);
+        }
     };
 
     const handleLoginSubmit = async (e) => {
@@ -150,7 +242,8 @@ const SesionRegistro = () => {
                 registerData.password,
                 registerData.telefono,
                 registerData.edad,
-                registerData.fecha_nacimiento
+                registerData.fecha_nacimiento,
+                registerData.nacionalidad
             );
 
             toast({
@@ -159,8 +252,9 @@ const SesionRegistro = () => {
                 className: "bg-green-500 text-white",
                 });
             setTipoForm('login');
+            setCedulaValidada(false); // Resetear estado de validación
             setRegisterData({
-                username: '', email: '', password: '', nombre: '', apellido: '', telefono: '', edad: '', fecha_nacimiento: ''
+                username: '', email: '', password: '', nombre: '', apellido: '', telefono: '', edad: '', fecha_nacimiento: '', nacionalidad: ''
             });
         } catch (err) {
             console.error("Register error:", err);
@@ -241,13 +335,22 @@ const SesionRegistro = () => {
                             <form onSubmit={handleRegisterSubmit} className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Cédula</label>
+                                        <label className="text-sm font-medium flex items-center gap-2">
+                                            Cédula
+                                            {validandoTSE && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
+                                            {cedulaValidada && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                                        </label>
                                         <input
                                             type="text"
                                             name="username"
-                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            placeholder="Ej: 101110111"
+                                            className={`flex h-10 w-full rounded-md border px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                                                cedulaValidada ? 'border-green-500 bg-green-50' : 'border-input bg-background'
+                                            }`}
                                             value={registerData.username}
                                             onChange={handleRegisterChange}
+                                            onBlur={handleCedulaBlur}
+                                            disabled={validandoTSE}
                                             required
                                         />
                                     </div>
@@ -270,20 +373,26 @@ const SesionRegistro = () => {
                                         <input
                                             type="text"
                                             name="nombre"
-                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            className={`flex h-10 w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                                                cedulaValidada ? 'bg-muted cursor-not-allowed' : 'bg-background'
+                                            }`}
                                             value={registerData.nombre}
                                             onChange={handleRegisterChange}
+                                            readOnly={cedulaValidada}
                                             required
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Apellido</label>
+                                        <label className="text-sm font-medium">Apellidos</label>
                                         <input
                                             type="text"
                                             name="apellido"
-                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            className={`flex h-10 w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                                                cedulaValidada ? 'bg-muted cursor-not-allowed' : 'bg-background'
+                                            }`}
                                             value={registerData.apellido}
                                             onChange={handleRegisterChange}
+                                            readOnly={cedulaValidada}
                                             required
                                         />
                                     </div>
@@ -329,9 +438,12 @@ const SesionRegistro = () => {
                                     <input
                                         type="date"
                                         name="fecha_nacimiento"
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        className={`flex h-10 w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                                            cedulaValidada ? 'bg-muted cursor-not-allowed' : 'bg-background'
+                                        }`}
                                         value={registerData.fecha_nacimiento}
                                         onChange={handleRegisterChange}
+                                        readOnly={cedulaValidada}
                                     />
                                 </div>
 

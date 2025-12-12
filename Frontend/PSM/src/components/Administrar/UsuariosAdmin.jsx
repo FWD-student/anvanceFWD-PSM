@@ -29,6 +29,7 @@ function UsuariosAdmin() {
         telefono: '',
         edad: '',
         fecha_nacimiento: '',
+        nacionalidad: '',
         role: 'user' // 'user' or 'admin'
     });
 
@@ -53,10 +54,6 @@ function UsuariosAdmin() {
     };
 
     const [editingId, setEditingId] = useState(null);
-
-    // ... (useEffect remains same)
-
-    // ... (obtenerUsuarios remains same)
 
     const manejarCambioInput = (e) => {
         const { name, value } = e.target;
@@ -84,6 +81,7 @@ function UsuariosAdmin() {
             telefono: user.telefono || '',
             edad: user.edad || '',
             fecha_nacimiento: user.fecha_nacimiento || '',
+            nacionalidad: user.nacionalidad || '',
             role: user.is_staff ? 'admin' : 'user' // Asumiendo que is_staff determina admin por ahora, o verificar lógica de roles
         });
         setIsDialogOpen(true);
@@ -99,6 +97,7 @@ function UsuariosAdmin() {
             telefono: '',
             edad: '',
             fecha_nacimiento: '',
+            nacionalidad: '',
             role: 'user'
         });
         setEditingId(null);
@@ -143,6 +142,7 @@ function UsuariosAdmin() {
                     telefono: formData.telefono,
                     edad: formData.edad,
                     fecha_nacimiento: formData.fecha_nacimiento,
+                    nacionalidad: formData.nacionalidad,
                     //El backend debe soportar el manejo de roles
                 };
                 
@@ -176,7 +176,8 @@ function UsuariosAdmin() {
                     formData.password,
                     formData.telefono,
                     formData.edad,
-                    formData.fecha_nacimiento
+                    formData.fecha_nacimiento,
+                    formData.nacionalidad
                 );
 
                 // Asignar el rol si es admin
@@ -282,6 +283,10 @@ function UsuariosAdmin() {
                                 <Input id="fecha_nacimiento" name="fecha_nacimiento" type="date" value={formData.fecha_nacimiento} onChange={manejarCambioInput} />
                             </div>
                             <div className="space-y-2">
+                                <Label htmlFor="nacionalidad">Nacionalidad</Label>
+                                <Input id="nacionalidad" name="nacionalidad" value={formData.nacionalidad} onChange={manejarCambioInput} placeholder="COSTARRICENSE" />
+                            </div>
+                            <div className="space-y-2">
                                 <Label htmlFor="role">Rol de Usuario</Label>
                                 <Select onValueChange={manejarCambioRol} value={formData.role}>
                                     <SelectTrigger>
@@ -362,7 +367,6 @@ function UsuariosAdmin() {
                                                 Editar
                                             </Button>
                                         </TableCell>
-
                                     </TableRow>
                                 ))
                             )}

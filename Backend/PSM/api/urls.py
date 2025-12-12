@@ -40,4 +40,7 @@ urlpatterns = [
 
     # Configuracion Global
     path('configuracion/perfil/', ConfiguracionPerfilView.as_view(), name="configuracion perfil"),
+    
+    # Validación TSE
+    path('validar-cedula/', ValidarCedulaTSEView.as_view(), name="validar cedula TSE"),
 ]

@@ -2,6 +2,7 @@ from django.shortcuts import render
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import status
 from .models import *
 from .serializers import *
 #Rol y auth
@@ -14,6 +15,8 @@ Usuario = get_user_model()
 from .mongo_utils import UtilidadesMongo
 from django.http import HttpResponse
 from django.db.models import Count
+# TSE Service para validación de cédulas
+from .services.tse_service import tse_service
 
 
 # Vistas User (autenticacion)
@@ -61,7 +64,7 @@ class InscripcionDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = InscripcionSerializer
     permission_classes = [IsAuthenticated]  # Solo usuarios autenticados
 
-    # METODO PARA ACTUALIZAR INSCRIPCION (Lógica de Cupos)
+    # METODO PARA ACTUALIZAR INSCRIPCION (Logica de Cupos)
     def perform_update(self, serializer):
         # 1. Obtener la instancia actual antes de guardar cambios
         instance = self.get_object()
@@ -74,7 +77,7 @@ class InscripcionDetailView(generics.RetrieveUpdateDestroyAPIView):
         print(f"Nuevo estado: {nuevo_estado}")
         print(f"Cupos actuales: {evento.cupos_disponibles}")
 
-        # 3. Lógica para reducir cupos (Pendiente/Cancelada -> Confirmada)
+        # 3. Logica para reducir cupos (Pendiente/Cancelada -> Confirmada)
         if instance.estado != 'confirmada' and nuevo_estado == 'confirmada':
             # Verificar si hay cupos
             if evento.cupos_disponibles > 0:
@@ -138,7 +141,6 @@ class MisInscripcionesView(APIView):
         
         return Response(data)
 
-
 # Vista de reseña
 class ResenaListCreateView(generics.ListCreateAPIView):
     queryset = Resena.objects.all()
@@ -149,7 +151,6 @@ class ResenaDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Resena.objects.all()
     serializer_class = ResenaSerializer
     permission_classes = [IsOwnerOrAdmin]  # Dueño o Admin
-
 
 # Vista de Contacto
 class ContactoListCreateView(generics.ListCreateAPIView):
@@ -342,7 +343,6 @@ class CategEventoPopularesView(APIView):
             })
         return Response(data)
 
-
 # Vista para la Configuración Global del Perfil
 class ConfiguracionPerfilView(APIView):
     # GET: Publico (o autenticado) para que el front sepa que campo bloquear
@@ -370,3 +370,28 @@ class ConfiguracionPerfilView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
+
+# Vista para validar cedulas con el TSE
+class ValidarCedulaTSEView(APIView):
+    """
+    Endpoint para validar cedulas costarricenses contra el TSE.
+    Recibe una cedula y devuelve los datos de la persona si es valida.
+    """
+    permission_classes = [AllowAny]  # Público para permitir validación durante registro
+    
+    def post(self, request):
+        cedula = request.data.get('cedula', '')
+        
+        if not cedula:
+            return Response(
+                {'error': 'El campo cédula es requerido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Consultar al TSE
+        resultado = tse_service.consultar_cedula(cedula)
+        
+        if resultado.get('valida'):
+            return Response(resultado, status=status.HTTP_200_OK)
+        else:
+            return Response(resultado, status=status.HTTP_400_BAD_REQUEST)
