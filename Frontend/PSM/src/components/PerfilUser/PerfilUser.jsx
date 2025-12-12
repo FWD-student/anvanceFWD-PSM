@@ -10,8 +10,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Calendar, MapPin, Clock, X } from "lucide-react";
+import { Loader2, Calendar, MapPin, Clock, X, User, Heart, ClipboardList, LogOut, ChevronRight, Home } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { AlternadorTema } from '../ui/alternador-tema.jsx';
+import './perfilUser.css';
 
 // Función para calcular edad a partir de fecha de nacimiento
 const calcularEdad = (fechaNacimiento) => {
@@ -26,6 +30,33 @@ const calcularEdad = (fechaNacimiento) => {
     return edad;
 };
 
+// Variantes de animación para las transiciones
+const contentVariants = {
+    initial: { 
+        opacity: 0, 
+        x: 30,
+        scale: 0.98
+    },
+    animate: { 
+        opacity: 1, 
+        x: 0,
+        scale: 1,
+        transition: {
+            duration: 0.35,
+            ease: [0.25, 0.46, 0.45, 0.94]
+        }
+    },
+    exit: { 
+        opacity: 0, 
+        x: -30,
+        scale: 0.98,
+        transition: {
+            duration: 0.25,
+            ease: [0.25, 0.46, 0.45, 0.94]
+        }
+    }
+};
+
 function PerfilUser() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -34,8 +65,12 @@ function PerfilUser() {
     const [inscripciones, setInscripciones] = useState([]);
     const [loadingInscripciones, setLoadingInscripciones] = useState(true);
     const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
+    const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
     const [inscripcionACancelar, setInscripcionACancelar] = useState(null);
+    const [activeSection, setActiveSection] = useState('personal');
+    const [isExiting, setIsExiting] = useState(false);
     const { toast } = useToast();
+    const navigate = useNavigate();
 
     // Estado para la configuración de campos editables
     const [config, setConfig] = useState({
@@ -56,19 +91,23 @@ function PerfilUser() {
         intereses: []
     });
 
+    const menuItems = [
+        { id: 'personal', label: 'Información Personal', icon: User, description: 'Tus datos de contacto' },
+        { id: 'intereses', label: 'Mis Intereses', icon: Heart, description: 'Deportes que te gustan' },
+        { id: 'inscripciones', label: 'Mis Inscripciones', icon: ClipboardList, description: 'Eventos registrados' }
+    ];
+
     useEffect(() => {
         loadData();
     }, []);
 
+    // Cargar datos del usuario, categorías e inscripciones
     const loadData = async () => {
         try {
-            // Cargar configuracion global PRIMERO
             try {
                 const configData = await configService.getConfig();
                 if (configData) setConfig(configData);
             } catch (err) {
-
-
                 console.warn("No se pudo cargar config, usando defaults", err);
             }
 
@@ -79,11 +118,9 @@ function PerfilUser() {
             }
             setUser(currentUser);
 
-            // Cargar categorías para intereses
             const cats = await categoriaService.getCategEventos();
             setCategorias(cats);
 
-            // Inicializar formulario
             setFormData({
                 email: currentUser.email || '',
                 telefono: currentUser.telefono || '',
@@ -92,7 +129,6 @@ function PerfilUser() {
                 intereses: currentUser.intereses || []
             });
 
-            // Cargar inscripciones del usuario
             try {
                 const insc = await inscripcionService.getMisInscripciones();
                 setInscripciones(insc);
@@ -112,10 +148,10 @@ function PerfilUser() {
         setLoading(false);
     };
 
+    // Manejo de cambios del formulario
     const handleChange = (e) => {
         const { name, value } = e.target;
         
-        // Si cambia la fecha de nacimiento, calcular edad automáticamente
         if (name === 'fecha_nacimiento') {
             const edadCalculada = calcularEdad(value);
             setFormData(prev => ({
@@ -142,26 +178,24 @@ function PerfilUser() {
         });
     };
 
+    // funcion del enviado del formulario
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
 
         try {
-            // Validaciones simples
             if (formData.edad && (formData.edad < 0 || formData.edad > 120)) {
                 toast({ title: "Error", description: "La edad debe ser válida", variant: "destructive" });
                 setSaving(false);
                 return;
             }
 
-            // Validar email
             if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
                 toast({ title: "Error", description: "El correo electrónico no es válido", variant: "destructive" });
                 setSaving(false);
                 return;
             }
 
-            // Enviar actualización
             await authService.updateProfile(user.id, formData);
             
             toast({
@@ -169,7 +203,6 @@ function PerfilUser() {
                 description: "Tus datos se han guardado correctamente."
             });
             
-            // Actualizar estado local del usuario
             setUser(prev => ({ ...prev, ...formData }));
             setSaving(false);
 
@@ -201,7 +234,6 @@ function PerfilUser() {
                 description: `Te has dado de baja del evento "${inscripcionACancelar.evento_nombre}"`
             });
             
-            // Recargar inscripciones
             const insc = await inscripcionService.getMisInscripciones();
             setInscripciones(insc);
             
@@ -218,7 +250,6 @@ function PerfilUser() {
         }
     };
 
-    // Formatear hora para mostrar
     const formatearHora = (horaStr) => {
         if (!horaStr) return '';
         const partes = horaStr.split(':');
@@ -231,220 +262,405 @@ function PerfilUser() {
 
     const getEstadoBadge = (estado) => {
         const variants = {
-            pendiente: 'bg-yellow-100 text-yellow-800',
-            confirmada: 'bg-green-100 text-green-800',
-            cancelada: 'bg-red-100 text-red-800'
+            pendiente: 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30',
+            confirmada: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+            cancelada: 'bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30'
         };
         return variants[estado] || variants.pendiente;
     };
 
+    // Navegación con transición de salida
+    const handleGoHome = () => {
+        setIsExiting(true);
+        setTimeout(() => {
+            navigate('/');
+        }, 300);
+    };
+
+    const handleLogout = () => {
+        setIsExiting(true);
+        setTimeout(() => {
+            authService.logout();
+            navigate('/sesion');
+        }, 300);
+    };
+
+    // Obtener iniciales del usuario
+    const getInitials = () => {
+        if (!user) return '?';
+        const first = user.first_name?.charAt(0) || '';
+        const last = user.last_name?.charAt(0) || '';
+        return (first + last).toUpperCase() || user.username?.charAt(0)?.toUpperCase() || '?';
+    };
+
     if (loading) {
-        return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+        return (
+            <div className="perfil-loading">
+                <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+                <p>Cargando perfil...</p>
+            </div>
+        );
     }
 
     if (!user) {
-        return <div className="p-8 text-center">Debes iniciar sesión para ver tu perfil.</div>;
+        return (
+            <div className="perfil-no-session">
+                <User className="h-16 w-16 text-muted-foreground/50" />
+                <p>Debes iniciar sesión para ver tu perfil.</p>
+                <Button onClick={() => navigate('/sesion')}>Iniciar Sesión</Button>
+            </div>
+        );
     }
 
     return (
-        <div className="container mx-auto py-8 px-4 max-w-5xl">
-            <h1 className="text-3xl font-bold mb-8 text-center">Mi Perfil</h1>
-            
-            <div className="grid gap-6 lg:grid-cols-3">
-                {/* Columna 1: Datos Personales */}
-                <Card className="lg:col-span-1">
-                    <CardHeader>
-                        <CardTitle>Información Personal</CardTitle>
-                        <CardDescription>Gestiona tus datos de contacto</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>Nombre</Label>
-                                    <Input 
-                                        value={user.first_name || ''} 
-                                        // Siempre deshabilitado o segun config
-                                        disabled={!config.nombre_editable} 
-                                        className={!config.nombre_editable ? "bg-muted" : ""}
+        <motion.div 
+            className="perfil-container"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: isExiting ? 0 : 1, scale: isExiting ? 0.98 : 1 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+        >
+            {/* Sidebar */}
+            <aside className="perfil-sidebar">
+                {/* Top bar: Home + Theme */}
+                <div className="perfil-topbar">
+                    <button onClick={handleGoHome} className="perfil-home-btn">
+                        <Home size={18} />
+                        <span>Inicio</span>
+                    </button>
+                    <AlternadorTema />
+                </div>
+
+                {/* Avatar y nombre */}
+                <div className="perfil-sidebar-header">
+                    <motion.div 
+                        className="perfil-avatar"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.4, ease: "easeOut" }}
+                    >
+                        {getInitials()}
+                    </motion.div>
+                    <motion.div 
+                        className="perfil-user-info"
+                        initial={{ y: 10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.1, duration: 0.4 }}
+                    >
+                        <h2>{user.first_name} {user.last_name}</h2>
+                        <p>{user.email}</p>
+                    </motion.div>
+                </div>
+
+                {/* Navegación */}
+                <nav className="perfil-nav">
+                    {menuItems.map((item, index) => {
+                        const Icon = item.icon;
+                        const isActive = activeSection === item.id;
+                        
+                        return (
+                            <motion.button
+                                key={item.id}
+                                initial={{ x: -20, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                transition={{ delay: index * 0.08, duration: 0.3 }}
+                                onClick={() => setActiveSection(item.id)}
+                                className={`perfil-nav-item ${isActive ? 'active' : ''}`}
+                            >
+                                {isActive && (
+                                    <motion.div
+                                        layoutId="activeTab"
+                                        className="perfil-nav-indicator"
+                                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
                                     />
-                                    {!config.nombre_editable && <span className="text-xs text-muted-foreground">No editable</span>}
+                                )}
+                                <Icon className="perfil-nav-icon" size={22} />
+                                <div className="perfil-nav-text">
+                                    <span className="perfil-nav-label">{item.label}</span>
+                                    <span className="perfil-nav-desc">{item.description}</span>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label>Apellido</Label>
-                                    <Input 
-                                        value={user.last_name || ''} 
-                                        disabled={!config.apellido_editable} 
-                                        className={!config.apellido_editable ? "bg-muted" : ""}
-                                    />
-                                </div>
-                            </div>
-                            
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Correo Electrónico</Label>
-                                <Input 
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    disabled={!config.email_editable}
-                                    className={!config.email_editable ? "bg-muted" : ""}
-                                />
+                                <ChevronRight className={`perfil-nav-arrow ${isActive ? 'visible' : ''}`} size={18} />
+                            </motion.button>
+                        );
+                    })}
+                </nav>
+
+                {/* Footer: Logout */}
+                <div className="perfil-sidebar-footer">
+                    <button onClick={() => setConfirmLogoutOpen(true)} className="perfil-logout-btn">
+                        <LogOut size={18} />
+                        <span>Cerrar Sesión</span>
+                    </button>
+                </div>
+            </aside>
+
+            {/* Contenido Principal */}
+            <main className="perfil-main">
+                <AnimatePresence mode="wait">
+                    {/* Sección: Información Personal */}
+                    {activeSection === 'personal' && (
+                        <motion.div
+                            key="personal"
+                            variants={contentVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            className="perfil-section"
+                        >
+                            <div className="perfil-section-header">
+                                <h1>Información Personal</h1>
+                                <p>Gestiona tus datos de contacto</p>
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="telefono">Teléfono</Label>
-                                <Input 
-                                    id="telefono" 
-                                    name="telefono" 
-                                    value={formData.telefono} 
-                                    onChange={handleChange} 
-                                    placeholder="Ej: 88888888"
-                                    disabled={!config.telefono_editable}
-                                    className={!config.telefono_editable ? "bg-muted" : ""}
-                                />
-                            </div>
+                            <Card className="perfil-card">
+                                <CardContent className="pt-6">
+                                    <form onSubmit={handleSubmit} className="perfil-form">
+                                        <div className="perfil-form-grid">
+                                            <div className="perfil-form-group">
+                                                <Label>Nombre</Label>
+                                                <Input 
+                                                    value={user.first_name || ''} 
+                                                    disabled={!config.nombre_editable} 
+                                                    className={!config.nombre_editable ? "bg-muted/50" : ""}
+                                                />
+                                                {!config.nombre_editable && <span className="perfil-field-hint">No editable</span>}
+                                            </div>
+                                            <div className="perfil-form-group">
+                                                <Label>Apellido</Label>
+                                                <Input 
+                                                    value={user.last_name || ''} 
+                                                    disabled={!config.apellido_editable} 
+                                                    className={!config.apellido_editable ? "bg-muted/50" : ""}
+                                                />
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="perfil-form-group">
+                                            <Label htmlFor="email">Correo Electrónico</Label>
+                                            <Input 
+                                                id="email"
+                                                name="email"
+                                                type="email"
+                                                value={formData.email}
+                                                onChange={handleChange}
+                                                disabled={!config.email_editable}
+                                                className={!config.email_editable ? "bg-muted/50" : ""}
+                                            />
+                                        </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="fecha_nacimiento">Fecha de Nacimiento</Label>
-                                    <Input 
-                                        id="fecha_nacimiento" 
-                                        name="fecha_nacimiento" 
-                                        type="date" 
-                                        value={formData.fecha_nacimiento} 
-                                        onChange={handleChange} 
-                                        disabled={!config.fecha_nacimiento_editable}
-                                        className={!config.fecha_nacimiento_editable ? "bg-muted" : ""}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Edad</Label>
-                                    <Input 
-                                        value={formData.edad} 
-                                        disabled 
-                                        className="bg-muted"
-                                        placeholder="Se calcula automáticamente"
-                                    />
-                                </div>
-                            </div>
+                                        <div className="perfil-form-group">
+                                            <Label htmlFor="telefono">Teléfono</Label>
+                                            <Input 
+                                                id="telefono" 
+                                                name="telefono" 
+                                                value={formData.telefono} 
+                                                onChange={handleChange} 
+                                                placeholder="Ej: 88888888"
+                                                disabled={!config.telefono_editable}
+                                                className={!config.telefono_editable ? "bg-muted/50" : ""}
+                                            />
+                                        </div>
 
-                            {/* Mostrar botón solo si hay al menos un campo editable relevante (opcional, por ahora mostrar siempre) */}
-                            <Button type="submit" disabled={saving} className="w-full">
-                                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                Guardar Cambios
-                            </Button>
-                        </form>
-                    </CardContent>
-                </Card>
+                                        <div className="perfil-form-grid">
+                                            <div className="perfil-form-group">
+                                                <Label htmlFor="fecha_nacimiento">Fecha de Nacimiento</Label>
+                                                <Input 
+                                                    id="fecha_nacimiento" 
+                                                    name="fecha_nacimiento" 
+                                                    type="date" 
+                                                    value={formData.fecha_nacimiento} 
+                                                    onChange={handleChange} 
+                                                    disabled={!config.fecha_nacimiento_editable}
+                                                    className={!config.fecha_nacimiento_editable ? "bg-muted/50" : ""}
+                                                />
+                                            </div>
+                                            <div className="perfil-form-group">
+                                                <Label>Edad</Label>
+                                                <Input 
+                                                    value={formData.edad} 
+                                                    disabled 
+                                                    className="bg-muted/50"
+                                                    placeholder="Se calcula automáticamente"
+                                                />
+                                            </div>
+                                        </div>
 
-                {/* Columna 2: Intereses */}
-                <Card className="lg:col-span-1">
-                    <CardHeader>
-                        <CardTitle>Mis Intereses</CardTitle>
-                        <CardDescription>
-                            Selecciona los deportes que te interesan
-                            {!config.intereses_editable && <span className="block text-red-500 text-xs mt-1">(Edición desactivada por admin)</span>}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3 max-h-64 overflow-y-auto">
-                            {categorias.map(categoria => (
-                                <div key={categoria.id} className="flex items-center space-x-2 border p-3 rounded-md hover:bg-accent transition-colors">
-                                    <Checkbox 
-                                        id={`cat-${categoria.id}`} 
-                                        checked={formData.intereses.includes(categoria.id)}
-                                        onCheckedChange={() => handleInteresChange(categoria.id)}
-                                        disabled={!config.intereses_editable}
-                                    />
-                                    <Label 
-                                        htmlFor={`cat-${categoria.id}`} 
-                                        className="flex-1 cursor-pointer font-medium"
-                                    >
-                                        {categoria.nombre}
-                                    </Label>
-                                </div>
-                            ))}
-                            {categorias.length === 0 && <p className="text-muted-foreground">No hay categorías disponibles.</p>}
-                        </div>
-                        <div className="mt-4">
-                            <h4 className="text-sm font-semibold mb-2">Tus intereses:</h4>
-                            <div className="flex flex-wrap gap-2">
-                                {formData.intereses.length > 0 ? (
-                                    formData.intereses.map(id => {
-                                        const cat = categorias.find(c => c.id === id);
-                                        return cat ? <Badge key={id} variant="secondary">{cat.nombre}</Badge> : null;
-                                    })
-                                ) : (
-                                    <span className="text-sm text-muted-foreground">Ninguno seleccionado</span>
+                                        <Button type="submit" disabled={saving} className="perfil-save-btn">
+                                            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                            Guardar Cambios
+                                        </Button>
+                                    </form>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    )}
+
+                    {/* Sección: Intereses */}
+                    {activeSection === 'intereses' && (
+                        <motion.div
+                            key="intereses"
+                            variants={contentVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            className="perfil-section"
+                        >
+                            <div className="perfil-section-header">
+                                <h1>Mis Intereses</h1>
+                                <p>Selecciona los deportes que te interesan</p>
+                                {!config.intereses_editable && (
+                                    <span className="perfil-edit-disabled">Edición desactivada por admin</span>
                                 )}
                             </div>
-                        </div>
-                        <Button type="button" onClick={handleSubmit} disabled={saving || !config.intereses_editable} className="w-full mt-4">
-                            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            Guardar Intereses
-                        </Button>
-                    </CardContent>
-                </Card>
 
-                {/* Columna 3: Mis Inscripciones */}
-                <Card className="lg:col-span-1">
-                    <CardHeader>
-                        <CardTitle>Mis Inscripciones</CardTitle>
-                        <CardDescription>Eventos en los que estás inscrito</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {loadingInscripciones ? (
-                            <div className="flex justify-center p-4">
-                                <Loader2 className="h-6 w-6 animate-spin" />
-                            </div>
-                        ) : inscripciones.length === 0 ? (
-                            <p className="text-muted-foreground text-center py-4">No tienes inscripciones activas.</p>
-                        ) : (
-                            <div className="space-y-3 max-h-80 overflow-y-auto">
-                                {inscripciones.map(inscripcion => (
-                                    <div key={inscripcion.id} className="border rounded-lg p-3 hover:bg-accent/50 transition-colors">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <h4 className="font-semibold text-sm">{inscripcion.evento_nombre}</h4>
-                                            <Badge className={getEstadoBadge(inscripcion.estado)}>
-                                                {inscripcion.estado}
-                                            </Badge>
-                                        </div>
-                                        
-                                        <div className="text-xs text-muted-foreground space-y-1">
-                                            <div className="flex items-center gap-1">
-                                                <Calendar className="h-3 w-3" />
-                                                <span>{inscripcion.evento_fecha_inicio}</span>
-                                            </div>
-                                            {inscripcion.evento_hora_inicio && (
-                                                <div className="flex items-center gap-1">
-                                                    <Clock className="h-3 w-3" />
-                                                    <span>{formatearHora(inscripcion.evento_hora_inicio)} - {formatearHora(inscripcion.evento_hora_fin)}</span>
-                                                </div>
+                            <Card className="perfil-card">
+                                <CardContent className="pt-6">
+                                    <div className="perfil-intereses-grid">
+                                        {categorias.map((categoria, index) => (
+                                            <motion.div 
+                                                key={categoria.id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.05 }}
+                                                className={`perfil-interes-item ${formData.intereses.includes(categoria.id) ? 'selected' : ''}`}
+                                                onClick={() => config.intereses_editable && handleInteresChange(categoria.id)}
+                                            >
+                                                <Checkbox 
+                                                    id={`cat-${categoria.id}`} 
+                                                    checked={formData.intereses.includes(categoria.id)}
+                                                    onCheckedChange={() => handleInteresChange(categoria.id)}
+                                                    disabled={!config.intereses_editable}
+                                                />
+                                                <Label htmlFor={`cat-${categoria.id}`} className="perfil-interes-label">
+                                                    {categoria.nombre}
+                                                </Label>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                    
+                                    {categorias.length === 0 && (
+                                        <p className="text-muted-foreground text-center py-8">No hay categorías disponibles.</p>
+                                    )}
+
+                                    <div className="perfil-intereses-summary">
+                                        <h4>Tus intereses seleccionados:</h4>
+                                        <div className="perfil-badges">
+                                            {formData.intereses.length > 0 ? (
+                                                formData.intereses.map(id => {
+                                                    const cat = categorias.find(c => c.id === id);
+                                                    return cat ? (
+                                                        <Badge key={id} className="perfil-badge">
+                                                            {cat.nombre}
+                                                        </Badge>
+                                                    ) : null;
+                                                })
+                                            ) : (
+                                                <span className="text-sm text-muted-foreground">Ninguno seleccionado</span>
                                             )}
                                         </div>
-                                        
-                                        {inscripcion.estado !== 'cancelada' && (
+                                    </div>
+
+                                    <Button 
+                                        onClick={handleSubmit} 
+                                        disabled={saving || !config.intereses_editable} 
+                                        className="perfil-save-btn"
+                                    >
+                                        {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                        Guardar Intereses
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    )}
+
+                    {/* Sección: Inscripciones */}
+                    {activeSection === 'inscripciones' && (
+                        <motion.div
+                            key="inscripciones"
+                            variants={contentVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            className="perfil-section"
+                        >
+                            <div className="perfil-section-header">
+                                <h1>Mis Inscripciones</h1>
+                                <p>Eventos en los que estás inscrito</p>
+                            </div>
+
+                            <div className="perfil-inscripciones">
+                                {loadingInscripciones ? (
+                                    <div className="perfil-inscripciones-loading">
+                                        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                                    </div>
+                                ) : inscripciones.length === 0 ? (
+                                    <Card className="perfil-card perfil-empty-state">
+                                        <CardContent className="py-12 text-center">
+                                            <ClipboardList className="h-12 w-12 mx-auto text-muted-foreground/40 mb-4" />
+                                            <p className="text-muted-foreground">No tienes inscripciones activas.</p>
                                             <Button 
                                                 variant="outline" 
-                                                size="sm" 
-                                                className="w-full mt-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                onClick={() => abrirConfirmacionCancelar(inscripcion)}
+                                                className="mt-4"
+                                                onClick={() => navigate('/calendario')}
                                             >
-                                                <X className="h-3 w-3 mr-1" />
-                                                Cancelar inscripción
+                                                Explorar Eventos
                                             </Button>
-                                        )}
+                                        </CardContent>
+                                    </Card>
+                                ) : (
+                                    <div className="perfil-inscripciones-list">
+                                        {inscripciones.map((inscripcion, index) => (
+                                            <motion.div
+                                                key={inscripcion.id}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.08 }}
+                                            >
+                                                <Card className="perfil-inscripcion-card">
+                                                    <CardContent className="py-4">
+                                                        <div className="perfil-inscripcion-header">
+                                                            <h4>{inscripcion.evento_nombre}</h4>
+                                                            <Badge className={`perfil-estado-badge ${getEstadoBadge(inscripcion.estado)}`}>
+                                                                {inscripcion.estado}
+                                                            </Badge>
+                                                        </div>
+                                                        
+                                                        <div className="perfil-inscripcion-details">
+                                                            <div className="perfil-inscripcion-detail">
+                                                                <Calendar className="h-4 w-4" />
+                                                                <span>{inscripcion.evento_fecha_inicio}</span>
+                                                            </div>
+                                                            {inscripcion.evento_hora_inicio && (
+                                                                <div className="perfil-inscripcion-detail">
+                                                                    <Clock className="h-4 w-4" />
+                                                                    <span>{formatearHora(inscripcion.evento_hora_inicio)} - {formatearHora(inscripcion.evento_hora_fin)}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        {inscripcion.estado !== 'cancelada' && (
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="sm" 
+                                                                className="perfil-cancel-btn"
+                                                                onClick={() => abrirConfirmacionCancelar(inscripcion)}
+                                                            >
+                                                                <X className="h-4 w-4 mr-1" />
+                                                                Cancelar inscripción
+                                                            </Button>
+                                                        )}
+                                                    </CardContent>
+                                                </Card>
+                                            </motion.div>
+                                        ))}
                                     </div>
-                                ))}
+                                )}
                             </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </main>
 
-            {/* Dialog de confirmación para cancelar inscripción */}
+            {/* Dialog de confirmación de cancelación */}
             <Dialog open={confirmCancelOpen} onOpenChange={setConfirmCancelOpen}>
                 <DialogContent>
                     <DialogHeader>
@@ -459,7 +675,23 @@ function PerfilUser() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div>
+
+            {/* Dialog de confirmación de cerrar sesión */}
+            <Dialog open={confirmLogoutOpen} onOpenChange={setConfirmLogoutOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>¿Cerrar sesión?</DialogTitle>
+                        <DialogDescription>
+                            ¿Estás seguro de que deseas cerrar tu sesión? Tendrás que iniciar sesión nuevamente para acceder a tu perfil.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setConfirmLogoutOpen(false)}>Cancelar</Button>
+                        <Button variant="destructive" onClick={handleLogout}>Sí, cerrar sesión</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </motion.div>
     );
 }
 

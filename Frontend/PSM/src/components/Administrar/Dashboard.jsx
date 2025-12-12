@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Calendar, MapPin, Users, MessageSquare, RefreshCw } from 'lucide-react';
+import { Calendar, MapPin, Users, MessageSquare, RefreshCw, ArrowRight, TrendingUp } from 'lucide-react';
+import { motion } from 'framer-motion';
 import EventoService from '../../services/EventoService';
 import UbicacionService from '../../services/UbicacionService';
 import InscripcionService from '../../services/InscripcionService';
@@ -26,7 +27,6 @@ function Dashboard() {
     const cargarEstadisticas = async () => {
         setLoading(true);
         try {
-            // cache busting concepto nuevo
             const [eventos, ubicaciones, inscripciones, resenas] = await Promise.all([
                 EventoService.getEventos(true),
                 UbicacionService.getUbicaciones(true),
@@ -55,32 +55,56 @@ function Dashboard() {
             value: stats.totalEventos,
             subtitle: `${stats.eventosActivos} activos`,
             icon: Calendar,
-            color: 'text-blue-600',
-            bgColor: 'bg-blue-50 dark:bg-blue-900/20'
+            gradient: 'from-blue-500 to-cyan-500',
+            bgGlow: 'shadow-blue-500/20'
         },
         {
             title: 'Ubicaciones',
             value: stats.totalUbicaciones,
             subtitle: 'Recintos registrados',
             icon: MapPin,
-            color: 'text-green-600',
-            bgColor: 'bg-green-50 dark:bg-green-900/20'
+            gradient: 'from-emerald-500 to-teal-500',
+            bgGlow: 'shadow-emerald-500/20'
         },
         {
             title: 'Inscripciones',
             value: stats.totalInscripciones,
             subtitle: `${stats.inscripcionesPendientes} pendientes`,
             icon: Users,
-            color: 'text-purple-600',
-            bgColor: 'bg-purple-50 dark:bg-purple-900/20'
+            gradient: 'from-violet-500 to-purple-500',
+            bgGlow: 'shadow-violet-500/20'
         },
         {
             title: 'Reseñas',
             value: stats.totalResenas,
             subtitle: 'Comentarios recibidos',
             icon: MessageSquare,
-            color: 'text-orange-600',
-            bgColor: 'bg-orange-50 dark:bg-orange-900/20'
+            gradient: 'from-amber-500 to-orange-500',
+            bgGlow: 'shadow-amber-500/20'
+        }
+    ];
+
+    const quickActions = [
+        {
+            title: 'Crear Evento',
+            description: 'Agregar nuevo evento deportivo',
+            path: '/admin/eventos',
+            icon: Calendar,
+            gradient: 'from-blue-500 to-cyan-500'
+        },
+        {
+            title: 'Nueva Ubicación',
+            description: 'Registrar nuevo recinto',
+            path: '/admin/ubicaciones',
+            icon: MapPin,
+            gradient: 'from-emerald-500 to-teal-500'
+        },
+        {
+            title: 'Ver Inscripciones',
+            description: 'Gestionar participantes',
+            path: '/admin/inscripciones',
+            icon: Users,
+            gradient: 'from-violet-500 to-purple-500'
         }
     ];
 
@@ -88,86 +112,133 @@ function Dashboard() {
         return (
             <div className="flex items-center justify-center h-64">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-muted-foreground">Cargando estadisticas...</p>
+                    <motion.div 
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="rounded-full h-12 w-12 border-3 border-blue-500 border-t-transparent mx-auto"
+                        style={{ borderWidth: '3px' }}
+                    />
+                    <p className="mt-4 text-muted-foreground">Cargando estadísticas...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
+            {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-                    <p className="text-muted-foreground mt-1">Resumen general del sistema</p>
+                    <motion.h1 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-3xl font-bold text-foreground tracking-tight"
+                    >
+                        Dashboard
+                    </motion.h1>
+                    <motion.p 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.1 }}
+                        className="text-muted-foreground mt-1"
+                    >
+                        Resumen general del sistema
+                    </motion.p>
                 </div>
-                <button
+                <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={cargarEstadisticas}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-slate-800 to-slate-700 dark:from-slate-700 dark:to-slate-600 text-white rounded-xl hover:shadow-lg hover:shadow-slate-500/20 transition-all duration-300 font-medium"
                 >
                     <RefreshCw size={18} />
-                    Recargar Datos
-                </button>
+                    Actualizar
+                </motion.button>
             </div>
 
+            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {statsCards.map((stat, index) => {
                     const Icon = stat.icon;
                     return (
-                        <Card key={index} className="hover:shadow-lg transition-shadow bg-card text-card-foreground">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardTitle className="text-sm font-medium text-muted-foreground">
-                                    {stat.title}
-                                </CardTitle>
-                                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                                    <Icon className={stat.color} size={20} />
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-3xl font-bold text-foreground">{stat.value}</div>
-                                <p className="text-xs text-muted-foreground mt-1">{stat.subtitle}</p>
-                            </CardContent>
-                        </Card>
+                        <motion.div
+                            key={index}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1, duration: 0.4 }}
+                        >
+                            <Card className={`relative overflow-hidden border-0 bg-card hover:shadow-xl ${stat.bgGlow} transition-all duration-300 group`}>
+                                {/* Gradient accent */}
+                                <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${stat.gradient} opacity-10 blur-2xl group-hover:opacity-20 transition-opacity`} />
+                                
+                                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                                        {stat.title}
+                                    </CardTitle>
+                                    <div className={`p-2.5 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-lg`}>
+                                        <Icon className="text-white" size={18} />
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <motion.div 
+                                        className="text-4xl font-bold text-foreground tracking-tight"
+                                        initial={{ scale: 0.5 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ delay: index * 0.1 + 0.2, type: "spring" }}
+                                    >
+                                        {stat.value}
+                                    </motion.div>
+                                    <div className="flex items-center gap-1 mt-1">
+                                        <TrendingUp size={14} className="text-emerald-500" />
+                                        <p className="text-sm text-muted-foreground">{stat.subtitle}</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
                     );
                 })}
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Acciones Rápidas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <button
-                            onClick={() => navigate('/admin/eventos')}
-                            className="p-4 border-2 border-dashed border-border rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all text-left"
-                        >
-                            <Calendar className="text-blue-600 mb-2" size={24} />
-                            <h3 className="font-semibold text-foreground">Crear Evento</h3>
-                            <p className="text-sm text-muted-foreground">Agregar nuevo evento deportivo</p>
-                        </button>
-
-                        <button
-                            onClick={() => navigate('/admin/ubicaciones')}
-                            className="p-4 border-2 border-dashed border-border rounded-lg hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all text-left"
-                        >
-                            <MapPin className="text-green-600 mb-2" size={24} />
-                            <h3 className="font-semibold text-foreground">Nueva Ubicación</h3>
-                            <p className="text-sm text-muted-foreground">Registrar nuevo recinto</p>
-                        </button>
-
-                        <button
-                            onClick={() => navigate('/admin/inscripciones')}
-                            className="p-4 border-2 border-dashed border-border rounded-lg hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all text-left"
-                        >
-                            <Users className="text-purple-600 mb-2" size={24} />
-                            <h3 className="font-semibold text-foreground">Ver Inscripciones</h3>
-                            <p className="text-sm text-muted-foreground">Gestionar participantes</p>
-                        </button>
-                    </div>
-                </CardContent>
-            </Card>
+            {/* Quick Actions */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+            >
+                <Card className="border-0 bg-card shadow-sm">
+                    <CardHeader>
+                        <CardTitle className="text-lg font-semibold">Acciones Rápidas</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {quickActions.map((action, index) => {
+                                const Icon = action.icon;
+                                return (
+                                    <motion.button
+                                        key={index}
+                                        whileHover={{ scale: 1.02, y: -2 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={() => navigate(action.path)}
+                                        className="group relative overflow-hidden p-5 border border-border rounded-2xl hover:border-transparent hover:shadow-xl transition-all duration-300 text-left bg-gradient-to-br from-background to-muted/30"
+                                    >
+                                        {/* Hover gradient overlay */}
+                                        <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
+                                        
+                                        <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${action.gradient} mb-3 shadow-lg`}>
+                                            <Icon className="text-white" size={22} />
+                                        </div>
+                                        <h3 className="font-semibold text-foreground flex items-center gap-2">
+                                            {action.title}
+                                            <ArrowRight size={16} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                                        </h3>
+                                        <p className="text-sm text-muted-foreground mt-1">{action.description}</p>
+                                    </motion.button>
+                                );
+                            })}
+                        </div>
+                    </CardContent>
+                </Card>
+            </motion.div>
         </div>
     );
 }

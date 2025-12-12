@@ -81,7 +81,7 @@ function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="default" size="lg" className="bg-[#F25C05] hover:bg-[#D94D04] text-base">
                     <User className="h-5 w-5 mr-2" />
-                    {user?.username || 'Usuario'}
+                    {user?.first_name} {user?.last_name?.split(' ')[0] || ''}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -134,7 +134,7 @@ function Header() {
                       <div className="border-t pt-4 mt-4">
                         <div className="flex justify-between items-center mb-4">
                           <p className="text-sm text-muted-foreground">
-                            Hola, {user?.username}
+                            Hola, {user?.first_name || user?.username}
                           </p>
                           <AlternadorTema />
                         </div>
