@@ -75,7 +75,9 @@ function PerfilUser() {
     // Estado para la configuración de campos editables
     const [config, setConfig] = useState({
         nombre_editable: true,
-        apellido_editable: true,
+        apellido_editable: true, // Mantener para compatibilidad
+        primer_apellido_editable: true,
+        segundo_apellido_editable: true,
         telefono_editable: true,
         fecha_nacimiento_editable: true,
         email_editable: true,
@@ -289,7 +291,7 @@ function PerfilUser() {
     const getInitials = () => {
         if (!user) return '?';
         const first = user.first_name?.charAt(0) || '';
-        const last = user.last_name?.charAt(0) || '';
+        const last = user.primer_apellido?.charAt(0) || '';
         return (first + last).toUpperCase() || user.username?.charAt(0)?.toUpperCase() || '?';
     };
 
@@ -346,8 +348,19 @@ function PerfilUser() {
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.1, duration: 0.4 }}
                     >
-                        <h2>{user.first_name} {user.last_name}</h2>
+                        <h2>{user.first_name} {user.primer_apellido} {user.segundo_apellido}</h2>
                         <p>{user.email}</p>
+                        {user.last_login && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Última conexión: {new Date(user.last_login).toLocaleDateString('es-CR', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
+                            </p>
+                        )}
                     </motion.div>
                 </div>
 
@@ -425,11 +438,22 @@ function PerfilUser() {
                                                 {!config.nombre_editable && <span className="perfil-field-hint">No editable</span>}
                                             </div>
                                             <div className="perfil-form-group">
-                                                <Label>Apellido</Label>
+                                                <Label>Primer Apellido</Label>
                                                 <Input 
-                                                    value={user.last_name || ''} 
-                                                    disabled={!config.apellido_editable} 
-                                                    className={!config.apellido_editable ? "bg-muted/50" : ""}
+                                                    value={user.primer_apellido || ''} 
+                                                    disabled={!config.primer_apellido_editable} 
+                                                    className={!config.primer_apellido_editable ? "bg-muted/50" : ""}
+                                                />
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="perfil-form-grid">
+                                            <div className="perfil-form-group">
+                                                <Label>Segundo Apellido</Label>
+                                                <Input 
+                                                    value={user.segundo_apellido || ''} 
+                                                    disabled={!config.segundo_apellido_editable} 
+                                                    className={!config.segundo_apellido_editable ? "bg-muted/50" : ""}
                                                 />
                                             </div>
                                         </div>

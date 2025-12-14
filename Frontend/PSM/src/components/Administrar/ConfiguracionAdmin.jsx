@@ -92,12 +92,23 @@ function ConfiguracionAdmin() {
 
                         <div className="flex items-center justify-between space-x-2 border-b pb-4">
                             <div className="space-y-0.5">
-                                <Label className="text-base">Apellido</Label>
-                                <p className="text-sm text-muted-foreground">Permitir cambiar sus apellidos</p>
+                                <Label className="text-base">Primer Apellido</Label>
+                                <p className="text-sm text-muted-foreground">Permitir cambiar su primer apellido</p>
                             </div>
                             <Switch 
-                                checked={config.apellido_editable} 
-                                onCheckedChange={() => handleToggle('apellido_editable')} 
+                                checked={config.primer_apellido_editable} 
+                                onCheckedChange={() => handleToggle('primer_apellido_editable')} 
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-between space-x-2 border-b pb-4">
+                            <div className="space-y-0.5">
+                                <Label className="text-base">Segundo Apellido</Label>
+                                <p className="text-sm text-muted-foreground">Permitir cambiar su segundo apellido</p>
+                            </div>
+                            <Switch 
+                                checked={config.segundo_apellido_editable} 
+                                onCheckedChange={() => handleToggle('segundo_apellido_editable')} 
                             />
                         </div>
 

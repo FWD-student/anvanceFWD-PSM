@@ -81,7 +81,7 @@ function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="default" size="lg" className="bg-[#F25C05] hover:bg-[#D94D04] text-base">
                     <User className="h-5 w-5 mr-2" />
-                    {user?.first_name} {user?.last_name?.split(' ')[0] || ''}
+                    {user?.first_name} {user?.primer_apellido || ''}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

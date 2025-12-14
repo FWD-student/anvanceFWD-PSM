@@ -25,7 +25,8 @@ function UsuariosAdmin() {
         email: '',
         password: '',
         nombre: '',
-        apellido: '',
+        primer_apellido: '',
+        segundo_apellido: '',
         telefono: '',
         edad: '',
         fecha_nacimiento: '',
@@ -77,7 +78,8 @@ function UsuariosAdmin() {
             email: user.email,
             password: '', // No cargar password, de esta manera se mantiene la contraseña actual
             nombre: user.first_name || '',
-            apellido: user.last_name || '',
+            primer_apellido: user.primer_apellido || '',
+            segundo_apellido: user.segundo_apellido || '',
             telefono: user.telefono || '',
             edad: user.edad || '',
             fecha_nacimiento: user.fecha_nacimiento || '',
@@ -93,7 +95,8 @@ function UsuariosAdmin() {
             email: '',
             password: '',
             nombre: '',
-            apellido: '',
+            primer_apellido: '',
+            segundo_apellido: '',
             telefono: '',
             edad: '',
             fecha_nacimiento: '',
@@ -106,7 +109,7 @@ function UsuariosAdmin() {
 
     const validarRegistro = () => {
         // Campos obligatorios basicos
-        if (!formData.username || !formData.email || !formData.nombre || !formData.apellido) {
+        if (!formData.username || !formData.email || !formData.nombre || !formData.primer_apellido) {
             toast({
                 variant: "destructive",
                 title: "Error de validación",
@@ -138,7 +141,8 @@ function UsuariosAdmin() {
                     username: formData.username,
                     email: formData.email,
                     first_name: formData.nombre,
-                    last_name: formData.apellido,
+                    primer_apellido: formData.primer_apellido,
+                    segundo_apellido: formData.segundo_apellido,
                     telefono: formData.telefono,
                     edad: formData.edad,
                     fecha_nacimiento: formData.fecha_nacimiento,
@@ -171,7 +175,8 @@ function UsuariosAdmin() {
                 const newUser = await AuthService.register(
                     formData.username,
                     formData.nombre,
-                    formData.apellido,
+                    formData.primer_apellido,
+                    formData.segundo_apellido,
                     formData.email,
                     formData.password,
                     formData.telefono,
@@ -253,9 +258,13 @@ function UsuariosAdmin() {
                                     <Input id="nombre" name="nombre" value={formData.nombre} onChange={manejarCambioInput} placeholder="John" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="apellido">Apellido *</Label>
-                                    <Input id="apellido" name="apellido" value={formData.apellido} onChange={manejarCambioInput} placeholder="Doe" />
+                                    <Label htmlFor="primer_apellido">Primer Apellido *</Label>
+                                    <Input id="primer_apellido" name="primer_apellido" value={formData.primer_apellido} onChange={manejarCambioInput} placeholder="Pérez" />
                                 </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="segundo_apellido">Segundo Apellido</Label>
+                                <Input id="segundo_apellido" name="segundo_apellido" value={formData.segundo_apellido} onChange={manejarCambioInput} placeholder="González" />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="password">Contraseña {editingId ? '(Opcional)' : '*'}</Label>
@@ -334,19 +343,20 @@ function UsuariosAdmin() {
                                 <TableHead>Email</TableHead>
                                 <TableHead>Nombre Completo</TableHead>
                                 <TableHead>Teléfono</TableHead>
+                                <TableHead>Última Conexión</TableHead>
                                 <TableHead>Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {loading ? (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center py-8">
+                                    <TableCell colSpan={6} className="text-center py-8">
                                         <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600" />
                                     </TableCell>
                                 </TableRow>
                             ) : filteredUsers.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                                    <TableCell colSpan={6} className="text-center py-8">
                                         No se encontraron usuarios
                                     </TableCell>
                                 </TableRow>
@@ -360,8 +370,19 @@ function UsuariosAdmin() {
                                             {user.username}
                                         </TableCell>
                                         <TableCell>{user.email}</TableCell>
-                                        <TableCell>{`${user.first_name || ''} ${user.last_name || ''}`}</TableCell>
+                                        <TableCell>{`${user.first_name || ''} ${user.primer_apellido || ''} ${user.segundo_apellido || ''}`.trim()}</TableCell>
                                         <TableCell>{user.telefono || '-'}</TableCell>
+                                        <TableCell>
+                                            {user.last_login 
+                                                ? new Date(user.last_login).toLocaleDateString('es-CR', {
+                                                    day: 'numeric',
+                                                    month: 'short',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })
+                                                : <span className="text-muted-foreground">Nunca</span>
+                                            }
+                                        </TableCell>
                                         <TableCell>
                                             <Button variant="ghost" size="sm" onClick={() => iniciarEdicion(user)}>
                                                 Editar

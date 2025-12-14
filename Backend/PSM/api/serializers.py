@@ -23,13 +23,19 @@ class UserSerializer(serializers.ModelSerializer):
             'edad', #datos extra
             'fecha_nacimiento', #datos extra
             'nacionalidad', #datos TSE
+            'primer_apellido', # Campo normalizado
+            'segundo_apellido', # Campo normalizado
             'password',
             'intereses',
+            'last_login', # Ultima conexion
+            'date_joined', # Fecha de registro
         ]
         extra_kwargs = {
             'password': {'write_only': True},
             'intereses': {'required': False},
-            'nacionalidad': {'required': False}
+            'nacionalidad': {'required': False},
+            'primer_apellido': {'required': False},
+            'segundo_apellido': {'required': False}
         }
 
     def create(self, validated_data):

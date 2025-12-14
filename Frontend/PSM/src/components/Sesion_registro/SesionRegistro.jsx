@@ -35,7 +35,8 @@ const SesionRegistro = () => {
         email: '',
         password: '',
         nombre: '', // first_name
-        apellido: '', // last_name
+        primer_apellido: '', // Normalizado
+        segundo_apellido: '', // Normalizado
         telefono: '',
         edad: '',
         fecha_nacimiento: '',
@@ -118,7 +119,8 @@ const SesionRegistro = () => {
                 setRegisterData(prev => ({
                     ...prev,
                     nombre: resultado.data.nombre || '',
-                    apellido: `${resultado.data.primerApellido} ${resultado.data.segundoApellido}`.trim(),
+                    primer_apellido: resultado.data.primerApellido || '',
+                    segundo_apellido: resultado.data.segundoApellido || '',
                     fecha_nacimiento: fechaNac || '',
                     edad: edadCalculada,
                     nacionalidad: resultado.data.nacionalidad || 'COSTARRICENSE'
@@ -237,7 +239,8 @@ const SesionRegistro = () => {
             await authService.register(
                 registerData.username,
                 registerData.nombre,
-                registerData.apellido,
+                registerData.primer_apellido,
+                registerData.segundo_apellido,
                 registerData.email,
                 registerData.password,
                 registerData.telefono,
@@ -254,14 +257,38 @@ const SesionRegistro = () => {
             setTipoForm('login');
             setCedulaValidada(false); // Resetear estado de validación
             setRegisterData({
-                username: '', email: '', password: '', nombre: '', apellido: '', telefono: '', edad: '', fecha_nacimiento: '', nacionalidad: ''
+                username: '', email: '', password: '', nombre: '', primer_apellido: '', segundo_apellido: '', telefono: '', edad: '', fecha_nacimiento: '', nacionalidad: ''
             });
         } catch (err) {
             console.error("Register error:", err);
+            
+            // Parsear el mensaje de error para mostrar mensajes más claros
+            let errorMessage = "Error al registrar. Verifica los datos o intenta más tarde.";
+            
+            try {
+                const errorData = JSON.parse(err.message);
+                
+                // Verificar errores específicos del backend
+                if (errorData.username) {
+                    errorMessage = "Esta cédula ya está registrada. Por favor inicia sesión.";
+                } else if (errorData.email) {
+                    errorMessage = "Este correo electrónico ya está registrado.";
+                } else if (errorData.detail) {
+                    errorMessage = errorData.detail;
+                }
+            } catch (parseError) {
+                // Si no se puede parsear, usar el mensaje original
+                if (err.message.includes("username")) {
+                    errorMessage = "Esta cédula ya está registrada.";
+                } else if (err.message.includes("email")) {
+                    errorMessage = "Este correo electrónico ya está registrado.";
+                }
+            }
+            
             toast({
                 variant: "destructive",
-                title: "Error",
-                description: "Error al registrar. Verifica los datos o intenta más tarde.",
+                title: "Error de Registro",
+                description: errorMessage,
             });
         } finally {
             setLoading(false);
@@ -367,30 +394,45 @@ const SesionRegistro = () => {
                                     </div>
                                 </div>
 
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Nombre</label>
+                                    <input
+                                        type="text"
+                                        name="nombre"
+                                        className={`flex h-10 w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                                            cedulaValidada ? 'bg-muted cursor-not-allowed' : 'bg-background'
+                                        }`}
+                                        value={registerData.nombre}
+                                        onChange={handleRegisterChange}
+                                        readOnly={cedulaValidada}
+                                        required
+                                    />
+                                </div>
+
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Nombre</label>
+                                        <label className="text-sm font-medium">Primer Apellido</label>
                                         <input
                                             type="text"
-                                            name="nombre"
+                                            name="primer_apellido"
                                             className={`flex h-10 w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
                                                 cedulaValidada ? 'bg-muted cursor-not-allowed' : 'bg-background'
                                             }`}
-                                            value={registerData.nombre}
+                                            value={registerData.primer_apellido}
                                             onChange={handleRegisterChange}
                                             readOnly={cedulaValidada}
                                             required
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Apellidos</label>
+                                        <label className="text-sm font-medium">Segundo Apellido</label>
                                         <input
                                             type="text"
-                                            name="apellido"
+                                            name="segundo_apellido"
                                             className={`flex h-10 w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
                                                 cedulaValidada ? 'bg-muted cursor-not-allowed' : 'bg-background'
                                             }`}
-                                            value={registerData.apellido}
+                                            value={registerData.segundo_apellido}
                                             onChange={handleRegisterChange}
                                             readOnly={cedulaValidada}
                                             required

@@ -1,12 +1,14 @@
 const API_URL = 'http://127.0.0.1:8000/api/';
 
-async function register(username, nombre, apellido, email, password, telefono, edad, fecha_nacimiento, nacionalidad) {
+async function register(username, nombre, primerApellido, segundoApellido, email, password, telefono, edad, fecha_nacimiento, nacionalidad) {
     const userData = {
         username,
         email,
         password,
-        first_name: nombre, //first_name: username,
-        last_name: apellido,
+        first_name: nombre,
+        // normalizacion en apellidos
+        primer_apellido: primerApellido,
+        segundo_apellido: segundoApellido,
         telefono,
         edad,
         fecha_nacimiento,

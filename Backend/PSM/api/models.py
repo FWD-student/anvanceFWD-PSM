@@ -10,6 +10,9 @@ class Usuario(AbstractUser): #una correccion con el nombramiento de
     edad = models.IntegerField(blank=True, null=True)
     fecha_nacimiento = models.DateField(blank=True, null=True)
     nacionalidad = models.CharField(max_length=80, blank=True, null=True)  # Campo para TSE
+    #normalizando los apellidos (2 apellidos)
+    primer_apellido = models.CharField(max_length=100, blank=True, null=True)
+    segundo_apellido = models.CharField(max_length=100, blank=True, null=True)
     intereses = models.ManyToManyField('CategEvento', blank=True, related_name='interesados')
 
     def __str__(self):
@@ -106,7 +109,9 @@ class Contacto(models.Model):
 class ConfiguracionPerfil(models.Model):
     # Singleton: solo debe haber 1 registro. Lo controlaremos en la vista.
     nombre_editable = models.BooleanField(default=True)
-    apellido_editable = models.BooleanField(default=True)
+    apellido_editable = models.BooleanField(default=True)  # Mantener para una compatibilidad
+    primer_apellido_editable = models.BooleanField(default=True)
+    segundo_apellido_editable = models.BooleanField(default=True)
     telefono_editable = models.BooleanField(default=True)
     fecha_nacimiento_editable = models.BooleanField(default=True)
     intereses_editable = models.BooleanField(default=True)

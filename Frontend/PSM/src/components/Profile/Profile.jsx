@@ -38,7 +38,8 @@ function Profile() {
                 username: currentUser.username,
                 email: currentUser.email,
                 first_name: currentUser.first_name || '',
-                last_name: currentUser.last_name || '',
+                primer_apellido: currentUser.primer_apellido || '',
+                segundo_apellido: currentUser.segundo_apellido || '',
                 telefono: currentUser.telefono || '',
                 edad: currentUser.edad || '',
                 fecha_nacimiento: currentUser.fecha_nacimiento || ''
@@ -179,11 +180,21 @@ function Profile() {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="last_name">Apellido</Label>
+                                        <Label htmlFor="primer_apellido">Primer Apellido</Label>
                                         <Input
-                                            id="last_name"
-                                            name="last_name"
-                                            value={formData.last_name || ''}
+                                            id="primer_apellido"
+                                            name="primer_apellido"
+                                            value={formData.primer_apellido || ''}
+                                            onChange={handleInputChange}
+                                            disabled={!editMode}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="segundo_apellido">Segundo Apellido</Label>
+                                        <Input
+                                            id="segundo_apellido"
+                                            name="segundo_apellido"
+                                            value={formData.segundo_apellido || ''}
                                             onChange={handleInputChange}
                                             disabled={!editMode}
                                         />
