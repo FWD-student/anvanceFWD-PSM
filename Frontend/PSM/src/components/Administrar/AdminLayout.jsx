@@ -42,11 +42,13 @@ function AdminLayout({ children }) {
 
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
+        { id: 'estadisticas', label: 'Estadísticas', icon: LayoutDashboard, path: '/admin/estadisticas' },
         { id: 'usuarios', label: 'Usuarios', icon: UserCog, path: '/admin/usuarios' },
         { id: 'eventos', label: 'Eventos', icon: Calendar, path: '/admin/eventos' },
         { id: 'ubicaciones', label: 'Ubicaciones', icon: MapPin, path: '/admin/ubicaciones' },
         { id: 'inscripciones', label: 'Inscripciones', icon: Users, path: '/admin/inscripciones' },
         { id: 'asistencia', label: 'Asistencia', icon: Users, path: '/admin/asistencia' },
+        { id: 'contactos', label: 'Contactos', icon: MessageSquare, path: '/admin/contactos' },
         { id: 'resenas', label: 'Reseñas', icon: MessageSquare, path: '/admin/resenas' },
         { id: 'configuracion', label: 'Configuración', icon: Settings, path: '/admin/configuracion' },
     ];

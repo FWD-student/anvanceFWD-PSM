@@ -43,4 +43,7 @@ urlpatterns = [
     
     # Validación TSE
     path('validar-cedula/', ValidarCedulaTSEView.as_view(), name="validar cedula TSE"),
+    
+    # Estadísticas para el admin
+    path('estadisticas/', EstadisticasView.as_view(), name="estadisticas dashboard"),
 ]

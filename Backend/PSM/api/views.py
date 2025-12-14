@@ -14,7 +14,9 @@ Usuario = get_user_model()
 # importes necesarios para evento
 from .mongo_utils import UtilidadesMongo
 from django.http import HttpResponse
-from django.db.models import Count
+from django.db.models import Count, Avg, Sum
+from django.utils import timezone
+from datetime import timedelta
 # TSE Service para validación de cédulas
 from .services.tse_service import tse_service
 
@@ -395,3 +397,124 @@ class ValidarCedulaTSEView(APIView):
             return Response(resultado, status=status.HTTP_200_OK)
         else:
             return Response(resultado, status=status.HTTP_400_BAD_REQUEST)
+
+# Vista para obtener estadísticas del dashboard de administración
+class EstadisticasView(APIView):
+    """
+    Endpoint que devuelve estadísticas agregadas para el dashboard de admin.
+    Solo accesible por administradores.
+    """
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        ahora = timezone.now()
+        hace_7_dias = ahora - timedelta(days=7)
+        hace_30_dias = ahora - timedelta(days=30)
+
+        # ======== ESTADÍSTICAS DE USUARIOS ========
+        total_usuarios = Usuario.objects.count()
+        usuarios_nuevos_7d = Usuario.objects.filter(date_joined__gte=hace_7_dias).count()
+        usuarios_nuevos_30d = Usuario.objects.filter(date_joined__gte=hace_30_dias).count()
+        usuarios_activos = Usuario.objects.filter(last_login__gte=hace_30_dias).count()
+        usuarios_inactivos = Usuario.objects.filter(last_login__lt=hace_30_dias).count() + Usuario.objects.filter(last_login__isnull=True).count()
+
+        # ======== ESTADÍSTICAS DE EVENTOS ========
+        total_eventos = Evento.objects.count()
+        eventos_activos = Evento.objects.filter(estado='activo').count()
+        eventos_inactivos = Evento.objects.filter(estado='inactivo').count()
+        eventos_finalizados = Evento.objects.filter(estado='finalizado').count()
+        
+        # Eventos con cupo lleno
+        eventos_llenos = Evento.objects.filter(cupos_disponibles=0).count()
+        
+        # Eventos más populares (por inscripciones)
+        eventos_populares = Evento.objects.annotate(
+            total_inscripciones=Count('inscripciones')
+        ).order_by('-total_inscripciones')[:5].values('id', 'nombre', 'total_inscripciones')
+
+        # ======== ESTADÍSTICAS DE INSCRIPCIONES ========
+        total_inscripciones = Inscripcion.objects.count()
+        inscripciones_pendientes = Inscripcion.objects.filter(estado='pendiente').count()
+        inscripciones_confirmadas = Inscripcion.objects.filter(estado='confirmada').count()
+        inscripciones_canceladas = Inscripcion.objects.filter(estado='cancelada').count()
+        
+        # Tasa de asistencia
+        total_con_asistencia = Inscripcion.objects.filter(estado='confirmada').count()
+        asistieron = Inscripcion.objects.filter(asistio=True).count()
+        tasa_asistencia = round((asistieron / total_con_asistencia * 100), 1) if total_con_asistencia > 0 else 0
+
+        # Inscripciones por mes (últimos 6 meses)
+        inscripciones_por_mes = []
+        for i in range(5, -1, -1):
+            fecha_inicio = (ahora - timedelta(days=30*i)).replace(day=1)
+            if i > 0:
+                fecha_fin = (ahora - timedelta(days=30*(i-1))).replace(day=1)
+            else:
+                fecha_fin = ahora
+            
+            count = Inscripcion.objects.filter(
+                fecha_inscripcion__gte=fecha_inicio,
+                fecha_inscripcion__lt=fecha_fin
+            ).count()
+            
+            inscripciones_por_mes.append({
+                'mes': fecha_inicio.strftime('%b'),
+                'cantidad': count
+            })
+
+        # Categorías más demandadas
+        categorias_demandadas = CategEvento.objects.annotate(
+            total_inscripciones=Count('eventos__inscripciones')
+        ).order_by('-total_inscripciones')[:5].values('id', 'nombre', 'total_inscripciones')
+
+        # ======== ESTADÍSTICAS DE RESEÑAS ========
+        total_resenas = Resena.objects.count()
+        promedio_calificacion = Resena.objects.aggregate(promedio=Avg('calificacion'))['promedio'] or 0
+
+        # Eventos mejor calificados
+        eventos_mejor_calificados = Evento.objects.annotate(
+            promedio=Avg('resenas__calificacion'),
+            total_resenas=Count('resenas')
+        ).filter(total_resenas__gt=0).order_by('-promedio')[:5].values('id', 'nombre', 'promedio', 'total_resenas')
+
+        # ======== ESTADÍSTICAS DE CONTACTOS ========
+        total_contactos = Contacto.objects.count()
+        contactos_7d = Contacto.objects.filter(fecha_envio__gte=hace_7_dias).count()
+        contactos_30d = Contacto.objects.filter(fecha_envio__gte=hace_30_dias).count()
+
+        return Response({
+            'usuarios': {
+                'total': total_usuarios,
+                'nuevos_7d': usuarios_nuevos_7d,
+                'nuevos_30d': usuarios_nuevos_30d,
+                'activos': usuarios_activos,
+                'inactivos': usuarios_inactivos
+            },
+            'eventos': {
+                'total': total_eventos,
+                'activos': eventos_activos,
+                'inactivos': eventos_inactivos,
+                'finalizados': eventos_finalizados,
+                'llenos': eventos_llenos,
+                'populares': list(eventos_populares)
+            },
+            'inscripciones': {
+                'total': total_inscripciones,
+                'pendientes': inscripciones_pendientes,
+                'confirmadas': inscripciones_confirmadas,
+                'canceladas': inscripciones_canceladas,
+                'tasa_asistencia': tasa_asistencia,
+                'por_mes': inscripciones_por_mes,
+                'categorias_demandadas': list(categorias_demandadas)
+            },
+            'resenas': {
+                'total': total_resenas,
+                'promedio_calificacion': round(promedio_calificacion, 1) if promedio_calificacion else 0,
+                'mejor_calificados': list(eventos_mejor_calificados)
+            },
+            'contactos': {
+                'total': total_contactos,
+                'ultimos_7d': contactos_7d,
+                'ultimos_30d': contactos_30d
+            }
+        })
