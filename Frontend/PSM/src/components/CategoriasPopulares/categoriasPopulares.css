@@ -13,7 +13,7 @@
   font-weight: 700;
   text-align: center;
   margin-bottom: 1.5rem;
-  color: var(--foreground);
+  color: hsl(var(--primary));
 }
 
 .categorias-populares-grid {

@@ -353,6 +353,9 @@ const SesionRegistro = () => {
                 // El rol viene en la respuesta del backend, no en el token JWT
                 const role = response.role || '';
                 localStorage.setItem('userRole', role);  // Guardar rol para validación posterior
+                
+                // Disparar evento para que el proveedor de tema detecte el cambio de rol
+                window.dispatchEvent(new Event('auth-change'));
 
                 const isAdminRole = role.toLowerCase() === 'admin' || role.toLowerCase() === 'administrador';
                 const targetPath = isAdminRole ? '/admin' : '/home';

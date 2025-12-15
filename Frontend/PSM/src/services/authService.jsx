@@ -62,6 +62,9 @@ function logout() {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_role');
+    localStorage.removeItem('userRole');
+    // Disparar evento para que el proveedor de tema detecte el cambio
+    window.dispatchEvent(new Event('auth-change'));
 }
 
 // Obtener el token del localStorage

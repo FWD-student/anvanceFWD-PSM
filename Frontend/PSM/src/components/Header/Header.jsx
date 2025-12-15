@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import authService from '../../services/authService.jsx';
 import { AlternadorTema } from '../ui/alternador-tema.jsx';
+import { SelectorPaleta } from '../ui/selector-paleta.jsx';
 
 function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -77,12 +78,13 @@ function Header() {
             </Link>
           </div>
 
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-2">
+            <SelectorPaleta />
             <AlternadorTema />
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="default" size="lg" className="bg-[#F25C05] hover:bg-[#D94D04] text-base">
+                  <Button variant="default" size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground text-base">
                     <User className="h-5 w-5 mr-2" />
                     {user?.first_name} {user?.primer_apellido || ''}
                   </Button>
@@ -105,7 +107,7 @@ function Header() {
               </DropdownMenu>
             ) : (
               <Link to="/sesion">
-                <Button variant="default" size="md" className="bg-[#F25C05] hover:bg-[#D94D04] text-base">
+                <Button variant="default" size="md" className="bg-primary hover:bg-primary/90 text-primary-foreground text-base">
                   Iniciar Sesión
                 </Button>
               </Link>
@@ -139,7 +141,10 @@ function Header() {
                           <p className="text-sm text-muted-foreground">
                             Hola, {user?.first_name || user?.username}
                           </p>
-                          <AlternadorTema />
+                          <div className="flex gap-2">
+                            <SelectorPaleta />
+                            <AlternadorTema />
+                          </div>
                         </div>
                         <Link to="/perfil" className="block">
                           <Button variant="outline" className="w-full mb-2" size="lg">
@@ -147,7 +152,7 @@ function Header() {
                             Ver Perfil
                           </Button>
                         </Link>
-                        <Button className="w-full bg-[#F25C05] hover:bg-[#D94D04]" onClick={() => setShowLogoutConfirm(true)} size="lg">
+                        <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => setShowLogoutConfirm(true)} size="lg">
                           <LogOut className="h-5 w-5 mr-2" />
                           Cerrar Sesión
                         </Button>
@@ -156,11 +161,14 @@ function Header() {
                   ) : (
                     <>
                       <div className="flex justify-between items-center mt-4 mb-2">
-                        <span className="text-sm font-medium">Tema</span>
-                        <AlternadorTema />
+                        <span className="text-sm font-medium">Apariencia</span>
+                        <div className="flex gap-2">
+                          <SelectorPaleta />
+                          <AlternadorTema />
+                        </div>
                       </div>
                       <Link to="/sesion">
-                        <Button className="w-full bg-[#F25C05] hover:bg-[#D94D04]" size="lg">Iniciar Sesión</Button>
+                        <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" size="lg">Iniciar Sesión</Button>
                       </Link>
                     </>
                   )}

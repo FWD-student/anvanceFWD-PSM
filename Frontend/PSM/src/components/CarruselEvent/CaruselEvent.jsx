@@ -154,9 +154,9 @@ function CaruselEvent() {
     }
 
     return (
-        <section className="w-full flex justify-center py-10 bg-[#f8f9fa] dark:bg-background transition-colors duration-300">
+        <section className="w-full flex justify-center py-10 bg-secondary dark:bg-background transition-colors duration-300">
             <div className="w-[90%] max-w-[1200px] flex flex-col items-center">
-                <h2 className="text-3xl font-bold text-center mb-8 text-[#333] dark:text-foreground">Próximos Eventos</h2>
+                <h2 className="text-3xl font-bold text-center mb-8 text-primary">Próximos Eventos</h2>
 
                 {eventosProcesados.length > 0 ? (
                     <Carousel
@@ -209,7 +209,7 @@ function CaruselEvent() {
 
                                                 {/* Contenido */}
                                                 <div className="flex flex-col flex-grow p-4 text-center">
-                                                    <h3 className="text-xl font-bold mb-2 line-clamp-1 dark:text-white">{evento.nombre}</h3>
+                                                    <h3 className="text-xl font-bold mb-2 line-clamp-1 text-primary">{evento.nombre}</h3>
                                                     
                                                     {/* Fecha Destacada */}
                                                     <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-2 font-medium">
