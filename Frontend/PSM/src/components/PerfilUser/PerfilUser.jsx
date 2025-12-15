@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Calendar, MapPin, Clock, X, User, Heart, ClipboardList, LogOut, ChevronRight, Home } from "lucide-react";
+import { Loader2, Calendar, MapPin, Clock, X, User, Heart, ClipboardList, LogOut, ChevronRight, Home, Bell } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -90,11 +90,14 @@ function PerfilUser() {
         telefono: '',
         edad: '',
         fecha_nacimiento: '',
-        intereses: []
+        intereses: [],
+        recibir_notificaciones: true,
+        dias_anticipacion_notificacion: 1
     });
 
     const menuItems = [
         { id: 'personal', label: 'Información Personal', icon: User, description: 'Tus datos de contacto' },
+        { id: 'notificaciones', label: 'Notificaciones', icon: Bell, description: 'Preferencias de avisos' },
         { id: 'intereses', label: 'Mis Intereses', icon: Heart, description: 'Deportes que te gustan' },
         { id: 'inscripciones', label: 'Mis Inscripciones', icon: ClipboardList, description: 'Eventos registrados' }
     ];
@@ -128,7 +131,9 @@ function PerfilUser() {
                 telefono: currentUser.telefono || '',
                 edad: currentUser.edad || calcularEdad(currentUser.fecha_nacimiento),
                 fecha_nacimiento: currentUser.fecha_nacimiento || '',
-                intereses: currentUser.intereses || []
+                intereses: currentUser.intereses || [],
+                recibir_notificaciones: currentUser.recibir_notificaciones !== false,
+                dias_anticipacion_notificacion: currentUser.dias_anticipacion_notificacion || 1
             });
 
             try {
@@ -513,6 +518,94 @@ function PerfilUser() {
                                             Guardar Cambios
                                         </Button>
                                     </form>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    )}
+
+                    {/* Sección: Notificaciones */}
+                    {activeSection === 'notificaciones' && (
+                        <motion.div
+                            key="notificaciones"
+                            variants={contentVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            className="perfil-section"
+                        >
+                            <div className="perfil-section-header">
+                                <h1>Notificaciones</h1>
+                                <p>Configura cómo quieres recibir avisos de tus eventos</p>
+                            </div>
+
+                            <Card className="perfil-card">
+                                <CardContent className="pt-6 space-y-6">
+                                    {/* Toggle para recibir notificaciones */}
+                                    <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border">
+                                        <div className="space-y-1">
+                                            <h4 className="font-medium">Recibir notificaciones por email</h4>
+                                            <p className="text-sm text-muted-foreground">
+                                                Te enviaremos recordatorios antes de tus eventos
+                                            </p>
+                                        </div>
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only peer"
+                                                checked={formData.recibir_notificaciones}
+                                                onChange={(e) => setFormData(prev => ({
+                                                    ...prev,
+                                                    recibir_notificaciones: e.target.checked
+                                                }))}
+                                            />
+                                            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                        </label>
+                                    </div>
+
+                                    {/* Selector de días de anticipación */}
+                                    {formData.recibir_notificaciones && (
+                                        <div className="space-y-4 animate-in fade-in duration-300">
+                                            <div className="space-y-2">
+                                                <Label className="text-sm font-medium">
+                                                    ¿Con cuántos días de anticipación?
+                                                </Label>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Recibirás un email recordatorio {formData.dias_anticipacion_notificacion === 1 
+                                                        ? '1 día' 
+                                                        : `${formData.dias_anticipacion_notificacion} días`} antes del evento
+                                                </p>
+                                            </div>
+                                            
+                                            <div className="flex flex-wrap gap-2">
+                                                {[1, 2, 3, 4, 5, 6, 7].map((dia) => (
+                                                    <button
+                                                        type="button"
+                                                        key={dia}
+                                                        onClick={() => setFormData(prev => ({
+                                                            ...prev,
+                                                            dias_anticipacion_notificacion: dia
+                                                        }))}
+                                                        className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                                                            formData.dias_anticipacion_notificacion === dia
+                                                                ? 'bg-blue-600 text-white shadow-md'
+                                                                : 'bg-muted hover:bg-muted/80 text-foreground'
+                                                        }`}
+                                                    >
+                                                        {dia} {dia === 1 ? 'día' : 'días'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <Button 
+                                        onClick={handleSubmit} 
+                                        disabled={saving} 
+                                        className="perfil-save-btn"
+                                    >
+                                        {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                        Guardar Preferencias
+                                    </Button>
                                 </CardContent>
                             </Card>
                         </motion.div>

@@ -46,4 +46,8 @@ urlpatterns = [
     
     # Estadísticas para el admin
     path('estadisticas/', EstadisticasView.as_view(), name="estadisticas dashboard"),
+    
+    # Validación del Email
+    path('enviar-codigo/', EnviarCodigoVerificacionView.as_view(), name="enviar codigo verificacion"),
+    path('verificar-codigo/', VerificarCodigoView.as_view(), name="verificar codigo"),
 ]

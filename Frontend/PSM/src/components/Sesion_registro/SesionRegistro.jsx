@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import authService from '../../services/authService';
 import tseService from '../../services/tseService';
+import verificacionService from '../../services/verificacionService';
 import { jwtDecode } from "jwt-decode";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-import { Home, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { Home, Loader2, CheckCircle2, XCircle, Globe, User, Mail, Send } from 'lucide-react';
 
 const SesionRegistro = () => {
     const navigate = useNavigate();
@@ -19,6 +20,15 @@ const SesionRegistro = () => {
     const [validandoTSE, setValidandoTSE] = useState(false);
     const [cedulaValidada, setCedulaValidada] = useState(false);
     const [tseError, setTseError] = useState('');
+    // Estado para tipo de identificación: 'nacional' o 'extranjero'
+    const [tipoIdentificacion, setTipoIdentificacion] = useState('nacional');
+    
+    // Estados para verificación de email
+    const [emailVerificado, setEmailVerificado] = useState(false);
+    const [codigoEnviado, setCodigoEnviado] = useState(false);
+    const [enviandoCodigo, setEnviandoCodigo] = useState(false);
+    const [verificandoCodigo, setVerificandoCodigo] = useState(false);
+    const [codigoIngresado, setCodigoIngresado] = useState('');
 
     useEffect(() => {
         if (searchParams.get('view') === 'registro') {
@@ -57,8 +67,23 @@ const SesionRegistro = () => {
         // Es cedula, solo permitir numeros
         if (name === 'username') {
             value = value.replace(/[^0-9]/g, '');
-            setCedulaValidada(false);
-            setTseError('');
+            // Arreglando el bypass: si la cédula cambia después de validación, limpiar todo
+            if (cedulaValidada) {
+                setCedulaValidada(false);
+                setTseError('');
+                // Limpiar los datos autocompletados del TSE
+                setRegisterData(prev => ({
+                    ...prev,
+                    [name]: value,
+                    nombre: '',
+                    primer_apellido: '',
+                    segundo_apellido: '',
+                    fecha_nacimiento: '',
+                    edad: '',
+                    nacionalidad: ''
+                }));
+                return; // Ya actualizamos el state y luego salir
+            }
         }
         
         setRegisterData(prev => {
@@ -79,8 +104,156 @@ const SesionRegistro = () => {
         });
     };
 
+    // Manejar cambio de tipo de identificación (Nacional/Extranjero)
+    const handleTipoIdentificacionChange = (tipo) => {
+        setTipoIdentificacion(tipo);
+        setCedulaValidada(false);
+        setTseError('');
+        
+        // Limpiar campos de nombre si cambia el tipo
+        setRegisterData(prev => ({
+            ...prev,
+            nombre: '',
+            primer_apellido: '',
+            segundo_apellido: '',
+            fecha_nacimiento: '',
+            edad: '',
+            nacionalidad: tipo === 'extranjero' ? 'EXTRANJERO' : ''
+        }));
+        
+        if (tipo === 'extranjero') {
+            toast({
+                title: "Modo Extranjero",
+                description: "Complete todos los datos manualmente.",
+                className: "bg-blue-500 text-white",
+            });
+        }
+    };
+
+    // Función para enviar el código de verificación al email
+    const handleEnviarCodigo = async () => {
+        const email = registerData.email.trim();
+        
+        if (!email) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Por favor ingrese su email primero.",
+            });
+            return;
+        }
+        
+        // Validar formato básico de email
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "El formato del email no es válido.",
+            });
+            return;
+        }
+        
+        setEnviandoCodigo(true);
+        
+        try {
+            const resultado = await verificacionService.enviarCodigo(email);
+            
+            if (resultado.success) {
+                setCodigoEnviado(true);
+                toast({
+                    title: "Código enviado",
+                    description: "Revisa tu bandeja de entrada. El código expira en 15 minutos.",
+                    className: "bg-green-500 text-white",
+                });
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: resultado.error,
+                });
+            }
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "No se pudo enviar el código. Intente de nuevo.",
+            });
+        } finally {
+            setEnviandoCodigo(false);
+        }
+    };
+
+    // Función para verificar el código ingresado
+    const handleVerificarCodigo = async () => {
+        const email = registerData.email.trim();
+        const codigo = codigoIngresado.trim();
+        
+        if (!codigo || codigo.length !== 6) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Ingrese el código de 6 dígitos.",
+            });
+            return;
+        }
+        
+        setVerificandoCodigo(true);
+        
+        try {
+            const resultado = await verificacionService.verificarCodigo(email, codigo);
+            
+            if (resultado.success) {
+                setEmailVerificado(true);
+                toast({
+                    title: "Email verificado ✓",
+                    description: "Tu correo ha sido verificado exitosamente.",
+                    className: "bg-green-500 text-white",
+                });
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Código inválido",
+                    description: resultado.error,
+                });
+            }
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Error al verificar el código.",
+            });
+        } finally {
+            setVerificandoCodigo(false);
+        }
+    };
+
+    // Reset verificación cuando cambia el email
+    const handleEmailChange = (e) => {
+        const newEmail = e.target.value;
+        setRegisterData(prev => ({ ...prev, email: newEmail }));
+        
+        // Si el email cambia después de verificación, resetear
+        if (emailVerificado || codigoEnviado) {
+            setEmailVerificado(false);
+            setCodigoEnviado(false);
+            setCodigoIngresado('');
+        }
+    };
+
+    // Verificar automáticamente cuando el código tiene 6 dígitos
+    useEffect(() => {
+        if (codigoIngresado.length === 6 && codigoEnviado && !emailVerificado && !verificandoCodigo) {
+            handleVerificarCodigo();
+        }
+    }, [codigoIngresado]);
+
     // Validar cedula con TSE cuando el usuario sale del campo
     const handleCedulaBlur = async () => {
+        // Solo validar TSE si es tipo NACIONAL
+        if (tipoIdentificacion !== 'nacional') {
+            return;
+        }
+        
         const cedula = registerData.username.trim();
         
         // Si la cedula esta vacia o tiene menos de 9 caracteres, no validar
@@ -209,6 +382,17 @@ const SesionRegistro = () => {
     const handleRegisterSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+
+        // Validar que el email esté verificado
+        if (!emailVerificado) {
+            toast({
+                variant: "destructive",
+                title: "Email no verificado",
+                description: "Por favor verifica tu email antes de continuar.",
+            });
+            setLoading(false);
+            return;
+        }
 
         // validacion simple
         if (registerData.password.length < 8) {
@@ -360,17 +544,45 @@ const SesionRegistro = () => {
                             </form>
                         ) : (
                             <form onSubmit={handleRegisterSubmit} className="space-y-4">
+                                {/* Selector Nacional/Extranjero */}
+                                <div className="flex rounded-lg bg-muted p-1 mb-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleTipoIdentificacionChange('nacional')}
+                                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                                            tipoIdentificacion === 'nacional'
+                                                ? 'bg-background text-primary shadow-sm'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                    >
+                                        <User className="h-4 w-4" />
+                                        Nacional
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleTipoIdentificacionChange('extranjero')}
+                                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                                            tipoIdentificacion === 'extranjero'
+                                                ? 'bg-background text-primary shadow-sm'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                    >
+                                        <Globe className="h-4 w-4" />
+                                        Extranjero
+                                    </button>
+                                </div>
+
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium flex items-center gap-2">
-                                            Cédula
-                                            {validandoTSE && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
-                                            {cedulaValidada && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                                            {tipoIdentificacion === 'nacional' ? 'Cédula' : 'Identificación'}
+                                            {tipoIdentificacion === 'nacional' && validandoTSE && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
+                                            {tipoIdentificacion === 'nacional' && cedulaValidada && <CheckCircle2 className="h-4 w-4 text-green-500" />}
                                         </label>
                                         <input
                                             type="text"
                                             name="username"
-                                            placeholder="Ej: 101110111"
+                                            placeholder={tipoIdentificacion === 'nacional' ? 'Ej: 101110111' : 'Número de identificación'}
                                             className={`flex h-10 w-full rounded-md border px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
                                                 cedulaValidada ? 'border-green-500 bg-green-50' : 'border-input bg-background'
                                             }`}
@@ -382,32 +594,115 @@ const SesionRegistro = () => {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Email</label>
+                                        <label className="text-sm font-medium flex items-center gap-2">
+                                            Email
+                                            {emailVerificado && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                                            {codigoEnviado && !emailVerificado && (
+                                                <span className="text-xs text-green-600 animate-in fade-in duration-300">✓ Código enviado</span>
+                                            )}
+                                        </label>
                                         <input
                                             type="email"
                                             name="email"
-                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            placeholder="correo@ejemplo.com"
+                                            className={`flex h-10 w-full rounded-md border px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                                                emailVerificado ? 'border-green-500 bg-green-50' : 'border-input bg-background'
+                                            }`}
                                             value={registerData.email}
-                                            onChange={handleRegisterChange}
+                                            onChange={handleEmailChange}
+                                            disabled={emailVerificado || codigoEnviado}
                                             required
                                         />
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Nombre</label>
-                                    <input
-                                        type="text"
-                                        name="nombre"
-                                        className={`flex h-10 w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
-                                            cedulaValidada ? 'bg-muted cursor-not-allowed' : 'bg-background'
-                                        }`}
-                                        value={registerData.nombre}
-                                        onChange={handleRegisterChange}
-                                        readOnly={cedulaValidada}
-                                        required
-                                    />
+                                {/* Fila: Nombre + Botón Verificar Email */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Nombre</label>
+                                        <input
+                                            type="text"
+                                            name="nombre"
+                                            className={`flex h-10 w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                                                cedulaValidada ? 'bg-muted cursor-not-allowed' : 'bg-background'
+                                            }`}
+                                            value={registerData.nombre}
+                                            onChange={handleRegisterChange}
+                                            readOnly={cedulaValidada}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">&nbsp;</label>
+                                        {!emailVerificado ? (
+                                            !codigoEnviado ? (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={handleEnviarCodigo}
+                                                    disabled={enviandoCodigo || !registerData.email}
+                                                    className="h-10 w-full"
+                                                >
+                                                    {enviandoCodigo ? (
+                                                        <>
+                                                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                                            Enviando...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Send className="h-4 w-4 mr-2" />
+                                                            Verificar Email
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            ) : (
+                                                /* Input de código con verificación automática */
+                                                <div className="flex gap-12 justify-end animate-in slide-in-from-right-4 duration-300">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="000000"
+                                                        maxLength={6}
+                                                        className={`flex h-10 w-20 rounded-md border px-2 py-2 text-sm text-center tracking-widest font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                                                            verificandoCodigo 
+                                                                ? 'border-blue-400 bg-blue-50 focus-visible:ring-blue-500' 
+                                                                : 'border-input bg-background focus-visible:ring-ring'
+                                                        }`}
+                                                        value={codigoIngresado}
+                                                        onChange={(e) => setCodigoIngresado(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                                        disabled={verificandoCodigo}
+                                                        autoFocus
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={handleEnviarCodigo}
+                                                        disabled={enviandoCodigo}
+                                                        className="h-10 px-2 text-xs"
+                                                    >
+                                                        {enviandoCodigo ? (
+                                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                                        ) : (
+                                                            'Reenviar'
+                                                        )}
+                                                    </Button>
+                                                </div>
+                                            )
+                                        ) : (
+                                            <div className="h-10 flex items-center justify-center text-green-600 font-medium animate-in zoom-in duration-300">
+                                                <CheckCircle2 className="h-5 w-5 mr-2" />
+                                                Verificado
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
+
+                                {/* Mensaje de ayuda para el código */}
+                                {codigoEnviado && !emailVerificado && (
+                                    <p className="text-xs text-muted-foreground -mt-2 animate-in fade-in duration-500">
+                                        Revisa tu bandeja de entrada. Ingresa el código de 6 dígitos. Expira en 15 min.
+                                    </p>
+                                )}
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">

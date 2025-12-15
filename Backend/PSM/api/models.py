@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser #para heredar el AuthUser
 from django.conf import settings  # << IMPORTANTE para relacionar el usuario
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 # Create your models here.
 
@@ -14,9 +15,44 @@ class Usuario(AbstractUser): #una correccion con el nombramiento de
     primer_apellido = models.CharField(max_length=100, blank=True, null=True)
     segundo_apellido = models.CharField(max_length=100, blank=True, null=True)
     intereses = models.ManyToManyField('CategEvento', blank=True, related_name='interesados')
+    # Campos para notificaciones de los eventos
+    recibir_notificaciones = models.BooleanField(default=True)
+    dias_anticipacion_notificacion = models.IntegerField(
+        default=1,
+        validators=[MinValueValidator(1), MaxValueValidator(7)]
+    )
+    # Campo para verificación de email
+    email_verificado = models.BooleanField(default=False)
 
     def __str__(self):
         return self.username
+
+
+# Modelo para los códigos de verificación del email
+class CodigoVerificacion(models.Model):
+    email = models.EmailField()
+    codigo = models.CharField(max_length=6)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    usado = models.BooleanField(default=False)
+    
+    class Meta:
+        indexes = [models.Index(fields=['email', 'codigo'])]
+        verbose_name = "Código de Verificación"
+        verbose_name_plural = "Códigos de Verificación"
+    
+    def es_valido(self):
+        """Verifica si el código no ha expirado (15 minutos) y no ha sido usado."""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        if self.usado:
+            return False
+        
+        tiempo_expiracion = self.creado_en + timedelta(minutes=15)
+        return timezone.now() < tiempo_expiracion
+    
+    def __str__(self):
+        return f"{self.email} - {self.codigo}"
 
 # tabla de categoria de eventos
 class CategEvento(models.Model):

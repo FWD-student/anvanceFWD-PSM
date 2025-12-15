@@ -19,6 +19,8 @@ from django.utils import timezone
 from datetime import timedelta
 # TSE Service para validación de cédulas
 from .services.tse_service import tse_service
+# Brevo Service para emails
+from .services.brevo_service import brevo_service
 
 
 # Vistas User (autenticacion)
@@ -518,3 +520,106 @@ class EstadisticasView(APIView):
                 'ultimos_30d': contactos_30d
             }
         })
+
+# Vista para enviar el código de verificación del email
+class EnviarCodigoVerificacionView(APIView):
+    """
+    Endpoint para enviar un código de verificación al email del usuario.
+    POST: { "email": "usuario@ejemplo.com" }
+    """
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        email = request.data.get('email', '').strip().lower()
+        
+        if not email:
+            return Response(
+                {'error': 'El campo email es requerido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validar formato de email básico
+        import re
+        if not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
+            return Response(
+                {'error': 'El formato del email no es válido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Verificar si el email ya está registrado
+        if Usuario.objects.filter(email=email).exists():
+            return Response(
+                {'error': 'Este email ya está registrado'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Generar código y guardarlo
+        codigo = brevo_service.generar_codigo_verificacion()
+        
+        # Invalidar códigos anteriores para este email
+        CodigoVerificacion.objects.filter(email=email, usado=False).update(usado=True)
+        
+        # Crear nuevo código
+        CodigoVerificacion.objects.create(email=email, codigo=codigo)
+        
+        # Enviar email con el código
+        resultado = brevo_service.enviar_codigo_verificacion(email, codigo)
+        
+        if resultado['success']:
+            return Response({
+                'success': True,
+                'message': 'Código de verificación enviado'
+            })
+        else:
+            return Response({
+                'success': False,
+                'error': resultado.get('error', 'Error al enviar el email')
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# Vista para verificar código
+class VerificarCodigoView(APIView):
+    """
+    Endpoint para verificar un código de verificación.
+    POST: { "email": "usuario@ejemplo.com", "codigo": "123456" }
+    """
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        email = request.data.get('email', '').strip().lower()
+        codigo = request.data.get('codigo', '').strip()
+        
+        if not email or not codigo:
+            return Response(
+                {'error': 'Email y código son requeridos'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Buscar el código
+        try:
+            verificacion = CodigoVerificacion.objects.filter(
+                email=email,
+                codigo=codigo,
+                usado=False
+            ).latest('creado_en')
+            
+            if verificacion.es_valido():
+                # Marcar como usado
+                verificacion.usado = True
+                verificacion.save()
+                
+                return Response({
+                    'success': True,
+                    'message': 'Email verificado correctamente',
+                    'email_verificado': True
+                })
+            else:
+                return Response({
+                    'success': False,
+                    'error': 'El código ha expirado. Solicita uno nuevo.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except CodigoVerificacion.DoesNotExist:
+            return Response({
+                'success': False,
+                'error': 'Código inválido o ya utilizado'
+            }, status=status.HTTP_400_BAD_REQUEST)

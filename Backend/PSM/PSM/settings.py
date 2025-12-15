@@ -1,7 +1,9 @@
 from pathlib import Path
 #timpor de expiracion del token
 from datetime import timedelta
-
+# Cargar variables de entorno desde .env
+from dotenv import load_dotenv
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

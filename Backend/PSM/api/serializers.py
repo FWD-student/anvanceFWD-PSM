@@ -29,6 +29,9 @@ class UserSerializer(serializers.ModelSerializer):
             'intereses',
             'last_login', # Ultima conexion
             'date_joined', # Fecha de registro
+            'recibir_notificaciones', # Preferencia de notificaciones
+            'dias_anticipacion_notificacion', # Días de anticipación
+            'email_verificado', # Estado de verificación de email
         ]
         extra_kwargs = {
             'password': {'write_only': True},

@@ -5,12 +5,14 @@ import { NavigationMenu, NavigationMenuItem, NavigationMenuList, navigationMenuT
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import authService from '../../services/authService.jsx';
 import { AlternadorTema } from '../ui/alternador-tema.jsx';
 
 function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,6 +37,7 @@ function Header() {
   };
 
   return (
+    <>
     <header className="sticky top-0 z-50 w-full min-w-[375px] border-b bg-background/80 backdrop-blur-md shadow-sm transition-all duration-300 supports-[backdrop-filter]:bg-background/60 border-border/40">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between">
@@ -94,7 +97,7 @@ function Header() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive">
+                  <DropdownMenuItem onClick={() => setShowLogoutConfirm(true)} className="cursor-pointer text-destructive">
                     <LogOut className="h-4 w-4 mr-2" />
                     Cerrar Sesión
                   </DropdownMenuItem>
@@ -144,7 +147,7 @@ function Header() {
                             Ver Perfil
                           </Button>
                         </Link>
-                        <Button className="w-full bg-[#F25C05] hover:bg-[#D94D04]" onClick={handleLogout} size="lg">
+                        <Button className="w-full bg-[#F25C05] hover:bg-[#D94D04]" onClick={() => setShowLogoutConfirm(true)} size="lg">
                           <LogOut className="h-5 w-5 mr-2" />
                           Cerrar Sesión
                         </Button>
@@ -168,6 +171,25 @@ function Header() {
         </div>
       </div>
     </header>
+
+      {/* Diálogo de confirmación de cierre de sesión */}
+      <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cerrar sesión</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que deseas cerrar tu sesión?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLogout} className="bg-destructive hover:bg-destructive/90">
+              Cerrar sesión
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
