@@ -500,7 +500,11 @@ function EventosAdmin() {
                                                 checked={formData.dias_semana.includes(dia.id)}
                                                 onCheckedChange={(checked) => {
                                                     if (checked) {
-                                                        manejarCambio('dias_semana', [...formData.dias_semana, dia.id]);
+                                                        // Agregar el dia y ordenar segun el orden correcto de DIAS_SEMANA
+                                                        const nuevosDias = [...formData.dias_semana, dia.id];
+                                                        const ordenDias = DIAS_SEMANA.map(d => d.id);
+                                                        nuevosDias.sort((a, b) => ordenDias.indexOf(a) - ordenDias.indexOf(b));
+                                                        manejarCambio('dias_semana', nuevosDias);
                                                     } else {
                                                         manejarCambio('dias_semana', formData.dias_semana.filter(d => d !== dia.id));
                                                     }

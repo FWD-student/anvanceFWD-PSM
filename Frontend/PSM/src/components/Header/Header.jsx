@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import authService from '../../services/authService.jsx';
 import { AlternadorTema } from '../ui/alternador-tema.jsx';
 import { SelectorPaleta } from '../ui/selector-paleta.jsx';
+import SportsAnimation from './SportsAnimation';
 
 function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -45,9 +46,11 @@ function Header() {
           
           <div className="mr-4 hidden md:flex items-center">
             <Link to="/" className="mr-6 flex items-center space-x-2">
-              <span className="font-bold text-xl lg:text-2xl whitespace-nowrap">
-                Puntarenas Se Mueve
-              </span>
+              <SportsAnimation>
+                <span className="font-bold text-xl lg:text-2xl whitespace-nowrap">
+                  Puntarenas Se Mueve
+                </span>
+              </SportsAnimation>
             </Link>
             <NavigationMenu>
               <NavigationMenuList>
@@ -72,9 +75,11 @@ function Header() {
 
           <div className="md:hidden flex-1">
             <Link to="/" className="flex items-center">
-              <span className="font-bold text-base whitespace-nowrap">
-                Puntarenas Se Mueve
-              </span>
+              <SportsAnimation>
+                <span className="font-bold text-base whitespace-nowrap">
+                  Puntarenas Se Mueve
+                </span>
+              </SportsAnimation>
             </Link>
           </div>
 

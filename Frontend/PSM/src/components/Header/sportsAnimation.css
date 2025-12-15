@@ -1,0 +1,70 @@
+.animated-title-wrapper {
+  position: relative;
+  display: inline-block;
+  overflow: visible;
+  cursor: pointer;
+  padding: 15px 0;
+}
+
+.sport-icon {
+  position: absolute;
+  color: currentColor; 
+  opacity: 0;
+  pointer-events: none;
+  z-index: 10;
+  offset-rotate: 0deg; 
+  left: 0;
+  top: 0;
+}
+
+/* === 1. FÚTBOL: Derecha a Izquierda - Gravedad Real === */
+.sport-icon.soccer { width: 22px; height: 22px; }
+.sport-icon.soccer.animate {
+  /* Empieza en 300, cae al suelo(20), rebota arriba(-15) y sale por la izquierda */
+  offset-path: path('M 300,10 L 220,20 Q 150,-20 100,20 T 20,20 L -60,20');
+  animation: move-along 2.5s ease-out forwards, rotate-soccer 2.5s linear forwards;
+}
+
+/* === 2. BICI: Más Grande y más Abajo === */
+.sport-icon.cycling { width: 32px; height: 32px; }
+.sport-icon.cycling.animate {
+  /* Bajada a Y=18 para que ruede sobre la base de las letras */
+  offset-path: path('M -50,18 L 350,18');
+  animation: move-along 2.8s linear forwards;
+}
+
+/* === 3. NADADOR: Lento con Ondas de Mar === */
+.sport-icon.swimming { width: 34px; height: 34px; }
+.sport-icon.swimming.animate {
+  /* Oscilación sutil entre Y=35 y Y=45 */
+  offset-path: path('M 300,38 Q 225,48 150,38 T 0,38 L -60,38');
+  animation: move-along 5s ease-in-out forwards;
+}
+
+/* === 4. SKATE: Ollie en la 'S' === */
+.sport-icon.skating { width: 28px; height: 28px; left: 55%; top: 50%; }
+.sport-icon.skating.animate {
+  animation: skate-jump 1.5s ease-in-out forwards;
+}
+
+/* === KEYFRAMES === */
+
+@keyframes move-along {
+  0% { offset-distance: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+@keyframes rotate-soccer {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-1200deg); }
+}
+
+@keyframes skate-jump {
+  0% { opacity: 0; transform: translate(-25px, 0); }
+  20% { opacity: 1; transform: translate(-10px, 0); }
+  45% { transform: translate(0, -22px) rotate(-15deg); } 
+  75% { transform: translate(15px, 0); }
+  100% { opacity: 0; transform: translate(30px, 0); }
+}

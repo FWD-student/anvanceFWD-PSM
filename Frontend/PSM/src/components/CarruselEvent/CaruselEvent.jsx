@@ -165,7 +165,7 @@ function CaruselEvent() {
                         }}
                         className="w-full max-w-sm md:max-w-2xl lg:max-w-4xl"
                     >
-                        <CarouselContent className="items-start">
+                        <CarouselContent className="items-start py-14">
                             {eventosProcesados.map((evento) => {
                                 const esPasado = evento.esPasado;
                                 return (
@@ -227,8 +227,21 @@ function CaruselEvent() {
                                                             <div className="flex items-center gap-2 text-foreground">
                                                                 <Clock className="w-3 h-3 text-primary shrink-0" />
                                                                 <span>
-                                                                    {new Date(evento.fecha_inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })} - 
-                                                                    {new Date(evento.fecha_fin).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                                                    {(() => {
+                                                                        // Formatear hora de TimeField (HH:MM:SS o HH:MM) a formato 12h
+                                                                        const formatearHora = (horaStr) => {
+                                                                            if (!horaStr) return 'N/A';
+                                                                            const partes = horaStr.split(':');
+                                                                            let hora = parseInt(partes[0], 10);
+                                                                            const minutos = partes[1] || '00';
+                                                                            const ampm = hora >= 12 ? 'PM' : 'AM';
+                                                                            hora = hora % 12 || 12;
+                                                                            return `${hora}:${minutos} ${ampm}`;
+                                                                        };
+                                                                        const horaInicio = formatearHora(evento.hora_inicio);
+                                                                        const horaFin = formatearHora(evento.hora_fin);
+                                                                        return `${horaInicio} - ${horaFin}`;
+                                                                    })()}
                                                                 </span>
                                                             </div>
                                                             <div className="flex items-center gap-2 text-foreground">
