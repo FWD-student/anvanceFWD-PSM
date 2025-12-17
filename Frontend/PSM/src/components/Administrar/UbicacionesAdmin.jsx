@@ -75,12 +75,12 @@ function UbicacionesAdmin() {
             // Validar formato en tiempo real
             if (valorFiltrado && valorFiltrado.length > 0) {
                 const telefonoLimpio = valorFiltrado.replace(/-/g, '');
-                if (telefonoLimpio.length > 0 && !/^[2678]/.test(telefonoLimpio)) {
-                    setErrorTelefono('El teléfono debe comenzar con 2, 6, 7 u 8');
+                if (telefonoLimpio.length > 0 && !/^[678]/.test(telefonoLimpio)) {
+                    setErrorTelefono('El teléfono debe comenzar con 6, 7 u 8');
                 } else if (telefonoLimpio.length > 0 && telefonoLimpio.length < 8) {
                     setErrorTelefono('El teléfono debe tener al menos 8 dígitos');
-                } else if (telefonoLimpio.length > 16) {
-                    setErrorTelefono('El teléfono no puede tener más de 16 dígitos');
+                } else if (telefonoLimpio.length > 15) {
+                    setErrorTelefono('El teléfono no puede tener más de 15 dígitos');
                 } else {
                     setErrorTelefono('');
                 }
@@ -107,11 +107,11 @@ function UbicacionesAdmin() {
         // Validar teléfono si tiene valor
         if (formData.telefono_contacto) {
             const telefonoLimpio = formData.telefono_contacto.replace(/-/g, '');
-            if (!/^[2678]\d{7,15}$/.test(telefonoLimpio)) {
+            if (!/^[678]\d{7,14}$/.test(telefonoLimpio)) {
                 toast({
                     variant: "destructive",
                     title: "Error",
-                    description: "El teléfono debe empezar con 2, 6, 7 u 8 y tener entre 8 y 16 dígitos.",
+                    description: "El teléfono debe empezar con 6, 7 u 8 y tener entre 8 y 15 dígitos.",
                 });
                 return;
             }

@@ -9,7 +9,8 @@ import estadisticasService from '../../services/estadisticasService';
 // Colores para gráficos que combinan con el tema
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
-// Componente de tarjeta KPI animada
+// Tarjeta KPI con animacion y gradientes
+// Muestra metricas principales con icono y tendencia
 const KPICard = ({ title, value, subtitle, icon: Icon, trend, color = 'blue', delay = 0 }) => {
     const colorClasses = {
         blue: 'from-blue-500 to-blue-600',
@@ -50,6 +51,8 @@ const KPICard = ({ title, value, subtitle, icon: Icon, trend, color = 'blue', de
     );
 };
 
+// Componente principal de estadisticas
+// Carga datos del backend y muestra graficos con Recharts
 function EstadisticasAdmin() {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -59,6 +62,7 @@ function EstadisticasAdmin() {
         fetchEstadisticas();
     }, []);
 
+    // Obtiene estadisticas del endpoint /api/estadisticas
     const fetchEstadisticas = async () => {
         try {
             const data = await estadisticasService.getEstadisticas();
@@ -92,14 +96,14 @@ function EstadisticasAdmin() {
         );
     }
 
-    // Datos para el gráfico de eventos por estado
+    // Datos para grafico de eventos por estado (pie chart)
     const eventosEstadoData = [
         { name: 'Activos', value: stats.eventos.activos, fill: '#10b981' },
         { name: 'Inactivos', value: stats.eventos.inactivos, fill: '#f59e0b' },
         { name: 'Finalizados', value: stats.eventos.finalizados, fill: '#6b7280' }
     ];
 
-    // Datos para el gráfico de inscripciones por estado
+    // Datos para grafico de inscripciones por estado (pie chart)
     const inscripcionesEstadoData = [
         { name: 'Confirmadas', value: stats.inscripciones.confirmadas, fill: '#10b981' },
         { name: 'Pendientes', value: stats.inscripciones.pendientes, fill: '#f59e0b' },

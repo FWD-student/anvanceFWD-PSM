@@ -155,7 +155,6 @@ class Contacto(models.Model):
 class ConfiguracionPerfil(models.Model):
     # Singleton: solo debe haber 1 registro. Lo controlaremos en la vista.
     nombre_editable = models.BooleanField(default=True)
-    apellido_editable = models.BooleanField(default=True)  # Mantener para una compatibilidad
     primer_apellido_editable = models.BooleanField(default=True)
     segundo_apellido_editable = models.BooleanField(default=True)
     telefono_editable = models.BooleanField(default=True)

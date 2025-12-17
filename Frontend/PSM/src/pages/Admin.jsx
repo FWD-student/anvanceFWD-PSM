@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Dashboard from '../components/Administrar/Dashboard'
 import UsuariosAdmin from '../components/Administrar/UsuariosAdmin'
 import EventosAdmin from '../components/Administrar/EventosAdmin'
+import EventosPendientesAdmin from '../components/Administrar/EventosPendientesAdmin'
 import UbicacionesAdmin from '../components/Administrar/UbicacionesAdmin'
 import InscripcionesAdmin from '../components/Administrar/InscripcionesAdmin'
 import ResenasAdmin from '../components/Administrar/ResenasAdmin'
@@ -20,6 +21,7 @@ function Admin() {
         <Route index element={<Dashboard />} />
         <Route path="estadisticas" element={<EstadisticasAdmin />} />
         <Route path="usuarios" element={<UsuariosAdmin />} />
+        <Route path="eventos-pendientes" element={<EventosPendientesAdmin />} />
         <Route path="eventos" element={<EventosAdmin />} />
         <Route path="ubicaciones" element={<UbicacionesAdmin />} />
         <Route path="inscripciones" element={<InscripcionesAdmin />} />

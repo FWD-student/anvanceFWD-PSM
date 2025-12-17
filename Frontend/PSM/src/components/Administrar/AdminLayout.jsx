@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Calendar, MapPin, Users, MessageSquare, LogOut, Menu, X, UserCog, Settings, Home } from 'lucide-react';
+import { LayoutDashboard, Calendar, MapPin, Users, MessageSquare, LogOut, Menu, X, UserCog, Settings, Home, Clock } from 'lucide-react';
 import { jwtDecode } from "jwt-decode";
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlternadorTema } from '../ui/alternador-tema.jsx';
@@ -45,6 +45,7 @@ function AdminLayout({ children }) {
         { id: 'estadisticas', label: 'Estadísticas', icon: LayoutDashboard, path: '/admin/estadisticas' },
         { id: 'usuarios', label: 'Usuarios', icon: UserCog, path: '/admin/usuarios' },
         { id: 'eventos', label: 'Eventos', icon: Calendar, path: '/admin/eventos' },
+        { id: 'eventos-pendientes', label: 'Pendientes', icon: Clock, path: '/admin/eventos-pendientes' },
         { id: 'ubicaciones', label: 'Ubicaciones', icon: MapPin, path: '/admin/ubicaciones' },
         { id: 'inscripciones', label: 'Inscripciones', icon: Users, path: '/admin/inscripciones' },
         { id: 'asistencia', label: 'Asistencia', icon: Users, path: '/admin/asistencia' },

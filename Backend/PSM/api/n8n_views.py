@@ -8,6 +8,9 @@ import base64
 import json
 import uuid
 from datetime import date, timedelta
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 
 def verificar_codigo_whatsapp(codigo):
     """
@@ -521,3 +524,111 @@ class N8NConfirmarEventoView(APIView):
             import traceback
             traceback.print_exc()
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# Endpoints para Admin Panel (usan JWT, no API Key de n8n)
+
+class AdminEventosPendientesView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        if not request.user.groups.filter(name='admin').exists():
+            return Response({'error': 'No tienes permisos'}, status=status.HTTP_403_FORBIDDEN)
+        
+        pendientes = EventoPendiente.objects.filter(estado='pendiente').order_by('-creado_en')
+        data = [{'token': p.token, 'datos': p.datos_json, 'creado_en': p.creado_en.isoformat(), 'expirado': p.esta_expirado(), 'imagen_url': p.datos_json.get('imagen_url') if p.datos_json else None} for p in pendientes]
+        return Response({'pendientes': data, 'total': len(data)})
+
+
+class AdminAprobarEventoView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, token):
+        if not request.user.groups.filter(name='admin').exists():
+            return Response({'error': 'No tienes permisos'}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            pendiente = EventoPendiente.objects.get(token=token, estado='pendiente')
+            if pendiente.esta_expirado():
+                pendiente.estado = 'rechazado'
+                pendiente.save()
+                return Response({'error': 'Evento expirado'}, status=status.HTTP_410_GONE)
+            
+            data = pendiente.datos_json.copy()
+            if request.data:
+                for key, value in request.data.items():
+                    if value is not None and value != '':
+                        data[key] = value
+            
+            # Crear categoría
+            categoria_nombre = data.get('categoria_nombre', '').strip() if data.get('categoria_nombre') else ''
+            categoria = CategEvento.objects.filter(nombre__icontains=categoria_nombre).first() if categoria_nombre else None
+            if not categoria:
+                categoria = CategEvento.objects.filter(nombre__icontains='General').first()
+                if not categoria:
+                    categoria = CategEvento.objects.create(nombre='General', descripcion='General', estado=True)
+            
+            # Crear ubicación
+            ubicacion_nombre = data.get('ubicacion_nombre', '').strip() if data.get('ubicacion_nombre') else ''
+            ubicacion = Ubicacion.objects.filter(recinto__icontains=ubicacion_nombre).first() if ubicacion_nombre else None
+            if not ubicacion:
+                ubicacion = Ubicacion.objects.filter(recinto__icontains='Por definir').first()
+                if not ubicacion:
+                    ubicacion = Ubicacion.objects.create(recinto='Por definir', direccion='https://maps.google.com', telefono_contacto='')
+            
+            fecha_inicio = data.get('fecha_inicio') or date.today().isoformat()
+            fecha_fin = data.get('fecha_fin') or fecha_inicio
+            
+            # Procesar imagen
+            imagen_id = None
+            imagen_url = data.get('imagen_url')
+            if imagen_url:
+                try:
+                    mongo_utils = UtilidadesMongo()
+                    imagen_id = mongo_utils.descargar_y_guardar_imagen(imagen_url)
+                except Exception as e:
+                    print(f"Error descargando imagen: {e}")
+            
+            evento = Evento.objects.create(
+                nombre=data.get('nombre', 'Evento sin nombre'),
+                descripcion=data.get('descripcion') or '',
+                categoria=categoria, ubicacion=ubicacion,
+                fecha_inicio=fecha_inicio, fecha_fin=fecha_fin,
+                hora_inicio=data.get('hora_inicio') or '08:00',
+                hora_fin=data.get('hora_fin') or '17:00',
+                dias_semana=data.get('dias_semana') or [],
+                cupo_maximo=int(data.get('cupo_maximo') or 50),
+                cupos_disponibles=int(data.get('cupo_maximo') or 50),
+                requisitos=data.get('requisitos') or '',
+                imagen_id=str(imagen_id) if imagen_id else None,
+                estado='activo', origen='whatsapp', datos_completos=True
+            )
+            
+            pendiente.estado = 'confirmado'
+            pendiente.save()
+            
+            return Response({'success': True, 'mensaje': f'Evento "{evento.nombre}" creado', 'evento_id': evento.id}, status=status.HTTP_201_CREATED)
+            
+        except EventoPendiente.DoesNotExist:
+            return Response({'error': 'Evento no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AdminRechazarEventoView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, token):
+        if not request.user.groups.filter(name='admin').exists():
+            return Response({'error': 'No tienes permisos'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            pendiente = EventoPendiente.objects.get(token=token, estado='pendiente')
+            pendiente.estado = 'rechazado'
+            pendiente.save()
+            return Response({'success': True, 'mensaje': 'Evento rechazado'})
+        except EventoPendiente.DoesNotExist:
+            return Response({'error': 'Evento no encontrado'}, status=status.HTTP_404_NOT_FOUND)

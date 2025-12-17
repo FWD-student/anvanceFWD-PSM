@@ -27,6 +27,8 @@ const DIAS_SEMANA = [
     { id: 'domingo', label: 'Domingo' }
 ];
 
+// Componente para gestionar eventos
+// CRUD de eventos con validaciones en tiempo real
 function EventosAdmin() {
     const [eventos, setEventos] = useState([]);
     const [ubicaciones, setUbicaciones] = useState([]);
@@ -75,6 +77,7 @@ function EventosAdmin() {
         cargarDatos();
     }, []);
 
+    // Carga eventos, ubicaciones y categorias del backend
     const cargarDatos = async () => {
         try {
             const [eventosData, ubicacionesData, categoriasData] = await Promise.all([
@@ -92,6 +95,7 @@ function EventosAdmin() {
         }
     };
 
+    // Abre modal para crear o editar evento
     const abrirModal = (evento = null) => {
         setErroresCampos({ fecha_fin: '', edad_maxima: '', cupos_disponibles: '', hora_fin: '', cupo_maximo: '', edad_minima: '' });
         

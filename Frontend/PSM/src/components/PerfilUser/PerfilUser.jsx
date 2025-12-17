@@ -86,6 +86,9 @@ function PerfilUser() {
 
     // Estado del formulario
     const [formData, setFormData] = useState({
+        first_name: '',
+        primer_apellido: '',
+        segundo_apellido: '',
         email: '',
         telefono: '',
         edad: '',
@@ -127,6 +130,9 @@ function PerfilUser() {
             setCategorias(cats);
 
             setFormData({
+                first_name: currentUser.first_name || '',
+                primer_apellido: currentUser.primer_apellido || '',
+                segundo_apellido: currentUser.segundo_apellido || '',
                 email: currentUser.email || '',
                 telefono: currentUser.telefono || '',
                 edad: currentUser.edad || calcularEdad(currentUser.fecha_nacimiento),
@@ -434,18 +440,24 @@ function PerfilUser() {
                                     <form onSubmit={handleSubmit} className="perfil-form">
                                         <div className="perfil-form-grid">
                                             <div className="perfil-form-group">
-                                                <Label>Nombre</Label>
+                                                <Label htmlFor="first_name">Nombre</Label>
                                                 <Input 
-                                                    value={user.first_name || ''} 
+                                                    id="first_name"
+                                                    name="first_name"
+                                                    value={formData.first_name} 
+                                                    onChange={handleChange}
                                                     disabled={!config.nombre_editable} 
                                                     className={!config.nombre_editable ? "bg-muted/50" : ""}
                                                 />
                                                 {!config.nombre_editable && <span className="perfil-field-hint">No editable</span>}
                                             </div>
                                             <div className="perfil-form-group">
-                                                <Label>Primer Apellido</Label>
+                                                <Label htmlFor="primer_apellido">Primer Apellido</Label>
                                                 <Input 
-                                                    value={user.primer_apellido || ''} 
+                                                    id="primer_apellido"
+                                                    name="primer_apellido"
+                                                    value={formData.primer_apellido} 
+                                                    onChange={handleChange}
                                                     disabled={!config.primer_apellido_editable} 
                                                     className={!config.primer_apellido_editable ? "bg-muted/50" : ""}
                                                 />
@@ -454,9 +466,12 @@ function PerfilUser() {
                                         
                                         <div className="perfil-form-grid">
                                             <div className="perfil-form-group">
-                                                <Label>Segundo Apellido</Label>
+                                                <Label htmlFor="segundo_apellido">Segundo Apellido</Label>
                                                 <Input 
-                                                    value={user.segundo_apellido || ''} 
+                                                    id="segundo_apellido"
+                                                    name="segundo_apellido"
+                                                    value={formData.segundo_apellido} 
+                                                    onChange={handleChange}
                                                     disabled={!config.segundo_apellido_editable} 
                                                     className={!config.segundo_apellido_editable ? "bg-muted/50" : ""}
                                                 />

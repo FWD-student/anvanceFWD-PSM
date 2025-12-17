@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import *
-from .n8n_views import (N8NCrearEventoView, N8NEventoPendienteView, N8NEventoPendienteDetailView, N8NConfirmarEventoView)
+from .n8n_views import (N8NCrearEventoView, N8NEventoPendienteView, N8NEventoPendienteDetailView, 
+                         N8NConfirmarEventoView, AdminEventosPendientesView, AdminAprobarEventoView, AdminRechazarEventoView)
 
 urlpatterns = [
 
@@ -58,4 +59,8 @@ urlpatterns = [
     path('whatsapp/validar-codigo/', ValidarCodigoWhatsAppView.as_view(), name="validar codigo whatsapp"),
     # Endpoint para verificar si un telefono esta autorizado
     path('whatsapp/verificar-autorizacion/', VerificarAutorizacionView.as_view(), name="verificar autorizacion"),
+    # Admin Panel - Gestión de eventos pendientes (JWT Auth)
+    path('n8n/eventos-pendientes/', AdminEventosPendientesView.as_view(), name="admin listar pendientes"),
+    path('n8n/aprobar-evento/<str:token>/', AdminAprobarEventoView.as_view(), name="admin aprobar evento"),
+    path('n8n/rechazar-evento/<str:token>/', AdminRechazarEventoView.as_view(), name="admin rechazar evento"),
 ]

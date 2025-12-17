@@ -13,6 +13,8 @@ import AuthService from '../../services/authService';
 import UserGroupService from '../../services/userGroupService';
 import tseService from '../../services/tseService';
 
+// Componente para gestionar usuarios
+// Permite crear, editar, eliminar y validar cedulas con TSE
 function UsuariosAdmin() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -47,6 +49,7 @@ function UsuariosAdmin() {
         obtenerUsuarios();
     }, []);
 
+    // Carga lista de usuarios desde el backend
     const obtenerUsuarios = async () => {
         setLoading(true);
         try {
@@ -175,6 +178,7 @@ function UsuariosAdmin() {
         }
     };
 
+    // Maneja cambios de input y filtra cedula
     const manejarCambioInput = (e) => {
         const { name, value } = e.target;
         
@@ -262,6 +266,7 @@ function UsuariosAdmin() {
         setIsDialogOpen(false);
     };
 
+    // Abre dialogo de confirmacion para borrar
     const confirmarEliminar = (user) => {
         setUserToDelete(user);
         setIsDeleteDialogOpen(true);
@@ -292,6 +297,7 @@ function UsuariosAdmin() {
         }
     };
 
+    // Valida campos antes de guardar
     const validarRegistro = () => {
         if (!formData.username || !formData.email || !formData.nombre || !formData.primer_apellido) {
             toast({
