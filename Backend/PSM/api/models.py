@@ -23,6 +23,8 @@ class Usuario(AbstractUser): #una correccion con el nombramiento de
     )
     # Campo para verificación de email
     email_verificado = models.BooleanField(default=False)
+    # Campo para forzar cambio de contraseña en el primer inicio de sesión
+    debe_cambiar_password = models.BooleanField(default=False)
 
     def __str__(self):
         return self.username
@@ -81,8 +83,13 @@ class Evento(models.Model):
         ('finalizado', 'Finalizado'),
     ]
     
+    ORIGEN_CHOICES = [
+        ('web', 'Panel Web'),
+        ('whatsapp', 'WhatsApp'),
+    ]
+    
     nombre = models.CharField(max_length=200, blank=False, null=False)
-    descripcion = models.TextField(blank=False)
+    descripcion = models.TextField(blank=True)  # Cambiado a blank=True para WhatsApp
     categoria = models.ForeignKey(CategEvento, on_delete=models.CASCADE, related_name="eventos")
     ubicacion = models.ForeignKey(Ubicacion, on_delete=models.CASCADE, related_name="eventos")
     fecha_inicio = models.DateField(blank=False, null=False)
@@ -100,6 +107,9 @@ class Evento(models.Model):
     # Campo para guardar el ID de la imagen en MongoDB
     imagen_id = models.CharField(max_length=100, blank=True, null=True)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='activo')
+    # Campos para tracking de origen y completitud
+    origen = models.CharField(max_length=20, choices=ORIGEN_CHOICES, default='web')
+    datos_completos = models.BooleanField(default=True)
     
     def __str__(self):
         return self.nombre
@@ -161,3 +171,78 @@ class ConfiguracionPerfil(models.Model):
 
     def __str__(self):
         return "Configuración Global de Perfil"
+
+# Evento pendiente de confirmacion por WhatsApp (n8n)
+class EventoPendiente(models.Model):
+    """
+    Evento temporal extraido por Gemini que espera confirmacion del admin.
+    Se elimina automaticamente despues de 24 horas o al ser procesado.
+    """
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('confirmado', 'Confirmado'),
+        ('rechazado', 'Rechazado'),
+    ]
+    
+    token = models.CharField(max_length=64, unique=True)  # UUID para identificar
+    datos_json = models.JSONField()  # Datos extraidos por Gemini
+    imagen_base64 = models.TextField(blank=True, null=True)  # Imagen original (opcional)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    
+    def esta_expirado(self):
+        """Expira despues de 24 horas."""
+        from django.utils import timezone
+        from datetime import timedelta
+        return timezone.now() > self.creado_en + timedelta(hours=24)
+    
+    class Meta:
+        verbose_name = "Evento Pendiente"
+        verbose_name_plural = "Eventos Pendientes"
+    
+    def __str__(self):
+        nombre = self.datos_json.get('nombre', 'Sin nombre') if self.datos_json else 'Sin datos'
+        return f"{nombre} ({self.estado})"
+
+# Codigo de autenticacion para WhatsApp (generado desde panel admin)
+class CodigoWhatsApp(models.Model):
+    """
+    Codigo de autenticacion generado por el admin desde el panel web.
+    Valido por 3 dias. Se envia por WhatsApp para autorizar operaciones n8n.
+    """
+    codigo = models.CharField(max_length=32, unique=True)  # Codigo alfanumerico
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name="codigos_whatsapp"
+    )
+    creado_en = models.DateTimeField(auto_now_add=True)
+    expira_en = models.DateTimeField()  # Fecha de expiracion (3 dias default)
+    activo = models.BooleanField(default=True)  # Se puede desactivar manualmente
+    telefono_autorizado = models.CharField(max_length=50, blank=True)  # Formato: whatsapp:+50612345678
+    
+    def esta_vigente(self):
+        """Verifica si el codigo esta activo y no ha expirado."""
+        from django.utils import timezone
+        return self.activo and timezone.now() < self.expira_en
+    
+    def tiempo_restante(self):
+        """Retorna el tiempo restante antes de expirar."""
+        from django.utils import timezone
+        if not self.esta_vigente():
+            return None
+        delta = self.expira_en - timezone.now()
+        return {
+            'dias': delta.days,
+            'horas': delta.seconds // 3600,
+            'minutos': (delta.seconds % 3600) // 60
+        }
+    
+    class Meta:
+        verbose_name = "Código WhatsApp"
+        verbose_name_plural = "Códigos WhatsApp"
+        ordering = ['-creado_en']
+    
+    def __str__(self):
+        estado = "✓ Activo" if self.esta_vigente() else "✗ Expirado/Inactivo"
+        return f"{self.codigo} - {self.usuario.username} ({estado})"

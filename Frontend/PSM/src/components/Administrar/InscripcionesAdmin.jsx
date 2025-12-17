@@ -11,10 +11,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from '@/hooks/use-toast';
 import InscripcionService from '../../services/inscripcionService';
 import EventoService from '../../services/eventoService';
+import UserService from '../../services/userService';
 
 function InscripcionesAdmin() {
     const [inscripciones, setInscripciones] = useState([]);
     const [eventos, setEventos] = useState([]);
+    const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filtroEstado, setFiltroEstado] = useState('todas');
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -28,12 +30,14 @@ function InscripcionesAdmin() {
 
     const cargarDatos = async () => {
         try {
-            const [inscripcionesData, eventosData] = await Promise.all([
+            const [inscripcionesData, eventosData, usuariosData] = await Promise.all([
                 InscripcionService.getInscripciones(),
-                EventoService.getEventos()
+                EventoService.getEventos(),
+                UserService.getUsers()
             ]);
             setInscripciones(inscripcionesData);
             setEventos(eventosData);
+            setUsuarios(usuariosData);
         } catch (error) {
             console.error('Error al cargar datos:', error);
         } finally {
@@ -186,10 +190,18 @@ function InscripcionesAdmin() {
                             ) : (
                                 inscripcionesFiltradas.map((inscripcion) => {
                                     const evento = eventos.find(e => e.id === inscripcion.evento);
+                                    const usuario = usuarios.find(u => u.id === inscripcion.usuario);
                                     return (
                                         <TableRow key={inscripcion.id}>
                                             <TableCell className="font-medium">
-                                                Usuario #{inscripcion.usuario}
+                                                <div>
+                                                    <span className="font-semibold">{usuario?.username || `ID: ${inscripcion.usuario}`}</span>
+                                                    {usuario && (
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {usuario.first_name} {usuario.primer_apellido}
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 {evento?.imagen_id ? (

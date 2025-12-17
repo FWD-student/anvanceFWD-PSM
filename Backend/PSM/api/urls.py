@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import *
+from .n8n_views import (N8NCrearEventoView, N8NEventoPendienteView, N8NEventoPendienteDetailView, N8NConfirmarEventoView)
 
 urlpatterns = [
 
@@ -34,20 +35,27 @@ urlpatterns = [
     # Eventos
     path('Evento/', EventoListCreateView.as_view(), name="crear y listar eventos"),
     path('Evento/<int:pk>/', EventoDetailView.as_view(), name="detalle evento"),
-    path('Evento/', EventoListCreateView.as_view(), name="crear y listar eventos"),
-    path('Evento/<int:pk>/', EventoDetailView.as_view(), name="detalle evento"),
     path('Evento/imagen/<str:imagen_id>/', EventoImagenView.as_view(), name="ver imagen evento"),
 
     # Configuracion Global
     path('configuracion/perfil/', ConfiguracionPerfilView.as_view(), name="configuracion perfil"),
-    
     # Validación TSE
     path('validar-cedula/', ValidarCedulaTSEView.as_view(), name="validar cedula TSE"),
-    
     # Estadísticas para el admin
     path('estadisticas/', EstadisticasView.as_view(), name="estadisticas dashboard"),
-    
     # Validación del Email
     path('enviar-codigo/', EnviarCodigoVerificacionView.as_view(), name="enviar codigo verificacion"),
     path('verificar-codigo/', VerificarCodigoView.as_view(), name="verificar codigo"),
+    # Endpoint para n8n (automatizaciones)
+    path('n8n/crear-evento/', N8NCrearEventoView.as_view(), name="n8n crear evento"),
+    # Endpoints para flujo de confirmacion por WhatsApp
+    path('n8n/evento-pendiente/', N8NEventoPendienteView.as_view(), name="n8n evento pendiente"),
+    path('n8n/evento-pendiente/<str:token>/', N8NEventoPendienteDetailView.as_view(), name="n8n editar pendiente"),
+    path('n8n/confirmar/<str:token>/', N8NConfirmarEventoView.as_view(), name="n8n confirmar evento"),
+    # Endpoint para generar código de autenticación WhatsApp (admin)
+    path('whatsapp/generar-codigo/', GenerarCodigoWhatsAppView.as_view(), name="generar codigo whatsapp"),
+    # Endpoint para validar código desde n8n (no requiere JWT, solo API Key)
+    path('whatsapp/validar-codigo/', ValidarCodigoWhatsAppView.as_view(), name="validar codigo whatsapp"),
+    # Endpoint para verificar si un telefono esta autorizado
+    path('whatsapp/verificar-autorizacion/', VerificarAutorizacionView.as_view(), name="verificar autorizacion"),
 ]

@@ -116,6 +116,10 @@ async function deleteUbicacion(id) {
             }
         });
 
+        if (!response.ok) {
+            throw new Error('Error al borrar ubicacion');
+        }
+
         return await response.json();
 
     } catch (error) {

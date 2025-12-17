@@ -35,6 +35,7 @@ function EventosAdmin() {
     const [modalOpen, setModalOpen] = useState(false);
     const [editando, setEditando] = useState(null);
     const [filtroEstado, setFiltroEstado] = useState('todos');
+    const [filtroOrigen, setFiltroOrigen] = useState('todos');
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
     const [eventoAEliminar, setEventoAEliminar] = useState(null);
     const navigate = useNavigate();
@@ -64,7 +65,10 @@ function EventosAdmin() {
     const [erroresCampos, setErroresCampos] = useState({
         fecha_fin: '',
         edad_maxima: '',
-        cupos_disponibles: ''
+        cupos_disponibles: '',
+        hora_fin: '',
+        cupo_maximo: '',
+        edad_minima: ''
     });
 
     useEffect(() => {
@@ -89,7 +93,7 @@ function EventosAdmin() {
     };
 
     const abrirModal = (evento = null) => {
-        setErroresCampos({ fecha_fin: '', edad_maxima: '', cupos_disponibles: '' });
+        setErroresCampos({ fecha_fin: '', edad_maxima: '', cupos_disponibles: '', hora_fin: '', cupo_maximo: '', edad_minima: '' });
         
         if (evento) {
             setEditando(evento);
@@ -140,7 +144,7 @@ function EventosAdmin() {
     const cerrarModal = () => {
         setModalOpen(false);
         setEditando(null);
-        setErroresCampos({ fecha_fin: '', edad_maxima: '', cupos_disponibles: '' });
+        setErroresCampos({ fecha_fin: '', edad_maxima: '', cupos_disponibles: '', hora_fin: '', cupo_maximo: '', edad_minima: '' });
     };
 
     const manejarCambio = (name, value) => {
@@ -162,26 +166,79 @@ function EventosAdmin() {
                 }
             }
 
-            // Validación de edades
+            // Validación de horas
+            if (name === 'hora_inicio' || name === 'hora_fin') {
+                const horaInicio = name === 'hora_inicio' ? value : newData.hora_inicio;
+                const horaFin = name === 'hora_fin' ? value : newData.hora_fin;
+                
+                if (horaInicio && horaFin && horaInicio >= horaFin) {
+                    nuevosErrores.hora_fin = 'La hora de fin debe ser posterior a la hora de inicio';
+                } else {
+                    nuevosErrores.hora_fin = '';
+                }
+            }
+
+            // Validación de edades - no negativas
+            if (name === 'edad_minima') {
+                const valor = parseInt(value);
+                if (value !== '' && (isNaN(valor) || valor < 0)) {
+                    nuevosErrores.edad_minima = 'La edad mínima no puede ser negativa';
+                } else {
+                    nuevosErrores.edad_minima = '';
+                }
+            }
+            
+            if (name === 'edad_maxima') {
+                const valor = parseInt(value);
+                if (value !== '' && (isNaN(valor) || valor < 0)) {
+                    nuevosErrores.edad_maxima = 'La edad máxima no puede ser negativa';
+                } else {
+                    nuevosErrores.edad_maxima = '';
+                }
+            }
+
+            // Validación de edades - máxima > mínima
             if (name === 'edad_minima' || name === 'edad_maxima') {
                 const min = name === 'edad_minima' ? parseInt(value) : parseInt(newData.edad_minima || 0);
                 const max = name === 'edad_maxima' ? parseInt(value) : parseInt(newData.edad_maxima || 0);
                 
                 if (min && max && min >= max) {
                     nuevosErrores.edad_maxima = 'La edad máxima debe ser mayor a la mínima';
-                } else {
+                } else if (!nuevosErrores.edad_maxima.includes('negativa')) {
                     nuevosErrores.edad_maxima = '';
                 }
             }
 
-            // Validación de cupos
+            // Validación de cupo máximo - no negativo
+            if (name === 'cupo_maximo') {
+                const valor = parseInt(value);
+                if (isNaN(valor) || valor < 0) {
+                    nuevosErrores.cupo_maximo = 'El cupo máximo no puede ser negativo';
+                } else if (valor === 0) {
+                    nuevosErrores.cupo_maximo = 'El cupo máximo debe ser mayor a 0';
+                } else {
+                    nuevosErrores.cupo_maximo = '';
+                }
+            }
+
+            // Validación de cupos disponibles - no negativo
+            if (name === 'cupos_disponibles') {
+                const valor = parseInt(value);
+                if (isNaN(valor) || valor < 0) {
+                    nuevosErrores.cupos_disponibles = 'Los cupos disponibles no pueden ser negativos';
+                } else {
+                    nuevosErrores.cupos_disponibles = '';
+                }
+            }
+
+            // Validación de cupos - disponibles <= máximo
             if (name === 'cupos_disponibles' || name === 'cupo_maximo') {
                 const disp = name === 'cupos_disponibles' ? parseInt(value) : parseInt(newData.cupos_disponibles || 0);
                 const max = name === 'cupo_maximo' ? parseInt(value) : parseInt(newData.cupo_maximo || 0);
                 
                 if (disp && max && disp > max) {
                     nuevosErrores.cupos_disponibles = 'Los cupos disponibles no pueden exceder el máximo';
-                } else {
+                } else if (!nuevosErrores.cupos_disponibles.includes('negativo')) {
                     nuevosErrores.cupos_disponibles = '';
                 }
             }
@@ -204,7 +261,7 @@ function EventosAdmin() {
         }
 
         // Verificar si hay errores de validación pendientes
-        if (erroresCampos.fecha_fin || erroresCampos.edad_maxima || erroresCampos.cupos_disponibles) {
+        if (erroresCampos.fecha_fin || erroresCampos.edad_maxima || erroresCampos.cupos_disponibles || erroresCampos.hora_fin || erroresCampos.cupo_maximo || erroresCampos.edad_minima) {
             toast({
                 variant: "destructive",
                 title: "Error",
@@ -284,9 +341,15 @@ function EventosAdmin() {
         }
     };
 
-    const eventosFiltrados = filtroEstado === 'todos'
-        ? eventos
-        : eventos.filter(e => e.estado === filtroEstado);
+    // Filtrar eventos
+    const eventosFiltrados = eventos.filter(e => {
+        const pasaEstado = filtroEstado === 'todos' || e.estado === filtroEstado;
+        const pasaOrigen = filtroOrigen === 'todos' || 
+            (filtroOrigen === 'incompletos' && e.datos_completos === false) ||
+            (filtroOrigen === 'whatsapp' && e.origen === 'whatsapp') ||
+            (filtroOrigen === 'web' && e.origen === 'web');
+        return pasaEstado && pasaOrigen;
+    });
 
     const getEstadoBadge = (estado) => {
         const variants = {
@@ -336,6 +399,19 @@ function EventosAdmin() {
                         <span className="text-sm text-muted-foreground">
                             {eventosFiltrados.length} evento(s)
                         </span>
+                        
+                        <Label className="ml-4">Origen:</Label>
+                        <Select value={filtroOrigen} onValueChange={setFiltroOrigen}>
+                            <SelectTrigger className="w-48">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="todos">Todos</SelectItem>
+                                <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                                <SelectItem value="web">Panel Web</SelectItem>
+                                <SelectItem value="incompletos">Incompletos</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </CardContent>
             </Card>
@@ -391,9 +467,21 @@ function EventosAdmin() {
                                             {evento.cupos_disponibles}/{evento.cupo_maximo}
                                         </TableCell>
                                         <TableCell>
-                                            <Badge className={getEstadoBadge(evento.estado)}>
-                                                {evento.estado}
-                                            </Badge>
+                                            <div className="flex flex-col gap-1">
+                                                <Badge className={getEstadoBadge(evento.estado)}>
+                                                    {evento.estado}
+                                                </Badge>
+                                                {evento.origen === 'whatsapp' && (
+                                                    <Badge className="bg-green-100 text-green-800 text-xs">
+                                                        WhatsApp
+                                                    </Badge>
+                                                )}
+                                                {evento.datos_completos === false && (
+                                                    <Badge className="bg-yellow-100 text-yellow-800 text-xs">
+                                                        Incompleto
+                                                    </Badge>
+                                                )}
+                                            </div>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
@@ -535,16 +623,22 @@ function EventosAdmin() {
                                     onChange={(e) => manejarCambio('hora_fin', e.target.value)} 
                                     required 
                                 />
+                                {erroresCampos.hora_fin && (
+                                    <p className="text-red-500 text-sm mt-1">{erroresCampos.hora_fin}</p>
+                                )}
                             </div>
 
                             <div>
                                 <Label>Cupo Máximo *</Label>
-                                <Input type="number" value={formData.cupo_maximo} onChange={(e) => manejarCambio('cupo_maximo', parseInt(e.target.value))} required />
+                                <Input type="number" min="1" value={formData.cupo_maximo} onChange={(e) => manejarCambio('cupo_maximo', parseInt(e.target.value))} required />
+                                {erroresCampos.cupo_maximo && (
+                                    <p className="text-red-500 text-sm mt-1">{erroresCampos.cupo_maximo}</p>
+                                )}
                             </div>
 
                             <div>
                                 <Label>Cupos Disponibles *</Label>
-                                <Input type="number" value={formData.cupos_disponibles} onChange={(e) => manejarCambio('cupos_disponibles', parseInt(e.target.value))} required />
+                                <Input type="number" min="0" value={formData.cupos_disponibles} onChange={(e) => manejarCambio('cupos_disponibles', parseInt(e.target.value))} required />
                                 {erroresCampos.cupos_disponibles && (
                                     <p className="text-red-500 text-sm mt-1">{erroresCampos.cupos_disponibles}</p>
                                 )}
@@ -552,12 +646,15 @@ function EventosAdmin() {
 
                             <div>
                                 <Label>Edad Mínima</Label>
-                                <Input type="number" value={formData.edad_minima} onChange={(e) => manejarCambio('edad_minima', e.target.value ? parseInt(e.target.value) : '')} />
+                                <Input type="number" min="0" value={formData.edad_minima} onChange={(e) => manejarCambio('edad_minima', e.target.value ? parseInt(e.target.value) : '')} />
+                                {erroresCampos.edad_minima && (
+                                    <p className="text-red-500 text-sm mt-1">{erroresCampos.edad_minima}</p>
+                                )}
                             </div>
 
                             <div>
                                 <Label>Edad Máxima</Label>
-                                <Input type="number" value={formData.edad_maxima} onChange={(e) => manejarCambio('edad_maxima', e.target.value ? parseInt(e.target.value) : '')} />
+                                <Input type="number" min="0" value={formData.edad_maxima} onChange={(e) => manejarCambio('edad_maxima', e.target.value ? parseInt(e.target.value) : '')} />
                                 {erroresCampos.edad_maxima && (
                                     <p className="text-red-500 text-sm mt-1">{erroresCampos.edad_maxima}</p>
                                 )}
@@ -596,7 +693,7 @@ function EventosAdmin() {
                             <Button 
                                 type="submit" 
                                 className="bg-green-600 hover:bg-green-700 text-white"
-                                disabled={!!erroresCampos.fecha_fin || !!erroresCampos.edad_maxima || !!erroresCampos.cupos_disponibles}
+                                disabled={!!erroresCampos.fecha_fin || !!erroresCampos.edad_maxima || !!erroresCampos.cupos_disponibles || !!erroresCampos.hora_fin || !!erroresCampos.cupo_maximo || !!erroresCampos.edad_minima}
                             >
                                 {editando ? 'Actualizar' : 'Crear'}
                             </Button>

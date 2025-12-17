@@ -56,12 +56,21 @@ class UbicacionDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Ubicacion.objects.all()
     serializer_class = UbicacionSerializer
     permission_classes = [IsAdminOrReadOnly]  # Publico lectura, admin escritura
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response({'success': True, 'message': 'Ubicacion eliminada'}, status=200)
 
 # Vistas Inscripcion
 class InscripcionListCreateView(generics.ListCreateAPIView):
     queryset = Inscripcion.objects.all()
     serializer_class = InscripcionSerializer
     permission_classes = [IsAuthenticated]  # Solo usuarios autenticados pueden inscribirse
+    
+    def perform_create(self, serializer):
+        # Asignar el usuario autenticado automaticamente
+        serializer.save(usuario=self.request.user)
 
 class InscripcionDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Inscripcion.objects.all()
@@ -308,7 +317,7 @@ class EventoDetailView(APIView):
         if not evento:
             return Response({'error': 'Evento no encontrado'}, status=404)
         evento.delete()
-        return Response(status=204)
+        return Response({'success': True, 'message': 'Evento eliminado'}, status=200)
 
 class EventoImagenView(APIView):
     permission_classes = [AllowAny]
@@ -623,3 +632,197 @@ class VerificarCodigoView(APIView):
                 'success': False,
                 'error': 'Código inválido o ya utilizado'
             }, status=status.HTTP_400_BAD_REQUEST)
+
+# Vista para generar código de autenticación WhatsApp (solo admin)
+class GenerarCodigoWhatsAppView(APIView):
+    """
+    Endpoint para que el admin genere un código de autenticación para WhatsApp.
+    Este código se envía por chat para autorizar operaciones n8n.
+    Válido por 3 días.
+    
+    POST: { "telefono": "+50663480444" (opcional) }
+    GET: Obtener código activo del admin
+    """
+    permission_classes = [IsAdminUser]  # Solo admin puede generar códigos
+    
+    def post(self, request):
+        import secrets
+        
+        # Verificar que es admin
+        if not request.user.is_staff and not request.user.groups.filter(name='admin').exists():
+            return Response({'error': 'Solo administradores pueden generar códigos'}, status=403)
+        
+        # Desactivar códigos anteriores del mismo usuario
+        CodigoWhatsApp.objects.filter(usuario=request.user, activo=True).update(activo=False)
+        
+        # Generar código alfanumérico de 8 caracteres (fácil de leer/copiar)
+        codigo = secrets.token_urlsafe(6)[:8].upper()  # Ej: "AB12CD34"
+        
+        # Calcular fecha de expiración (3 días)
+        expira_en = timezone.now() + timedelta(days=3)
+        
+        # Obtener teléfono si lo envían
+        telefono = request.data.get('telefono', '')
+        
+        # Crear código
+        codigo_whatsapp = CodigoWhatsApp.objects.create(
+            codigo=codigo,
+            usuario=request.user,
+            expira_en=expira_en,
+            telefono_autorizado=telefono
+        )
+        
+        return Response({
+            'success': True,
+            'codigo': codigo,
+            'expira_en': expira_en.isoformat(),
+            'tiempo_restante': codigo_whatsapp.tiempo_restante(),
+            'instrucciones': f'Envía este código en el chat de WhatsApp para autorizar operaciones: {codigo}'
+        }, status=status.HTTP_201_CREATED)
+    
+    def get(self, request):
+        """Obtener el código activo del admin."""
+        if not request.user.is_staff and not request.user.groups.filter(name='admin').exists():
+            return Response({'error': 'Solo administradores'}, status=403)
+        
+        try:
+            codigo = CodigoWhatsApp.objects.filter(
+                usuario=request.user,
+                activo=True
+            ).latest('creado_en')
+            
+            if codigo.esta_vigente():
+                return Response({
+                    'success': True,
+                    'codigo': codigo.codigo,
+                    'expira_en': codigo.expira_en.isoformat(),
+                    'tiempo_restante': codigo.tiempo_restante(),
+                    'activo': True
+                })
+            else:
+                return Response({
+                    'success': False,
+                    'mensaje': 'No hay código activo. Genera uno nuevo.',
+                    'activo': False
+                })
+        except CodigoWhatsApp.DoesNotExist:
+            return Response({
+                'success': False,
+                'mensaje': 'No hay código generado. Genera uno nuevo.',
+                'activo': False
+            })
+
+
+class ValidarCodigoWhatsAppView(APIView):
+    """
+    Endpoint para que n8n valide un código enviado por WhatsApp.
+    No requiere JWT, solo la API Key de n8n.
+    
+    POST: { "codigo": "AB12CD34" }
+    
+    Respuesta exitosa:
+    {
+        "valido": true,
+        "mensaje": "Código válido. Autorizado para procesar eventos.",
+        "tiempo_restante": {"dias": 2, "horas": 15, "minutos": 30},
+        "usuario": "admin@example.com"
+    }
+    """
+    permission_classes = [AllowAny]  # n8n no tiene JWT, usa API Key
+    
+    def post(self, request):
+        from django.conf import settings
+        
+        # Verificar API Key de n8n
+        api_key = request.headers.get('X-API-Key', '')
+        if api_key != getattr(settings, 'N8N_API_KEY', ''):
+            return Response({'error': 'API Key invalida'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        codigo = request.data.get('codigo', '').strip().upper()
+        telefono = request.data.get('telefono', '').strip()  # Guardar telefono de WhatsApp
+        
+        if not codigo:
+            return Response({
+                'valido': False,
+                'mensaje': 'Debes enviar un código'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            codigo_obj = CodigoWhatsApp.objects.get(codigo=codigo, activo=True)
+            
+            if codigo_obj.esta_vigente():
+                # Guardar el telefono autorizado
+                if telefono:
+                    codigo_obj.telefono_autorizado = telefono
+                    codigo_obj.save()
+                
+                return Response({
+                    'valido': True,
+                    'mensaje': 'Código válido. Autorizado para procesar eventos.',
+                    'tiempo_restante': codigo_obj.tiempo_restante(),
+                    'usuario': codigo_obj.usuario.email,
+                    'expira_en': codigo_obj.expira_en.isoformat()
+                })
+            else:
+                return Response({
+                    'valido': False,
+                    'mensaje': 'El código ha expirado. Genera uno nuevo desde el panel admin.'
+                })
+                
+        except CodigoWhatsApp.DoesNotExist:
+            return Response({
+                'valido': False,
+                'mensaje': 'Código inválido. Verifica que esté bien escrito.'
+            })
+
+
+class VerificarAutorizacionView(APIView):
+    """
+    Endpoint para verificar si un telefono de WhatsApp esta autorizado.
+    Usado por n8n antes de procesar imagenes.
+    
+    POST: { "telefono": "whatsapp:+50663480444" }
+    """
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        from django.conf import settings
+        
+        # Verificar API Key
+        api_key = request.headers.get('X-API-Key', '')
+        if api_key != getattr(settings, 'N8N_API_KEY', ''):
+            return Response({'error': 'API Key invalida'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        telefono = request.data.get('telefono', '').strip()
+        
+        if not telefono:
+            return Response({
+                'autorizado': False,
+                'mensaje': 'Debes enviar el telefono'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Buscar codigo activo con ese telefono
+        try:
+            codigo_obj = CodigoWhatsApp.objects.filter(
+                telefono_autorizado=telefono,
+                activo=True
+            ).latest('creado_en')
+            
+            if codigo_obj.esta_vigente():
+                return Response({
+                    'autorizado': True,
+                    'mensaje': 'Telefono autorizado para procesar eventos.',
+                    'tiempo_restante': codigo_obj.tiempo_restante(),
+                    'expira_en': codigo_obj.expira_en.isoformat()
+                })
+            else:
+                return Response({
+                    'autorizado': False,
+                    'mensaje': 'Autorizacion expirada. Envia un nuevo codigo.'
+                })
+                
+        except CodigoWhatsApp.DoesNotExist:
+            return Response({
+                'autorizado': False,
+                'mensaje': 'Telefono no autorizado. Envia tu codigo primero.'
+            })

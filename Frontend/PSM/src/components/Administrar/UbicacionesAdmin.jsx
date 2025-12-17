@@ -26,6 +26,9 @@ function UbicacionesAdmin() {
         telefono_contacto: ''
     });
 
+    // Estado para errores de validación
+    const [errorTelefono, setErrorTelefono] = useState('');
+
     useEffect(() => {
         cargarUbicaciones();
     }, []);
@@ -42,6 +45,7 @@ function UbicacionesAdmin() {
     };
 
     const abrirModal = (ubicacion = null) => {
+        setErrorTelefono('');
         if (ubicacion) {
             setEditando(ubicacion);
             setFormData({
@@ -59,9 +63,32 @@ function UbicacionesAdmin() {
     const cerrarModal = () => {
         setModalOpen(false);
         setEditando(null);
+        setErrorTelefono('');
     };
 
     const handleChange = (name, value) => {
+        // Si es teléfono, solo permitir números y guiones
+        if (name === 'telefono_contacto') {
+            const valorFiltrado = value.replace(/[^0-9-]/g, '');
+            setFormData(prev => ({ ...prev, [name]: valorFiltrado }));
+            
+            // Validar formato en tiempo real
+            if (valorFiltrado && valorFiltrado.length > 0) {
+                const telefonoLimpio = valorFiltrado.replace(/-/g, '');
+                if (telefonoLimpio.length > 0 && !/^[2678]/.test(telefonoLimpio)) {
+                    setErrorTelefono('El teléfono debe comenzar con 2, 6, 7 u 8');
+                } else if (telefonoLimpio.length > 0 && telefonoLimpio.length < 8) {
+                    setErrorTelefono('El teléfono debe tener al menos 8 dígitos');
+                } else if (telefonoLimpio.length > 16) {
+                    setErrorTelefono('El teléfono no puede tener más de 16 dígitos');
+                } else {
+                    setErrorTelefono('');
+                }
+            } else {
+                setErrorTelefono('');
+            }
+            return;
+        }
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -75,6 +102,19 @@ function UbicacionesAdmin() {
                 description: "Por favor completa todos los campos obligatorios.",
             });
             return;
+        }
+
+        // Validar teléfono si tiene valor
+        if (formData.telefono_contacto) {
+            const telefonoLimpio = formData.telefono_contacto.replace(/-/g, '');
+            if (!/^[2678]\d{7,15}$/.test(telefonoLimpio)) {
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "El teléfono debe empezar con 2, 6, 7 u 8 y tener entre 8 y 16 dígitos.",
+                });
+                return;
+            }
         }
 
         try {
@@ -269,13 +309,20 @@ function UbicacionesAdmin() {
                                 onChange={(e) => handleChange('telefono_contacto', e.target.value)}
                                 placeholder="Ej: 2661-1234"
                             />
+                            {errorTelefono && (
+                                <p className="text-red-500 text-sm mt-1">{errorTelefono}</p>
+                            )}
                         </div>
 
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={cerrarModal}>
                                 Cancelar
                             </Button>
-                            <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
+                            <Button 
+                                type="submit" 
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                disabled={!!errorTelefono}
+                            >
                                 {editando ? 'Actualizar' : 'Crear'} Ubicación
                             </Button>
                         </DialogFooter>

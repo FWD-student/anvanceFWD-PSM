@@ -10,6 +10,7 @@ import ConfiguracionAdmin from '../components/Administrar/ConfiguracionAdmin'
 import AsistenciaAdmin from '../components/Administrar/AsistenciaAdmin'
 import EstadisticasAdmin from '../components/Administrar/EstadisticasAdmin'
 import ContactosAdmin from '../components/Administrar/ContactosAdmin'
+import WhatsAppAdmin from '../components/Administrar/WhatsAppAdmin'
 import AdminLayout from '../components/Administrar/AdminLayout'
 
 function Admin() {
@@ -26,6 +27,7 @@ function Admin() {
         <Route path="contactos" element={<ContactosAdmin />} />
         <Route path="resenas" element={<ResenasAdmin />} />
         <Route path="configuracion" element={<ConfiguracionAdmin />} />
+        <Route path="whatsapp" element={<WhatsAppAdmin />} />
         <Route path="*" element={<Navigate to="" replace />} />
       </Routes>
     </AdminLayout>

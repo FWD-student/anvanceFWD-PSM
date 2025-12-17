@@ -32,13 +32,22 @@ class UserSerializer(serializers.ModelSerializer):
             'recibir_notificaciones', # Preferencia de notificaciones
             'dias_anticipacion_notificacion', # Días de anticipación
             'email_verificado', # Estado de verificación de email
+            'debe_cambiar_password', # Flag para forzar cambio de contraseña
         ]
         extra_kwargs = {
             'password': {'write_only': True},
             'intereses': {'required': False},
             'nacionalidad': {'required': False},
             'primer_apellido': {'required': False},
-            'segundo_apellido': {'required': False}
+            'segundo_apellido': {'required': False},
+            'edad': {'required': False, 'allow_null': True},
+            'fecha_nacimiento': {'required': False, 'allow_null': True},
+            'recibir_notificaciones': {'required': False},
+            'dias_anticipacion_notificacion': {'required': False},
+            'email_verificado': {'required': False},
+            'debe_cambiar_password': {'required': False},
+            'first_name': {'required': False},
+            'last_name': {'required': False},
         }
 
     def create(self, validated_data):
@@ -129,6 +138,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['id'] = self.user.id
         data['username'] = self.user.username
         data['email'] = self.user.email
+        data['debe_cambiar_password'] = self.user.debe_cambiar_password
         
         return data
 

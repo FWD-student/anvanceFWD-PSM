@@ -50,6 +50,7 @@ function AdminLayout({ children }) {
         { id: 'asistencia', label: 'Asistencia', icon: Users, path: '/admin/asistencia' },
         { id: 'contactos', label: 'Contactos', icon: MessageSquare, path: '/admin/contactos' },
         { id: 'resenas', label: 'Reseñas', icon: MessageSquare, path: '/admin/resenas' },
+        { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, path: '/admin/whatsapp' },
         { id: 'configuracion', label: 'Configuración', icon: Settings, path: '/admin/configuracion' },
     ];
 

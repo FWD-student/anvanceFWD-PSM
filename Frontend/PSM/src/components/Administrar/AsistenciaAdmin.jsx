@@ -8,10 +8,12 @@ import { Label } from '../ui/label';
 import { useToast } from '@/hooks/use-toast';
 import InscripcionService from '../../services/inscripcionService';
 import EventoService from '../../services/eventoService';
+import UserService from '../../services/userService';
 
 function AsistenciaAdmin() {
     const [eventos, setEventos] = useState([]);
     const [inscripciones, setInscripciones] = useState([]);
+    const [usuarios, setUsuarios] = useState([]);
     const [selectedEventoId, setSelectedEventoId] = useState('');
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
@@ -30,10 +32,14 @@ function AsistenciaAdmin() {
 
     const cargarEventos = async () => {
         try {
-            const data = await EventoService.getEventos();
-            setEventos(data);
+            const [eventosData, usuariosData] = await Promise.all([
+                EventoService.getEventos(),
+                UserService.getUsers()
+            ]);
+            setEventos(eventosData);
+            setUsuarios(usuariosData);
         } catch (error) {
-            console.error('Error al cargar eventos:', error);
+            console.error('Error al cargar datos:', error);
         } finally {
             setLoading(false);
         }
@@ -126,12 +132,19 @@ function AsistenciaAdmin() {
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    inscripciones.map((inv) => (
+                                    inscripciones.map((inv) => {
+                                        const usuario = usuarios.find(u => u.id === inv.usuario);
+                                        return (
                                         <TableRow key={inv.id}>
                                             <TableCell className="font-medium">
-                                                Usuario #{inv.usuario} 
-                                                {/* Idealmente aqui iría el nombre real si el backend lo devuelve. 
-                                                    si no, solo ID o requeriría otro fetch. */}
+                                                <div>
+                                                    <span className="font-semibold">{usuario?.username || `ID: ${inv.usuario}`}</span>
+                                                    {usuario && (
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {usuario.first_name} {usuario.primer_apellido}
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 <span className={`px-2 py-1 rounded-full text-xs font-semibold
@@ -157,7 +170,7 @@ function AsistenciaAdmin() {
                                                 </div>
                                             </TableCell>
                                         </TableRow>
-                                    ))
+                                    )})
                                 )}
                             </TableBody>
                         </Table>

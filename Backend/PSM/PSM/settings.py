@@ -18,7 +18,22 @@ SECRET_KEY = 'django-insecure-6!y$0epaxyt)vp8#vp1!qdc7fayz$7r16$o$l8g$#*th&i1@bx
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+#ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']  # Permitir cualquier host (ngrok, localhost, etc.)
+
+# Dominios confiables para CSRF (requerido para POST desde ngrok)
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'https://cloudless-lonnie-lushiest.ngrok-free.dev',  # Tu dominio fijo de ngrok
+]
+
+# API Key para n8n (autenticacion sin JWT)
+import os
+N8N_API_KEY = os.environ.get('N8N_API_KEY', 'psm-n8n-secret-key-2025')
+
+# Numero de WhatsApp del admin autorizado (sin codigo de pais para flexibilidad)
+ADMIN_WHATSAPP = os.environ.get('ADMIN_WHATSAPP', '63480444') # solo admin
 
 # >>IMPORTANTE<< Permitir la herencia a usuario 
 AUTH_USER_MODEL = "api.Usuario"
@@ -76,6 +91,9 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5174',
     'http://127.0.0.1:5174'
 ]
+
+# Permitir cualquier origen para n8n (usa API Key para seguridad)
+CORS_ALLOW_ALL_ORIGINS = True
  
 # configuracion del cors version general de los puertos 
 #CORS_ALLOW_ALL_ORIGINS = True

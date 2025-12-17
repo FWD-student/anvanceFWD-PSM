@@ -6,18 +6,25 @@ import { Label } from '../ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "../ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { Plus, Search, User, Shield, ShieldAlert, Loader2 } from 'lucide-react';
+import { Plus, Search, User, Trash2, Loader2, RefreshCw, Eye, EyeOff, Check, X } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import UserService from '../../services/userService';
 import AuthService from '../../services/authService';
 import UserGroupService from '../../services/userGroupService';
+import tseService from '../../services/tseService';
 
 function UsuariosAdmin() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState(null);
     const [creating, setCreating] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [validatingTSE, setValidatingTSE] = useState(false);
+    const [tseValidated, setTseValidated] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const { toast } = useToast();
 
     const [formData, setFormData] = useState({
@@ -33,6 +40,8 @@ function UsuariosAdmin() {
         nacionalidad: '',
         role: 'user' // 'user' or 'admin'
     });
+
+    const [editingId, setEditingId] = useState(null);
 
     useEffect(() => {
         obtenerUsuarios();
@@ -54,14 +63,151 @@ function UsuariosAdmin() {
         }
     };
 
-    const [editingId, setEditingId] = useState(null);
+    // Generar contraseña aleatoria segura
+    const generarPasswordAleatorio = () => {
+        const mayusculas = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const minusculas = 'abcdefghijklmnopqrstuvwxyz';
+        const numeros = '0123456789';
+        const especiales = '!@#$%&*';
+        
+        let password = '';
+        // Asegurar al menos uno de cada tipo
+        password += mayusculas[Math.floor(Math.random() * mayusculas.length)];
+        password += minusculas[Math.floor(Math.random() * minusculas.length)];
+        password += numeros[Math.floor(Math.random() * numeros.length)];
+        password += especiales[Math.floor(Math.random() * especiales.length)];
+        
+        // Completar hasta 12 caracteres
+        const todos = mayusculas + minusculas + numeros + especiales;
+        for (let i = 0; i < 8; i++) {
+            password += todos[Math.floor(Math.random() * todos.length)];
+        }
+        
+        // Mezclar
+        password = password.split('').sort(() => Math.random() - 0.5).join('');
+        
+        setFormData(prev => ({ ...prev, password }));
+        setShowPassword(true);
+        
+        toast({
+            title: "Contraseña generada",
+            description: "Se ha generado una contraseña segura.",
+        });
+    };
+
+    // Calcular edad desde fecha de nacimiento
+    const calcularEdadDesdeFecha = (fechaNacimiento) => {
+        if (!fechaNacimiento) return '';
+        
+        const hoy = new Date();
+        const nacimiento = new Date(fechaNacimiento);
+        let edad = hoy.getFullYear() - nacimiento.getFullYear();
+        const mesActual = hoy.getMonth();
+        const mesNacimiento = nacimiento.getMonth();
+        
+        if (mesActual < mesNacimiento || (mesActual === mesNacimiento && hoy.getDate() < nacimiento.getDate())) {
+            edad--;
+        }
+        
+        return edad > 0 ? edad : '';
+    };
+
+    // Validar cédula con TSE
+    const validarCedulaTSE = async (cedula) => {
+        // Limpiar la cédula de guiones
+        const cedulaLimpia = cedula.replace(/-/g, '');
+        
+        // Si tiene más de 9 dígitos, es extranjero
+        if (cedulaLimpia.length > 9) {
+            setFormData(prev => ({
+                ...prev,
+                nacionalidad: 'EXTRANJERO'
+            }));
+            setTseValidated(false);
+            toast({
+                title: "Cédula extranjera",
+                description: "La cédula tiene más de 9 dígitos. Se cataloga como extranjero.",
+            });
+            return;
+        }
+        
+        // Si tiene menos de 9 dígitos, esperar
+        if (cedulaLimpia.length < 9) {
+            return;
+        }
+        
+        setValidatingTSE(true);
+        try {
+            const resultado = await tseService.validarCedula(cedulaLimpia);
+            
+            if (resultado.success) {
+                setFormData(prev => ({
+                    ...prev,
+                    nombre: resultado.data.nombre || prev.nombre,
+                    primer_apellido: resultado.data.primerApellido || prev.primer_apellido,
+                    segundo_apellido: resultado.data.segundoApellido || prev.segundo_apellido,
+                    fecha_nacimiento: resultado.data.fechaNacimiento || prev.fecha_nacimiento,
+                    nacionalidad: resultado.data.nacionalidad || 'COSTARRICENSE',
+                    edad: resultado.data.edad || calcularEdadDesdeFecha(resultado.data.fechaNacimiento) || prev.edad
+                }));
+                setTseValidated(true);
+                toast({
+                    title: "Cédula válida",
+                    description: "Datos obtenidos del TSE correctamente.",
+                });
+            } else {
+                // No se encontró en TSE, marcar como extranjero
+                setFormData(prev => ({
+                    ...prev,
+                    nacionalidad: 'EXTRANJERO'
+                }));
+                setTseValidated(false);
+                toast({
+                    title: "Cédula no encontrada",
+                    description: "No se encontró en el TSE. Se cataloga como extranjero.",
+                });
+            }
+        } catch (error) {
+            console.error('Error validando TSE:', error);
+            setTseValidated(false);
+        } finally {
+            setValidatingTSE(false);
+        }
+    };
 
     const manejarCambioInput = (e) => {
         const { name, value } = e.target;
+        
+        // Si es cédula, solo permitir números y guiones
+        if (name === 'username') {
+            const valorFiltrado = value.replace(/[^0-9-]/g, '');
+            setFormData(prev => ({ ...prev, [name]: valorFiltrado }));
+            setTseValidated(false);
+            return;
+        }
+        
+        // Si es fecha de nacimiento, calcular edad automáticamente
+        if (name === 'fecha_nacimiento') {
+            const edadCalculada = calcularEdadDesdeFecha(value);
+            setFormData(prev => ({
+                ...prev,
+                [name]: value,
+                edad: edadCalculada
+            }));
+            return;
+        }
+        
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
+    };
+
+    const manejarBlurCedula = () => {
+        const cedulaLimpia = formData.username.replace(/-/g, '');
+        if (cedulaLimpia.length >= 9) {
+            validarCedulaTSE(formData.username);
+        }
     };
 
     const manejarCambioRol = (value) => {
@@ -76,7 +222,7 @@ function UsuariosAdmin() {
         setFormData({
             username: user.username,
             email: user.email,
-            password: '', // No cargar password, de esta manera se mantiene la contraseña actual
+            password: '',
             nombre: user.first_name || '',
             primer_apellido: user.primer_apellido || '',
             segundo_apellido: user.segundo_apellido || '',
@@ -84,8 +230,15 @@ function UsuariosAdmin() {
             edad: user.edad || '',
             fecha_nacimiento: user.fecha_nacimiento || '',
             nacionalidad: user.nacionalidad || '',
-            role: user.is_staff ? 'admin' : 'user' // Asumiendo que is_staff determina admin por ahora, o verificar lógica de roles
+            role: user.is_staff ? 'admin' : 'user'
         });
+        setTseValidated(false);
+        setShowPassword(false);
+        setIsDialogOpen(true);
+    };
+
+    const abrirDialogoNuevo = () => {
+        limpiarFormulario();
         setIsDialogOpen(true);
     };
 
@@ -104,11 +257,42 @@ function UsuariosAdmin() {
             role: 'user'
         });
         setEditingId(null);
+        setTseValidated(false);
+        setShowPassword(false);
         setIsDialogOpen(false);
     };
 
+    const confirmarEliminar = (user) => {
+        setUserToDelete(user);
+        setIsDeleteDialogOpen(true);
+    };
+
+    const eliminarUsuario = async () => {
+        if (!userToDelete) return;
+        
+        setDeleting(true);
+        try {
+            await UserService.deleteUser(userToDelete.id);
+            toast({
+                title: "Éxito",
+                description: "Usuario eliminado correctamente.",
+            });
+            setIsDeleteDialogOpen(false);
+            setUserToDelete(null);
+            obtenerUsuarios();
+        } catch (error) {
+            console.error(error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "No se pudo eliminar el usuario.",
+            });
+        } finally {
+            setDeleting(false);
+        }
+    };
+
     const validarRegistro = () => {
-        // Campos obligatorios basicos
         if (!formData.username || !formData.email || !formData.nombre || !formData.primer_apellido) {
             toast({
                 variant: "destructive",
@@ -118,9 +302,18 @@ function UsuariosAdmin() {
             return false;
         }
         
-        // Validar password solo si es creacion o si se escribio algo (cambio de pass)
-        if ((!editingId || formData.password) && formData.password.length < 6) {
-             toast({
+        // Validar password solo si es creación o si se escribió algo
+        if (!editingId && !formData.password) {
+            toast({
+                variant: "destructive",
+                title: "Error de validación",
+                description: "Debe ingresar o generar una contraseña.",
+            });
+            return false;
+        }
+        
+        if (formData.password && formData.password.length < 6) {
+            toast({
                 variant: "destructive",
                 title: "Error de validación",
                 description: "La contraseña debe tener al menos 6 caracteres.",
@@ -147,22 +340,18 @@ function UsuariosAdmin() {
                     edad: formData.edad,
                     fecha_nacimiento: formData.fecha_nacimiento,
                     nacionalidad: formData.nacionalidad,
-                    //El backend debe soportar el manejo de roles
                 };
                 
-                // Solo enviar password si se cambio
                 if (formData.password) {
                     updateData.password = formData.password;
                 }
 
                 await UserService.updateUser(editingId, updateData);
                 
-                // Actualizar rol si hubo un cambio
-                // Nota: Esto depende de cómo el backend maneje roles. Si es por UserGroup, llamamos al servicio.
                 if (formData.role === 'admin') {
-                     await UserGroupService.asignarRole(editingId, 1);
+                    await UserGroupService.asignarRole(editingId, 1);
                 } else {
-                     await UserGroupService.asignarRole(editingId, 0); // 0 cliente
+                    await UserGroupService.asignarRole(editingId, 0);
                 }
 
                 toast({
@@ -185,17 +374,20 @@ function UsuariosAdmin() {
                     formData.nacionalidad
                 );
 
-                // Asignar el rol si es admin
-                if (formData.role === 'admin') {
-                    const userId = newUser.id || (newUser.user && newUser.user.id);
-                    if (userId) {
+                // Marcar que debe cambiar password
+                const userId = newUser.id || (newUser.user && newUser.user.id);
+                if (userId) {
+                    await UserService.updateUser(userId, { debe_cambiar_password: true });
+                    
+                    if (formData.role === 'admin') {
                         await UserGroupService.asignarRole(userId, 1);
                     }
                 }
 
                 toast({
                     title: "Éxito",
-                    description: "Usuario creado correctamente.",
+                    description: `Usuario creado correctamente. Contraseña temporal: ${formData.password}`,
+                    duration: 10000, // 10 segundos para que pueda copiar
                 });
             }
 
@@ -227,98 +419,207 @@ function UsuariosAdmin() {
                     <h1 className="text-3xl font-bold text-foreground">Gestión de Usuarios</h1>
                     <p className="text-muted-foreground mt-1">Administra los usuarios y sus permisos</p>
                 </div>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="bg-green-600 hover:bg-green-700 text-white">
-                            <Plus className="mr-2 h-4 w-4" />
-                            Nuevo Usuario
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle>{editingId ? 'Editar Usuario' : 'Crear Nuevo Usuario'}</DialogTitle>
-                            <DialogDescription>
-                                {editingId ? 'Modifique los datos del usuario.' : 'Ingrese los datos del nuevo usuario.'}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="username">Nombre de Usuario *</Label>
-                                    <Input id="username" name="username" value={formData.username} onChange={manejarCambioInput} placeholder="jdoe" />
+                <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={abrirDialogoNuevo}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Nuevo Usuario
+                </Button>
+            </div>
+
+            {/* Diálogo Crear/Editar Usuario */}
+            <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) limpiarFormulario(); else setIsDialogOpen(true); }}>
+                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>{editingId ? 'Editar Usuario' : 'Crear Nuevo Usuario'}</DialogTitle>
+                        <DialogDescription>
+                            {editingId ? 'Modifique los datos del usuario.' : 'Ingrese los datos del nuevo usuario.'}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="username">Cédula *</Label>
+                                <div className="relative">
+                                    <Input 
+                                        id="username" 
+                                        name="username" 
+                                        value={formData.username} 
+                                        onChange={manejarCambioInput}
+                                        onBlur={manejarBlurCedula}
+                                        placeholder="123456789" 
+                                    />
+                                    {validatingTSE && (
+                                        <Loader2 className="absolute right-2 top-2.5 h-4 w-4 animate-spin text-blue-600" />
+                                    )}
+                                    {tseValidated && !validatingTSE && (
+                                        <Check className="absolute right-2 top-2.5 h-4 w-4 text-green-600" />
+                                    )}
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="email">Correo Electrónico *</Label>
-                                    <Input id="email" name="email" type="email" value={formData.email} onChange={manejarCambioInput} placeholder="jdoe@example.com" />
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="nombre">Nombre *</Label>
-                                    <Input id="nombre" name="nombre" value={formData.nombre} onChange={manejarCambioInput} placeholder="John" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="primer_apellido">Primer Apellido *</Label>
-                                    <Input id="primer_apellido" name="primer_apellido" value={formData.primer_apellido} onChange={manejarCambioInput} placeholder="Pérez" />
-                                </div>
+                                {formData.nacionalidad === 'EXTRANJERO' && (
+                                    <p className="text-xs text-amber-600">Catalogado como extranjero</p>
+                                )}
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="segundo_apellido">Segundo Apellido</Label>
-                                <Input id="segundo_apellido" name="segundo_apellido" value={formData.segundo_apellido} onChange={manejarCambioInput} placeholder="González" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="password">Contraseña {editingId ? '(Opcional)' : '*'}</Label>
-                                <Input 
-                                    id="password" 
-                                    name="password" 
-                                    type="password" 
-                                    value={formData.password} 
-                                    onChange={manejarCambioInput} 
-                                    placeholder={editingId ? "Dejar en blanco para mantener actual" : ""}
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="telefono">Teléfono</Label>
-                                    <Input id="telefono" name="telefono" value={formData.telefono} onChange={manejarCambioInput} placeholder="88888888" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="edad">Edad</Label>
-                                    <Input id="edad" name="edad" type="number" value={formData.edad} onChange={manejarCambioInput} placeholder="25" />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="fecha_nacimiento">Fecha de Nacimiento</Label>
-                                <Input id="fecha_nacimiento" name="fecha_nacimiento" type="date" value={formData.fecha_nacimiento} onChange={manejarCambioInput} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="nacionalidad">Nacionalidad</Label>
-                                <Input id="nacionalidad" name="nacionalidad" value={formData.nacionalidad} onChange={manejarCambioInput} placeholder="COSTARRICENSE" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="role">Rol de Usuario</Label>
-                                <Select onValueChange={manejarCambioRol} value={formData.role}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Seleccione un rol" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="user">Usuario Regular</SelectItem>
-                                        <SelectItem value="admin">Administrador</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <Label htmlFor="email">Correo Electrónico *</Label>
+                                <Input id="email" name="email" type="email" value={formData.email} onChange={manejarCambioInput} placeholder="jdoe@example.com" />
                             </div>
                         </div>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={limpiarFormulario}>Cancelar</Button>
-                            <Button onClick={guardarUsuario} disabled={creating} className="bg-green-600 hover:bg-green-700 text-white">
-                                {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {editingId ? 'Guardar Cambios' : 'Crear Usuario'}
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="nombre">Nombre *</Label>
+                                <Input 
+                                    id="nombre" 
+                                    name="nombre" 
+                                    value={formData.nombre} 
+                                    onChange={manejarCambioInput} 
+                                    placeholder="John" 
+                                    disabled={tseValidated}
+                                    className={tseValidated ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' : ''}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="primer_apellido">Primer Apellido *</Label>
+                                <Input 
+                                    id="primer_apellido" 
+                                    name="primer_apellido" 
+                                    value={formData.primer_apellido} 
+                                    onChange={manejarCambioInput} 
+                                    placeholder="Pérez" 
+                                    disabled={tseValidated}
+                                    className={tseValidated ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' : ''}
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="segundo_apellido">Segundo Apellido</Label>
+                            <Input 
+                                id="segundo_apellido" 
+                                name="segundo_apellido" 
+                                value={formData.segundo_apellido} 
+                                onChange={manejarCambioInput} 
+                                placeholder="González" 
+                                disabled={tseValidated}
+                                className={tseValidated ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' : ''}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="password">Contraseña {editingId ? '(Opcional)' : '*'}</Label>
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <Input 
+                                        id="password" 
+                                        name="password" 
+                                        type={showPassword ? "text" : "password"} 
+                                        value={formData.password} 
+                                        onChange={manejarCambioInput} 
+                                        placeholder={editingId ? "Dejar en blanco para mantener actual" : "Escriba o genere una contraseña"}
+                                    />
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-0 text-gray-500 hover:text-gray-700"
+                                    >
+                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
+                                <Button type="button" variant="outline" onClick={generarPasswordAleatorio} className="shrink-0">
+                                    <RefreshCw className="h-4 w-4 mr-1" />
+                                    Generar
+                                </Button>
+                            </div>
+                            {formData.password && !editingId && (
+                                <p className="text-xs text-amber-600">⚠️ Guarde esta contraseña. El usuario deberá cambiarla en el primer inicio de sesión.</p>
+                            )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="telefono">Teléfono</Label>
+                                <Input id="telefono" name="telefono" value={formData.telefono} onChange={manejarCambioInput} placeholder="88888888" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="edad">Edad</Label>
+                                <Input 
+                                    id="edad" 
+                                    name="edad" 
+                                    type="number" 
+                                    value={formData.edad} 
+                                    onChange={manejarCambioInput} 
+                                    placeholder="25" 
+                                    readOnly 
+                                    className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="fecha_nacimiento">Fecha de Nacimiento</Label>
+                            <Input 
+                                id="fecha_nacimiento" 
+                                name="fecha_nacimiento" 
+                                type="date" 
+                                value={formData.fecha_nacimiento} 
+                                onChange={manejarCambioInput} 
+                                disabled={tseValidated}
+                                className={tseValidated ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' : ''}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="nacionalidad">Nacionalidad</Label>
+                            <Input 
+                                id="nacionalidad" 
+                                name="nacionalidad" 
+                                value={formData.nacionalidad} 
+                                onChange={manejarCambioInput} 
+                                placeholder="COSTARRICENSE" 
+                                disabled={tseValidated || formData.nacionalidad === 'EXTRANJERO'}
+                                className={(tseValidated || formData.nacionalidad === 'EXTRANJERO') ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' : ''}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="role">Rol de Usuario</Label>
+                            <Select onValueChange={manejarCambioRol} value={formData.role}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccione un rol" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="user">Usuario Regular</SelectItem>
+                                    <SelectItem value="admin">Administrador</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={limpiarFormulario}>Cancelar</Button>
+                        <Button onClick={guardarUsuario} disabled={creating} className="bg-green-600 hover:bg-green-700 text-white">
+                            {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {editingId ? 'Guardar Cambios' : 'Crear Usuario'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
-                </Dialog>
-            </div>
+            {/* Diálogo Confirmar Eliminación */}
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent className="sm:max-w-[400px]">
+                    <DialogHeader>
+                        <DialogTitle className="text-red-600">Eliminar Usuario</DialogTitle>
+                        <DialogDescription>
+                            ¿Está seguro de que desea eliminar al usuario <strong>{userToDelete?.username}</strong>? Esta acción no se puede deshacer.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                            Cancelar
+                        </Button>
+                        <Button 
+                            variant="destructive" 
+                            onClick={eliminarUsuario} 
+                            disabled={deleting}
+                        >
+                            {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Eliminar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <Card>
                 <CardHeader>
@@ -370,7 +671,7 @@ function UsuariosAdmin() {
                                             {user.username}
                                         </TableCell>
                                         <TableCell>{user.email}</TableCell>
-                                        <TableCell>{`${user.first_name || ''} ${user.primer_apellido || ''} ${user.segundo_apellido || ''}`.trim()}</TableCell>
+                                        <TableCell>{`${user.first_name || ''} ${user.primer_apellido || ''} ${user.segundo_apellido || ''}`.trim() || '-'}</TableCell>
                                         <TableCell>{user.telefono || '-'}</TableCell>
                                         <TableCell>
                                             {user.last_login 
@@ -384,9 +685,19 @@ function UsuariosAdmin() {
                                             }
                                         </TableCell>
                                         <TableCell>
-                                            <Button variant="ghost" size="sm" onClick={() => iniciarEdicion(user)}>
-                                                Editar
-                                            </Button>
+                                            <div className="flex gap-2">
+                                                <Button variant="ghost" size="sm" onClick={() => iniciarEdicion(user)}>
+                                                    Editar
+                                                </Button>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm" 
+                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    onClick={() => confirmarEliminar(user)}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))
