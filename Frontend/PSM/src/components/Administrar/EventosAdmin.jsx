@@ -163,8 +163,8 @@ function EventosAdmin() {
                 const inicio = name === 'fecha_inicio' ? value : newData.fecha_inicio;
                 const fin = name === 'fecha_fin' ? value : newData.fecha_fin;
                 
-                if (inicio && fin && new Date(inicio) >= new Date(fin)) {
-                    nuevosErrores.fecha_fin = 'La fecha final debe ser posterior a la inicial';
+                if (inicio && fin && new Date(inicio) > new Date(fin)) {
+                    nuevosErrores.fecha_fin = 'La fecha final no puede ser anterior a la inicial';
                 } else {
                     nuevosErrores.fecha_fin = '';
                 }
@@ -182,11 +182,13 @@ function EventosAdmin() {
                 }
             }
 
-            // Validación de edades - no negativas
+            // Validación de edades - no negativas y máximo 105
             if (name === 'edad_minima') {
                 const valor = parseInt(value);
                 if (value !== '' && (isNaN(valor) || valor < 0)) {
                     nuevosErrores.edad_minima = 'La edad mínima no puede ser negativa';
+                } else if (value !== '' && valor > 105) {
+                    nuevosErrores.edad_minima = 'La edad mínima no puede ser mayor a 105';
                 } else {
                     nuevosErrores.edad_minima = '';
                 }
@@ -196,6 +198,8 @@ function EventosAdmin() {
                 const valor = parseInt(value);
                 if (value !== '' && (isNaN(valor) || valor < 0)) {
                     nuevosErrores.edad_maxima = 'La edad máxima no puede ser negativa';
+                } else if (value !== '' && valor > 105) {
+                    nuevosErrores.edad_maxima = 'La edad máxima no puede ser mayor a 105';
                 } else {
                     nuevosErrores.edad_maxima = '';
                 }
@@ -650,7 +654,7 @@ function EventosAdmin() {
 
                             <div>
                                 <Label>Edad Mínima</Label>
-                                <Input type="number" min="0" value={formData.edad_minima} onChange={(e) => manejarCambio('edad_minima', e.target.value ? parseInt(e.target.value) : '')} />
+                                <Input type="number" min="0" max="105" value={formData.edad_minima} onChange={(e) => manejarCambio('edad_minima', e.target.value ? parseInt(e.target.value) : '')} />
                                 {erroresCampos.edad_minima && (
                                     <p className="text-red-500 text-sm mt-1">{erroresCampos.edad_minima}</p>
                                 )}
@@ -658,7 +662,7 @@ function EventosAdmin() {
 
                             <div>
                                 <Label>Edad Máxima</Label>
-                                <Input type="number" min="0" value={formData.edad_maxima} onChange={(e) => manejarCambio('edad_maxima', e.target.value ? parseInt(e.target.value) : '')} />
+                                <Input type="number" min="0" max="105" value={formData.edad_maxima} onChange={(e) => manejarCambio('edad_maxima', e.target.value ? parseInt(e.target.value) : '')} />
                                 {erroresCampos.edad_maxima && (
                                     <p className="text-red-500 text-sm mt-1">{erroresCampos.edad_maxima}</p>
                                 )}

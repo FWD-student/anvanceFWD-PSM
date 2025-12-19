@@ -3,6 +3,7 @@ import eventoService from '../../services/eventoService.jsx';
 import authService from '../../services/authService.jsx';
 import inscripcionService from '../../services/inscripcionService.jsx';
 import UbicacionService from '../../services/UbicacionService.jsx'; // Importado para mapeo de nombres
+import categoriaService from '../../services/categoriaService.jsx'; // Importado para mapeo de categorías/deportes
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Carousel,CarouselContent,CarouselItem,CarouselNext,CarouselPrevious} from "@/components/ui/carousel"
@@ -41,10 +42,11 @@ function CaruselEvent() {
                     }
                 }
 
-                // Cargar eventos y ubicaciones en paralelo
-                const [eventosData, ubicacionesData] = await Promise.all([
+                // Cargar eventos, ubicaciones y categorías en paralelo
+                const [eventosData, ubicacionesData, categoriasData] = await Promise.all([
                     eventoService.getEventos(true),
-                    UbicacionService.getUbicaciones()
+                    UbicacionService.getUbicaciones(),
+                    categoriaService.getCategEventos()
                 ]);
 
                 // Crear mapa de ubicaciones para acceso O(1)
@@ -53,30 +55,55 @@ function CaruselEvent() {
                     return acc;
                 }, {});
 
+                // Crear mapa de categorías/deportes para acceso O(1)
+                const mapaCategorias = categoriasData.reduce((acc, cat) => {
+                    acc[cat.id] = cat;
+                    return acc;
+                }, {});
+
                 const now = new Date();
                 now.setHours(0, 0, 0, 0);
 
                 // Procesar eventos usando map
                 const eventosMapeados = eventosData.map(evento => {
-                    const fechaEvento = new Date(evento.fecha_inicio + 'T00:00:00');
+                    const fechaInicio = new Date(evento.fecha_inicio + 'T00:00:00');
+                    const fechaFin = new Date(evento.fecha_fin + 'T00:00:00');
                     // Mapear nombre de ubicación
                     const nombreUbicacion = mapaUbicaciones[evento.ubicacion] || 'Ubicación por confirmar';
+                    // Mapear información de categoría/deporte
+                    const categoriaInfo = mapaCategorias[evento.categoria] || null;
+                    
+                    // Determinar estado del evento:
+                    // - Pasado: fecha_fin < hoy
+                    // - En curso: fecha_inicio <= hoy <= fecha_fin
+                    // - Futuro: fecha_inicio > hoy
+                    const esPasado = fechaFin < now;
+                    const esEnCurso = !esPasado && fechaInicio <= now && fechaFin >= now;
+                    const esFuturo = fechaInicio > now;
                     
                     return {
                         ...evento,
-                        fechaObj: fechaEvento,
-                        ubicacion_nombre: nombreUbicacion, // Asignamos el nombre resuelto
-                        esPasado: fechaEvento < now
+                        fechaObj: fechaInicio,
+                        fechaFinObj: fechaFin,
+                        ubicacion_nombre: nombreUbicacion,
+                        categoria_info: categoriaInfo,
+                        esPasado,
+                        esEnCurso,
+                        esFuturo
                     };
                 });
 
-                // Separar pasados y futuros
+                // Separar por estado
                 const pasados = eventosMapeados
                     .filter(e => e.esPasado)
-                    .sort((a, b) => b.fechaObj - a.fechaObj);
+                    .sort((a, b) => b.fechaFinObj - a.fechaFinObj); // Más reciente primero
+
+                const enCurso = eventosMapeados
+                    .filter(e => e.esEnCurso)
+                    .sort((a, b) => a.fechaFinObj - b.fechaFinObj); // Termina más pronto primero
 
                 const futuros = eventosMapeados
-                    .filter(e => !e.esPasado)
+                    .filter(e => e.esFuturo)
                     .sort((a, b) => a.fechaObj - b.fechaObj);
 
                 // Priorizar intereses en futuros
@@ -90,9 +117,10 @@ function CaruselEvent() {
                     });
                 }
 
-                // Construir lista final
+                // Construir lista final: Pasado (izquierda), En curso (centro), Futuros (derecha)
                 const listaFinal = [
                     ...(pasados.length > 0 ? [{ ...pasados[0] }] : []),
+                    ...enCurso,
                     ...futuros
                 ];
 
@@ -168,6 +196,7 @@ function CaruselEvent() {
                         <CarouselContent className="items-start py-14">
                             {eventosProcesados.map((evento) => {
                                 const esPasado = evento.esPasado;
+                                const esEnCurso = evento.esEnCurso;
                                 return (
                                 <CarouselItem key={evento.id} className="md:basis-1/2 lg:basis-1/3 pl-4 flex">
                                     <div className="p-1 w-full">
@@ -175,7 +204,9 @@ function CaruselEvent() {
                                             w-full flex flex-col relative overflow-hidden transition-all duration-300 border-white/20 h-[580px]
                                             ${esPasado 
                                                 ? 'bg-gray-100 dark:bg-gray-900 border-gray-200 grayscale opacity-80' 
-                                                : 'bg-white/80 dark:bg-black/40 backdrop-blur-md shadow-lg border-white/20'
+                                                : esEnCurso
+                                                    ? 'bg-white/80 dark:bg-black/40 backdrop-blur-md shadow-lg border-green-400/50 ring-2 ring-green-400/30'
+                                                    : 'bg-white/80 dark:bg-black/40 backdrop-blur-md shadow-lg border-white/20'
                                             }
                                             ${!esPasado && !esGamaBaja && animacionesHabilitadas 
                                                 ? 'group hover:scale-105 hover:shadow-xl hover:z-10' 
@@ -189,6 +220,11 @@ function CaruselEvent() {
                                                     {esPasado && (
                                                         <div className="absolute inset-0 bg-black/10 z-10 flex items-center justify-center">
                                                             <span className="bg-gray-800 text-white text-xs px-2 py-1 rounded uppercase font-bold tracking-widest">Finalizado</span>
+                                                        </div>
+                                                    )}
+                                                    {esEnCurso && (
+                                                        <div className="absolute inset-0 z-10 flex items-center justify-center">
+                                                            <span className="bg-green-600 text-white text-xs px-3 py-1.5 rounded uppercase font-bold tracking-widest shadow-lg animate-pulse">🟢 En Curso</span>
                                                         </div>
                                                     )}
                                                     {userInterests.includes(evento.categoria) && !esPasado && (
@@ -209,8 +245,14 @@ function CaruselEvent() {
 
                                                 {/* Contenido */}
                                                 <div className="flex flex-col flex-grow p-4 text-center">
-                                                    <h3 className="text-xl font-bold mb-2 line-clamp-1 text-primary">{evento.nombre}</h3>
+                                                    <h3 className="text-xl font-bold mb-1 line-clamp-1 text-primary">{evento.nombre}</h3>
                                                     
+                                                    {/* Badge del Deporte/Categoría */}
+                                                    {evento.categoria_info && (
+                                                        <span className="inline-block mx-auto mb-2 px-3 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                                                            {evento.categoria_info.nombre}
+                                                        </span>
+                                                    )}
                                                     {/* Fecha Destacada */}
                                                     <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-2 font-medium">
                                                         <CalendarDays className="w-4 h-4 text-primary" />
@@ -278,8 +320,8 @@ function CaruselEvent() {
                                                         </div>
                                                     )}
 
-                                                    {/* Botón */}
-                                                    {isAuthenticated && !esPasado && (
+                                                    {/* Botón - Solo para eventos futuros (no pasados ni en curso) */}
+                                                    {isAuthenticated && !esPasado && !esEnCurso && (
                                                         <Button
                                                             onClick={() => handleInscribirse(evento.id, evento.nombre)}
                                                             size="sm"

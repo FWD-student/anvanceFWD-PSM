@@ -1,124 +1,226 @@
 /* Contenedor del calendario */
 .rbc-calendar {
-    font-family: inherit;
+  font-family: inherit;
 }
 
 /* Barra de herramientas */
 .rbc-toolbar {
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .rbc-toolbar button {
-    border-radius: 6px;
-    padding: 0.5rem 1rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .rbc-toolbar button:hover {
-    background-color: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
 }
 
 .rbc-toolbar button.rbc-active {
-    background-color: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
 }
 
 /* Encabezados de dias */
 .rbc-header {
-    padding: 0.75rem;
-    font-weight: 600;
-    background-color: hsl(var(--muted));
-    border-bottom: 1px solid hsl(var(--border));
+  padding: 0.75rem;
+  font-weight: 600;
+  background-color: hsl(var(--muted));
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 /* Celdas del calendario */
 .rbc-day-bg {
-    transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
 .rbc-day-bg:hover {
-    background-color: hsl(var(--muted) / 0.5);
+  background-color: hsl(var(--muted) / 0.5);
 }
 
 /* Dia actual */
 .rbc-today {
-    background-color: hsl(var(--primary) / 0.1) !important;
+  background-color: hsl(var(--primary) / 0.1) !important;
 }
 
 /* Eventos */
 .rbc-event {
-    border-radius: 4px !important;
-    padding: 2px 6px !important;
-    font-size: 0.8rem !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+  font-size: 0.8rem !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .rbc-event:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Eventos en vista mes */
 .rbc-row-segment .rbc-event {
-    margin: 1px 2px;
+  margin: 1px 2px;
 }
 
 /* Para la vista de semana y dia */
 .rbc-time-slot {
-    border-top: 1px solid hsl(var(--border) / 0.5);
+  border-top: 1px solid hsl(var(--border) / 0.5);
 }
 
 .rbc-time-gutter {
-    background-color: hsl(var(--muted) / 0.3);
+  background-color: hsl(var(--muted) / 0.3);
 }
 
 .rbc-timeslot-group {
-    min-height: 50px;
+  min-height: 50px;
 }
 
 /* Evento seleccionado */
 .rbc-selected {
-    box-shadow: 0 0 0 2px hsl(var(--ring)) !important;
+  box-shadow: 0 0 0 2px hsl(var(--ring)) !important;
 }
 
 .rbc-overlay {
-    border-radius: 8px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    border: 1px solid hsl(var(--border));
-    padding: 0.5rem;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  border: 1px solid hsl(var(--border));
+  padding: 0.5rem;
 }
 
 .rbc-overlay-header {
-    font-weight: 600;
-    padding: 0.5rem;
-    border-bottom: 1px solid hsl(var(--border));
-    margin-bottom: 0.5rem;
+  font-weight: 600;
+  padding: 0.5rem;
+  border-bottom: 1px solid hsl(var(--border));
+  margin-bottom: 0.5rem;
 }
 
 /* Para la agenda */
 .rbc-agenda-view table {
-    border-collapse: collapse;
+  border-collapse: collapse;
 }
 
 .rbc-agenda-view table thead th {
-    background-color: hsl(var(--muted));
-    padding: 0.75rem;
-    font-weight: 600;
+  background-color: hsl(var(--muted));
+  padding: 0.75rem;
+  font-weight: 600;
 }
 
 .rbc-agenda-view table tbody tr {
-    border-bottom: 1px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border));
 }
 
 .rbc-agenda-view table tbody td {
-    padding: 0.75rem;
+  padding: 0.75rem;
 }
 
 .rbc-agenda-event-cell {
-    padding: 0.5rem !important;
+  padding: 0.5rem !important;
+}
+
+/* ========== Modo Oscuro ========== */
+.dark .rbc-calendar {
+  color: #ffffff;
+}
+
+/* Toolbar en modo oscuro */
+.dark .rbc-toolbar {
+  color: #ffffff;
+}
+
+.dark .rbc-toolbar button {
+  color: #ffffff;
+  border-color: hsl(var(--border));
+  background-color: transparent;
+}
+
+.dark .rbc-toolbar button:hover {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+/* Label del mes/titulo en modo oscuro */
+.dark .rbc-toolbar-label {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Encabezados de dias en modo oscuro */
+.dark .rbc-header {
+  color: #ffffff;
+  background-color: hsl(var(--muted));
+}
+
+.dark .rbc-header a,
+.dark .rbc-header span {
+  color: #ffffff !important;
+}
+
+/* Numeros de los dias en modo oscuro */
+.dark .rbc-date-cell {
+  color: #ffffff;
+}
+
+.dark .rbc-date-cell a {
+  color: #ffffff !important;
+}
+
+/* Dias fuera del mes actual */
+.dark .rbc-off-range {
+  color: #6b7280 !important;
+}
+
+.dark .rbc-off-range a {
+  color: #6b7280 !important;
+}
+
+/* Bordes en modo oscuro */
+.dark .rbc-month-view,
+.dark .rbc-day-bg,
+.dark .rbc-header,
+.dark .rbc-month-row {
+  border-color: hsl(var(--border));
+}
+
+/* Vista de hora en modo oscuro */
+.dark .rbc-time-view,
+.dark .rbc-time-header,
+.dark .rbc-time-content,
+.dark .rbc-time-gutter,
+.dark .rbc-timeslot-group {
+  border-color: hsl(var(--border));
+}
+
+.dark .rbc-time-gutter .rbc-label {
+  color: #ffffff;
+}
+
+/* Overlay/popup en modo oscuro */
+.dark .rbc-overlay {
+  background-color: hsl(var(--background));
+  color: #ffffff;
+}
+
+.dark .rbc-overlay-header {
+  color: #ffffff;
+}
+
+/* Agenda en modo oscuro */
+.dark .rbc-agenda-view table thead th {
+  color: #ffffff;
+}
+
+.dark .rbc-agenda-view table tbody td {
+  color: #ffffff;
+  border-color: hsl(var(--border));
+}
+
+.dark .rbc-agenda-date-cell,
+.dark .rbc-agenda-time-cell {
+  color: #d1d5db;
 }

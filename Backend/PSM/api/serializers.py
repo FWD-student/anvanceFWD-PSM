@@ -62,6 +62,12 @@ class UserSerializer(serializers.ModelSerializer):
             
         return user
 
+    def update(self, instance, validated_data):
+        # Si se envía password, hashearlo antes de guardar
+        if 'password' in validated_data:
+            validated_data['password'] = make_password(validated_data['password'])
+        return super().update(instance, validated_data)
+
     def validate_email(self, value):
         # Obtener el ID del usuario actual si es una actualización
         user_id = self.instance.id if self.instance else None
