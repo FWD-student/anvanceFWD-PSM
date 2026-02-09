@@ -270,4 +270,4 @@ Este proyecto fue desarrollado con fines educativos como parte del programa FWD 
 
 ## Autor
 
-**Glumie** - [@Glumie](https://github.com/Glumie)
+**Luis Blandon** - [@Glumie](https://github.com/Glumie)
