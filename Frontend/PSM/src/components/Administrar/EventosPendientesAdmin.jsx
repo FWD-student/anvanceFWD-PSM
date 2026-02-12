@@ -6,7 +6,7 @@ import { Badge } from '../ui/badge';
 import { Check, X, Edit, Clock, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { motion, AnimatePresence } from 'framer-motion';
-import eventoPendienteService from '../../services/eventoPendienteService.jsx';
+import eventoPendienteService from '../../services/eventoPendienteService';
 
 // Componente para aprobar o rechazar eventos de WhatsApp
 // Auto-refresca cada 30 segundos

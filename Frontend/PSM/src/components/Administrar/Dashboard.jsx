@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Calendar, MapPin, Users, MessageSquare, RefreshCw, ArrowRight, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
-import EventoService from '../../services/EventoService';
-import UbicacionService from '../../services/UbicacionService';
-import InscripcionService from '../../services/InscripcionService';
-import ResenaService from '../../services/ResenaService';
+import EventoService from '../../services/eventoService';
+import UbicacionService from '../../services/ubicacionService';
+import InscripcionService from '../../services/inscripcionService';
+import ResenaService from '../../services/resenaService';
 
 function Dashboard() {
     const [stats, setStats] = useState({

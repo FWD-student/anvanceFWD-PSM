@@ -1,6 +1,6 @@
-import Routing from './routes/Routing.jsx'
+import Routing from './routes/Routing'
 import { Toaster } from "@/components/ui/toaster"
-import { ProveedorTema } from "./components/ui/proveedor-tema.jsx"
+import { ProveedorTema } from "./components/ui/proveedor-tema"
 
 function App() {
 

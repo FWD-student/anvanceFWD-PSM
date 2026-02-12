@@ -6,9 +6,9 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import authService from '../../services/authService.jsx';
-import { AlternadorTema } from '../ui/alternador-tema.jsx';
-import { SelectorPaleta } from '../ui/selector-paleta.jsx';
+import authService from '../../services/authService';
+import { AlternadorTema } from '../ui/alternador-tema';
+import { SelectorPaleta } from '../ui/selector-paleta';
 import SportsAnimation from './SportsAnimation';
 
 function Header() {

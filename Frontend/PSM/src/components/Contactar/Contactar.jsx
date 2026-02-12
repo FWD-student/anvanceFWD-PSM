@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import contactoService from '../../services/contactoService';
-import { Button } from "@/components/ui/button.jsx"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card.jsx"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, CheckCircle2 } from "lucide-react"
 

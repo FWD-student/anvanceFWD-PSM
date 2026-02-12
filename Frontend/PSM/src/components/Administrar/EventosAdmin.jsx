@@ -12,9 +12,9 @@ import { Badge } from '../ui/badge';
 import { Checkbox } from '../ui/checkbox';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import eventoService from '../../services/eventoService.jsx';
-import ubicacionService from '../../services/ubicacionService.jsx';
-import categoriaService from '../../services/categoriaService.jsx';
+import eventoService from '../../services/eventoService';
+import ubicacionService from '../../services/ubicacionService';
+import categoriaService from '../../services/categoriaService';
 
 // Constante para los días de la semana
 const DIAS_SEMANA = [

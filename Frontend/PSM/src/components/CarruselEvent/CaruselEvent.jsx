@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import eventoService from '../../services/eventoService.jsx';
-import authService from '../../services/authService.jsx';
-import inscripcionService from '../../services/inscripcionService.jsx';
-import UbicacionService from '../../services/UbicacionService.jsx'; // Importado para mapeo de nombres
-import categoriaService from '../../services/categoriaService.jsx'; // Importado para mapeo de categorías/deportes
+import eventoService from '../../services/eventoService';
+import authService from '../../services/authService';
+import inscripcionService from '../../services/inscripcionService';
+import ubicacionService from '../../services/ubicacionService'; // Importado para mapeo de nombres
+import categoriaService from '../../services/categoriaService'; // Importado para mapeo de categorías/deportes
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Carousel,CarouselContent,CarouselItem,CarouselNext,CarouselPrevious} from "@/components/ui/carousel"
 import { useToast } from "@/hooks/use-toast"
-import { useModoRendimiento } from '../../hooks/use-modo-rendimiento.jsx';
+import { useModoRendimiento } from '../../hooks/use-modo-rendimiento';
 import { MapPin, Clock, CalendarDays } from "lucide-react";
 
 
@@ -45,7 +45,7 @@ function CaruselEvent() {
                 // Cargar eventos, ubicaciones y categorías en paralelo
                 const [eventosData, ubicacionesData, categoriasData] = await Promise.all([
                     eventoService.getEventos(true),
-                    UbicacionService.getUbicaciones(),
+                    ubicacionService.getUbicaciones(),
                     categoriaService.getCategEventos()
                 ]);
 

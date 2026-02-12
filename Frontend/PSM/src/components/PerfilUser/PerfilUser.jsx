@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import authService from '../../services/authService.jsx';
-import categoriaService from '../../services/categoriaService.jsx';
-import inscripcionService from '../../services/inscripcionService.jsx';
-import configService from '../../services/configService.jsx';
+import authService from '../../services/authService';
+import categoriaService from '../../services/categoriaService';
+import inscripcionService from '../../services/inscripcionService';
+import configService from '../../services/configService';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,7 @@ import { Loader2, Calendar, MapPin, Clock, X, User, Heart, ClipboardList, LogOut
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { AlternadorTema } from '../ui/alternador-tema.jsx';
+import { AlternadorTema } from '../ui/alternador-tema';
 import './perfilUser.css';
 
 // Función para calcular edad a partir de fecha de nacimiento

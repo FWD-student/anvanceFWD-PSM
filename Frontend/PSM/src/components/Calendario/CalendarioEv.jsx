@@ -4,9 +4,9 @@ import { Calendar, Views } from "react-big-calendar";
 import localizer from "../../utils/calendarlocalizer.js";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./calendarioEv.css";
-import EventoService from "../../services/eventoService.jsx";
-import categoriaService from "../../services/categoriaService.jsx";
-import ubicacionService from "../../services/ubicacionService.jsx";
+import EventoService from "../../services/eventoService";
+import categoriaService from "../../services/categoriaService";
+import ubicacionService from "../../services/ubicacionService";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
 
 // Paleta de colores para categorias de deportes

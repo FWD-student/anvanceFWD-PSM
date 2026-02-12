@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Calendar, MapPin, Users, MessageSquare, LogOut, Menu, X, UserCog, Settings, Home, Clock } from 'lucide-react';
 import { jwtDecode } from "jwt-decode";
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlternadorTema } from '../ui/alternador-tema.jsx';
+import { AlternadorTema } from '../ui/alternador-tema';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Button } from '../ui/button';
 

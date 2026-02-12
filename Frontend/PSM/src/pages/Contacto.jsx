@@ -1,8 +1,8 @@
 import React from 'react';
-import Contactar from '../components/Contactar/Contactar.jsx';
-import Header from '../components/Header/Header.jsx';
-import Footer from '../components/Footer/Footer.jsx';
-import MapaContact from '../components/Mapa/MapaContact.jsx';
+import Contactar from '../components/Contactar/Contactar';
+import Header from '../components/Header/Header';
+import Footer from '../components/Footer/Footer';
+import MapaContact from '../components/Mapa/MapaContact';
 
 const Contacto = () => {
     return (
