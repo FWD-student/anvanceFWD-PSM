@@ -1,5 +1,5 @@
 import React from 'react'
-import './MapaContact.css'
+import './mapaContact.css'
 
 function MapaContact() {
   return (
