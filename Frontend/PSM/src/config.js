@@ -2,7 +2,8 @@
 const getApiUrl = () => {
     // En producción (Vercel), usa tu backend de Railway
     if (import.meta.env.PROD) {
-        return import.meta.env.VITE_API_URL || 'https://tu-app.railway.app/api';
+        const url = import.meta.env.VITE_API_URL || 'https://tu-app.railway.app/api';
+        return url.endsWith('/') ? url.slice(0, -1) : url;
     }
     // En desarrollo local
     return 'http://127.0.0.1:8000/api';

@@ -1,9 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import { API_BASE_URL } from '../config';
 
 // Obtener eventos pendientes
 async function getPendientes() {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/api/n8n/eventos-pendientes/`, {
+    const response = await fetch(`${API_BASE_URL}/n8n/eventos-pendientes/`, {
         headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -16,7 +16,7 @@ async function getPendientes() {
 // Aprobar evento pendiente
 async function aprobarEvento(eventoToken, datosEditados = {}) {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/api/n8n/aprobar-evento/${eventoToken}/`, {
+    const response = await fetch(`${API_BASE_URL}/n8n/aprobar-evento/${eventoToken}/`, {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -31,7 +31,7 @@ async function aprobarEvento(eventoToken, datosEditados = {}) {
 // Rechazar evento pendiente
 async function rechazarEvento(eventoToken) {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/api/n8n/rechazar-evento/${eventoToken}/`, {
+    const response = await fetch(`${API_BASE_URL}/n8n/rechazar-evento/${eventoToken}/`, {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${token}`,

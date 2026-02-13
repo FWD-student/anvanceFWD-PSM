@@ -1,4 +1,5 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/';
+import { API_BASE_URL } from '../config';
+
 /*
  * Envía un código de verificación al email proporcionado
  * @param {string} email - Email para verificar
@@ -6,7 +7,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/';
  */
 async function enviarCodigo(email) {
     try {
-        const response = await fetch(`${API_URL}enviar-codigo/`, {
+        const response = await fetch(`${API_BASE_URL}/enviar-codigo/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -44,7 +45,7 @@ async function enviarCodigo(email) {
  */
 async function verificarCodigo(email, codigo) {
     try {
-        const response = await fetch(`${API_URL}verificar-codigo/`, {
+        const response = await fetch(`${API_BASE_URL}/verificar-codigo/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
