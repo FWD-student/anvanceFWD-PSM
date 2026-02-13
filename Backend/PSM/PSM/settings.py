@@ -29,6 +29,11 @@ railway_domain = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
 if railway_domain and railway_domain not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(railway_domain)
 
+# AGREGADO: Permitir dominios adicionales via variable de entorno (separados por coma)
+additional_hosts = os.environ.get('ADDITIONAL_HOSTS', '')
+if additional_hosts:
+    ALLOWED_HOSTS.extend([host.strip() for host in additional_hosts.split(',') if host.strip()])
+
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
@@ -39,12 +44,13 @@ if railway_domain:
     CSRF_TRUSTED_ORIGINS.append(f'https://{railway_domain}')
 
 # Agregar frontend de Vercel si está configurado
-frontend_url = os.environ.get('FRONTEND_URL', '')
+frontend_url = os.environ.get('FRONTEND_URL', '').strip() # Strip para seguridad
 # Eliminar slash al final si existe (CORS no permite paths)
 if frontend_url.endswith('/'):
     frontend_url = frontend_url[:-1]
 if frontend_url:
     CSRF_TRUSTED_ORIGINS.append(frontend_url)
+    print(f"CORS/CSRF confiando en: {frontend_url}") # Debug log
 
 # =============================================================================
 # API KEYS Y CONFIGURACIÓN

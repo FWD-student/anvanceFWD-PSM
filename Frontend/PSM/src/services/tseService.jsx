@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/';
+import { API_BASE_URL } from '../config';
 
 /*
   Valida una cédula costarricense contra el TSE
@@ -7,7 +7,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/';
 */
 async function validarCedula(cedula) {
     try {
-        const response = await fetch(`${API_URL}validar-cedula/`, {
+        const response = await fetch(`${API_BASE_URL}/validar-cedula/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
