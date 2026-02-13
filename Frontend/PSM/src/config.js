@@ -1,6 +1,6 @@
 // config.js - URLs de la API
 const getApiUrl = () => {
-    // En producción (Netlify), usa tu backend de Railway
+    // En producción (Vercel), usa tu backend de Railway
     if (import.meta.env.PROD) {
         return import.meta.env.VITE_API_URL || 'https://tu-app.railway.app/api';
     }

@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
 from .models import Evento, CategEvento, Ubicacion, EventoPendiente, CodigoWhatsApp
-from .mongo_utils import UtilidadesMongo
+from .cloudinary_utils import cloudinary_utils
 import base64
 import json
 import uuid
@@ -136,8 +136,6 @@ class N8NCrearEventoView(APIView):
             imagen_url = data.get('imagen_url')
             
             if imagen_base64 or imagen_url:
-                mongo_utils = UtilidadesMongo()
-                
                 if imagen_base64:
                     # Decodificar base64 y guardar
                     try:
@@ -147,18 +145,18 @@ class N8NCrearEventoView(APIView):
                         
                         imagen_bytes = base64.b64decode(imagen_base64)
                         
-                        # Guardar en MongoDB
+                        # Guardar en Cloudinary
                         from io import BytesIO
                         archivo = BytesIO(imagen_bytes)
                         archivo.name = f"evento_{data.get('nombre', 'sin_nombre')}.jpg"
-                        imagen_id = mongo_utils.guardar_archivo(archivo)
+                        imagen_id = cloudinary_utils.guardar_archivo(archivo)
                         print(f"Imagen guardada desde base64: {imagen_id}")
                     except Exception as e:
                         print(f"Error procesando imagen base64: {e}")
                 
                 elif imagen_url:
                     try:
-                        imagen_id = mongo_utils.descargar_y_guardar_imagen(imagen_url)
+                        imagen_id = cloudinary_utils.guardar_desde_url(imagen_url)
                         print(f"Imagen descargada desde URL: {imagen_id}")
                     except Exception as e:
                         print(f"Error descargando imagen: {e}")
@@ -475,12 +473,11 @@ class N8NConfirmarEventoView(APIView):
             imagen_id = None
             if pendiente.imagen_base64:
                 try:
-                    mongo_utils = UtilidadesMongo()
                     imagen_bytes = base64.b64decode(pendiente.imagen_base64)
                     from io import BytesIO
                     archivo = BytesIO(imagen_bytes)
                     archivo.name = f"evento_{data.get('nombre', 'sin_nombre')}.jpg"
-                    imagen_id = mongo_utils.guardar_archivo(archivo)
+                    imagen_id = cloudinary_utils.guardar_archivo(archivo)
                 except Exception as e:
                     print(f"Error guardando imagen: {e}")
             
@@ -585,8 +582,7 @@ class AdminAprobarEventoView(APIView):
             imagen_url = data.get('imagen_url')
             if imagen_url:
                 try:
-                    mongo_utils = UtilidadesMongo()
-                    imagen_id = mongo_utils.descargar_y_guardar_imagen(imagen_url)
+                    imagen_id = cloudinary_utils.guardar_desde_url(imagen_url)
                 except Exception as e:
                     print(f"Error descargando imagen: {e}")
             

@@ -1,5 +1,19 @@
 from django.urls import path
-from .views import *
+from .views import (
+    RegisterView, CustomTokenObtainPairView, UserGroupView,
+    UserListCreateView, UserDetailView,
+    CategEventoListCreateView, CategEventoDetailView, CategEventoPopularesView,
+    UbicacionListCreateView, UbicacionDetailView,
+    InscripcionListCreateView, InscripcionDetailView, MisInscripcionesView,
+    EventoListCreateView, EventoDetailView,
+    ResenaListCreateView, ResenaDetailView,
+    ContactoListCreateView,
+    ConfiguracionPerfilView,
+    ValidarCedulaTSEView,
+    EstadisticasView,
+    EnviarCodigoVerificacionView, VerificarCodigoView,
+    GenerarCodigoWhatsAppView, ValidarCodigoWhatsAppView, VerificarAutorizacionView
+)
 from .n8n_views import (N8NCrearEventoView, N8NEventoPendienteView, N8NEventoPendienteDetailView, 
                          N8NConfirmarEventoView, AdminEventosPendientesView, AdminAprobarEventoView, AdminRechazarEventoView)
 
@@ -36,7 +50,7 @@ urlpatterns = [
     # Eventos
     path('Evento/', EventoListCreateView.as_view(), name="crear y listar eventos"),
     path('Evento/<int:pk>/', EventoDetailView.as_view(), name="detalle evento"),
-    path('Evento/imagen/<str:imagen_id>/', EventoImagenView.as_view(), name="ver imagen evento"),
+    # Nota: El endpoint de imagen ya no es necesario con Cloudinary, las imágenes se sirven directamente desde Cloudinary
 
     # Configuracion Global
     path('configuracion/perfil/', ConfiguracionPerfilView.as_view(), name="configuracion perfil"),

@@ -12,7 +12,7 @@ from django.contrib.auth import get_user_model
 from .permissions import IsAdminUser, IsAdminOrReadOnly, IsAdminOrSelf, IsOwnerOrAdmin # chequeo 
 Usuario = get_user_model()
 # importes necesarios para evento
-from .mongo_utils import UtilidadesMongo
+from .cloudinary_utils import cloudinary_utils
 from django.http import HttpResponse
 from django.db.models import Count, Avg, Sum
 from django.utils import timezone
@@ -221,20 +221,18 @@ class EventoListCreateView(APIView):
             print(f"Tiene imagen (FILES): {imagen is not None}")
             print(f"Tiene imagen_url: {imagen_url}")
             
-            # Guardar imagen en MongoDB si existe
+            # Guardar imagen en Cloudinary si existe
             if imagen or imagen_url:
-                mongo_utils = UtilidadesMongo()
-                
                 if imagen:
-                    print(f"Guardando imagen en MongoDB...")
-                    imagen_id = mongo_utils.guardar_archivo(imagen)
-                    print(f"Imagen guardada con ID: {imagen_id}")
-                    data['imagen_id'] = str(imagen_id)
+                    print(f"Guardando imagen en Cloudinary...")
+                    imagen_url_result = cloudinary_utils.guardar_archivo(imagen)
+                    print(f"Imagen guardada con URL: {imagen_url_result}")
+                    data['imagen_id'] = imagen_url_result
                 elif imagen_url:
                     print(f"Descargando imagen desde URL...")
-                    imagen_id = mongo_utils.descargar_y_guardar_imagen(imagen_url)
-                    print(f"Imagen descargada con ID: {imagen_id}")
-                    data['imagen_id'] = str(imagen_id)
+                    imagen_url_result = cloudinary_utils.guardar_desde_url(imagen_url)
+                    print(f"Imagen descargada con URL: {imagen_url_result}")
+                    data['imagen_id'] = imagen_url_result
                 
             print(f"===SERIALIZANDO EVENTO ===")
             print(f"Data keys: {data.keys()}")
@@ -291,16 +289,14 @@ class EventoDetailView(APIView):
             if key not in ['imagen', 'imagen_url']:
                 data[key] = request.data[key]
         
-        # Guardar imagen en MongoDB si existe
+        # Guardar imagen en Cloudinary si existe
         if imagen or imagen_url:
-            mongo_utils = UtilidadesMongo()
-            
             if imagen:
-                imagen_id = mongo_utils.guardar_archivo(imagen)
-                data['imagen_id'] = str(imagen_id)
+                imagen_url_result = cloudinary_utils.guardar_archivo(imagen)
+                data['imagen_id'] = imagen_url_result
             elif imagen_url:
-                imagen_id = mongo_utils.descargar_y_guardar_imagen(imagen_url)
-                data['imagen_id'] = str(imagen_id)
+                imagen_url_result = cloudinary_utils.guardar_desde_url(imagen_url)
+                data['imagen_id'] = imagen_url_result
                 
         serializer = EventoSerializer(evento, data=data, partial=True)
         if serializer.is_valid():
@@ -319,17 +315,17 @@ class EventoDetailView(APIView):
         evento.delete()
         return Response({'success': True, 'message': 'Evento eliminado'}, status=200)
 
-class EventoImagenView(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request, imagen_id):
-        mongo_utils = UtilidadesMongo()
-        archivo = mongo_utils.obtener_archivo(imagen_id)
-        
-        if archivo:
-            response = HttpResponse(archivo.read(), content_type=archivo.content_type)
-            return response
-        return Response({'error': 'Imagen no encontrada'}, status=404)
+# NOTA: EventoImagenView ya NO es necesaria porque Cloudinary sirve las imágenes directamente por URL
+# class EventoImagenView(APIView):
+    # permission_classes = [AllowAny]
+    #
+    # def get(self, request, imagen_id):
+    #     archivo = cloudinary_utils.obtener_archivo(imagen_id)
+    #
+    #     if archivo:
+    #         response = HttpResponse(archivo.read(), content_type=archivo.content_type)
+    #         return response
+    #     return Response({'error': 'Imagen no encontrada'}, status=404)
 
 # Vista para obtener las categorías mas populares (o sea con mas eventos)
 class CategEventoPopularesView(APIView):
