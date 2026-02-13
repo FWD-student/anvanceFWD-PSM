@@ -1,11 +1,47 @@
-Django>=5.1,<5.2
-djangorestframework>=3.15.0
-djangorestframework-simplejwt>=5.3.0
-django-cors-headers>=4.3.0
-mysqlclient>=2.2.0
-pymongo>=4.6.0
-python-dotenv>=1.0.0
-requests>=2.31.0
-beautifulsoup4>=4.12.0
-whitenoise>=6.6.0
-gunicorn>=21.2.0
+# Framework Django (última versión estable 5.1.x)
+Django>=5.1.15,<5.2
+
+# Django REST Framework
+# Última versión estable: 3.15.2 (enero 2025)
+djangorestframework>=3.15.2,<3.16
+
+# Autenticación JWT
+# Última versión: 5.4.0
+# IMPORTANTE: Compatibilidad con Django 5.1.15 verificada
+djangorestframework-simplejwt>=5.4.0,<5.5
+
+# CORS Headers
+# Última versión: 4.7.0 (julio 2025)
+django-cors-headers>=4.7.0,<4.8
+
+# PostgreSQL (última versión estable 2.9.x)
+psycopg2-binary>=2.9.9,<3.0
+
+# Cloudinary para imágenes
+# Última versión: 1.42.2 (estable)
+cloudinary>=1.42.2,<1.43
+
+# Parseo de DATABASE_URL
+# Última versión: 2.3.0
+dj-database-url>=2.3.0,<2.4
+
+# Variables de entorno
+python-dotenv>=1.0.1,<1.1
+
+# HTTP Requests
+# Última versión: 2.32.3
+requests>=2.32.3,<2.33
+
+# Web Scraping
+# BeautifulSoup4 última: 4.12.3
+# lxml parser última: 5.3.0
+beautifulsoup4>=4.12.3,<4.13
+lxml>=5.3.0,<5.4
+
+# Servidor WSGI
+# Última versión: 23.0.0
+gunicorn>=23.0.0,<24.0
+
+# WhiteNoise para archivos estáticos
+# Última versión: 6.9.0 (julio 2025)
+whitenoise>=6.9.0,<6.10
