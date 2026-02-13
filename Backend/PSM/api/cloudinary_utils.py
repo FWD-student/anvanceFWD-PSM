@@ -1,4 +1,7 @@
-#Reemplaza la funcionalidad de MongoDB/GridFS
+"""
+Utilidades para manejar archivos con Cloudinary
+Reemplaza la funcionalidad de MongoDB/GridFS
+"""
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
@@ -6,18 +9,19 @@ import requests
 from io import BytesIO
 from django.conf import settings
 
+
 class UtilidadesCloudinary:
-    Clase para manejar archivos en Cloudinary
+    """Clase para manejar archivos en Cloudinary"""
     
     def __init__(self):
-        # Configuración ya está hecha en settings.py
+        """Inicializa la clase - la configuración ya está en settings.py"""
         pass
     
     def guardar_archivo(self, archivo, folder='eventos'):
-        
+        """
         Guarda un archivo (objeto File de Django) en Cloudinary
         Retorna la URL pública de la imagen
-        
+        """
         try:
             print(f"Intentando subir archivo a Cloudinary: {archivo.name}, tamaño: {archivo.size}")
             
@@ -40,10 +44,10 @@ class UtilidadesCloudinary:
             return None
     
     def guardar_desde_url(self, url_imagen, folder='eventos'):
-        
+        """
         Descarga una imagen desde una URL y la sube a Cloudinary
         Retorna la URL pública de la imagen en Cloudinary
-        
+        """
         try:
             print(f"Descargando imagen desde URL: {url_imagen}")
             
@@ -69,9 +73,10 @@ class UtilidadesCloudinary:
             return None
     
     def guardar_desde_base64(self, base64_data, folder='eventos'):
-        
-        #Guarda una imagen en base64 en Cloudinary retorna la URL pública de la imagen
-        
+        """
+        Guarda una imagen en base64 en Cloudinary
+        Retorna la URL pública de la imagen
+        """
         try:
             print("Subiendo imagen base64 a Cloudinary...")
             
@@ -93,9 +98,9 @@ class UtilidadesCloudinary:
             return None
     
     def eliminar_archivo(self, public_id):
-        
-        #Elimina un archivo de Cloudinary por su public_id
-        
+        """
+        Elimina un archivo de Cloudinary por su public_id
+        """
         try:
             result = cloudinary.uploader.destroy(public_id)
             print(f"Archivo eliminado de Cloudinary: {public_id}")
@@ -105,10 +110,11 @@ class UtilidadesCloudinary:
             return None
     
     def obtener_url(self, url_completa):
-        
-        #Retorna la URL de la imagen (ya está guardada en la BD)
-       
+        """
+        Retorna la URL de la imagen (ya está guardada en la BD)
+        """
         return url_completa
+
 
 # Instancia global para usar en las vistas
 cloudinary_utils = UtilidadesCloudinary()
