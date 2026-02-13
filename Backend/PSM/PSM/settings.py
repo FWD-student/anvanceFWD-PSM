@@ -43,6 +43,10 @@ CSRF_TRUSTED_ORIGINS = [
 if railway_domain:
     CSRF_TRUSTED_ORIGINS.append(f'https://{railway_domain}')
 
+# Permitir healthcheck de Railway
+ALLOWED_HOSTS.append('healthcheck.railway.app')
+CSRF_TRUSTED_ORIGINS.append('https://healthcheck.railway.app')
+
 # Agregar frontend de Vercel si está configurado
 frontend_url = os.environ.get('FRONTEND_URL', '').strip() # Strip para seguridad
 # Eliminar slash al final si existe (CORS no permite paths)
