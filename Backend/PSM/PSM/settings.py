@@ -39,7 +39,10 @@ if railway_domain:
     CSRF_TRUSTED_ORIGINS.append(f'https://{railway_domain}')
 
 # Agregar frontend de Vercel si está configurado
-frontend_url = os.environ.get('FRONTEND_URL')
+frontend_url = os.environ.get('FRONTEND_URL', '')
+# Eliminar slash al final si existe (CORS no permite paths)
+if frontend_url.endswith('/'):
+    frontend_url = frontend_url[:-1]
 if frontend_url:
     CSRF_TRUSTED_ORIGINS.append(frontend_url)
 
