@@ -19,9 +19,8 @@ from django.utils import timezone
 from datetime import timedelta
 # TSE Service para validación de cédulas
 from .services.tse_service import tse_service
-# Brevo Service para emails - COMENTADO: Falta sib_api_v3_sdk en requirements.txt
-# Descomentar cuando se instale: pip install sib-api-v3-sdk
-# from .services.brevo_service import brevo_service
+# Brevo Service para emails
+from .services.brevo_service import brevo_service
 
 
 # Vistas User (autenticacion)
@@ -560,13 +559,7 @@ class EnviarCodigoVerificacionView(APIView):
             )
         
         # Generar código y guardarlo
-        # COMENTADO: brevo_service requiere sib_api_v3_sdk que no está instalado
-        # Para habilitar emails, instalar: pip install sib-api-v3-sdk
-        # codigo = brevo_service.generar_codigo_verificacion()
-        
-        # Código temporal sin Brevo (solo para desarrollo)
-        import random
-        codigo = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        codigo = brevo_service.generar_codigo_verificacion()
         
         # Invalidar códigos anteriores para este email
         CodigoVerificacion.objects.filter(email=email, usado=False).update(usado=True)
@@ -574,15 +567,19 @@ class EnviarCodigoVerificacionView(APIView):
         # Crear nuevo código
         CodigoVerificacion.objects.create(email=email, codigo=codigo)
         
-        # Enviar email con el código - COMENTADO: Falta SDK de Brevo
-        # resultado = brevo_service.enviar_codigo_verificacion(email, codigo)
-        print(f"[DESARROLLO] Código de verificación para {email}: {codigo}")
+        # Enviar email con el código
+        resultado = brevo_service.enviar_codigo_verificacion(email, codigo)
+        print(f"[INFO] Resultado envío email a {email}: {resultado}")
         
-        # Simular éxito (en producción descomentar línea de brevo arriba)
+        if not resultado.get('success'):
+             return Response({
+                'success': False,
+                'error': f"Error enviando email: {resultado.get('error')}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         return Response({
             'success': True,
-            'message': 'Código de verificación generado (ver logs para el código)',
-            'nota': 'Brevo está deshabilitado. En producción instalar sib-api-v3-sdk'
+            'message': 'Código de verificación enviado correctamente a tu correo.'
         })
 
 # Vista para verificar código
