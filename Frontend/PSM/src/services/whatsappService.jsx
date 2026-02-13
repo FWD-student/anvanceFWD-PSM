@@ -1,4 +1,5 @@
-const API_URL = 'http://127.0.0.1:8000/api/whatsapp/generar-codigo/';
+import { API_BASE_URL } from '../config';
+const API_URL = `${API_BASE_URL}/whatsapp/generar-codigo/`;
 
 // Obtener codigo activo del admin
 async function obtenerCodigo() {

@@ -1,4 +1,5 @@
-const API_URL = 'http://127.0.0.1:8000/api/Inscripcion/';
+import { API_BASE_URL } from '../config';
+const API_URL = `${API_BASE_URL}/Inscripcion/`;
 
 const getInscripciones = async (noCache = false) => {
     const token = localStorage.getItem('token');

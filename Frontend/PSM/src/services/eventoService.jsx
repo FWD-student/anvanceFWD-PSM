@@ -1,4 +1,6 @@
-const API_URL = 'http://127.0.0.1:8000/api/';
+import { API_BASE_URL } from '../config';
+
+const API_URL = `${API_BASE_URL}/`;
 
 async function getEventos(noCache = false) {
     const token = localStorage.getItem('token');
@@ -56,7 +58,6 @@ async function createEvento(eventoData) {
         'Authorization': `Bearer ${token}`
     };
 
-    // Si no es FormData, uno asume que es JSON y agregamos Content-Type
     let body = eventoData;
     if (!(eventoData instanceof FormData)) {
         headers['Content-Type'] = 'application/json';
@@ -84,7 +85,6 @@ async function updateEvento(id, eventoData) {
         'Authorization': `Bearer ${token}`
     };
 
-    // Si no es FormData, asumimos que es JSON y agregamos Content-Type
     let body = eventoData;
     if (!(eventoData instanceof FormData)) {
         headers['Content-Type'] = 'application/json';
@@ -127,4 +127,4 @@ function getEventoImagenUrl(imagenId) {
     return `${API_URL}Evento/imagen/${imagenId}/`;
 }
 
-export default { getEventos, getEventoById, createEvento, updateEvento, deleteEvento, getEventoImagenUrl };
+export default { getEventos, getEventoById, createEvento, updateEvento, deleteEvento, getEventoImagenUrl }

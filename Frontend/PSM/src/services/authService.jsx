@@ -1,4 +1,6 @@
-const API_URL = 'http://127.0.0.1:8000/api/';
+import { API_BASE_URL } from '../config';
+
+const API_URL = `${API_BASE_URL}/`;
 
 async function register(username, nombre, primerApellido, segundoApellido, email, password, telefono, edad, fecha_nacimiento, nacionalidad) {
     const userData = {
@@ -6,13 +8,12 @@ async function register(username, nombre, primerApellido, segundoApellido, email
         email,
         password,
         first_name: nombre,
-        // normalizacion en apellidos
         primer_apellido: primerApellido,
         segundo_apellido: segundoApellido,
         telefono,
         edad,
         fecha_nacimiento,
-        nacionalidad // nuevo campo necesario para la validaciones futuras o nuevos features
+        nacionalidad
     };
 
     const response = await fetch(`${API_URL}register/`, {
@@ -26,7 +27,6 @@ async function register(username, nombre, primerApellido, segundoApellido, email
     const data = await response.json();
     
     if (!response.ok) {
-        // Si hay errores de validación, mostrarlos
         console.error('Errores de validación:', data);
         const errorMsg = typeof data === 'object' ? JSON.stringify(data) : data;
         throw new Error(errorMsg);
@@ -56,40 +56,33 @@ async function login(username, password) {
     return await response.json();
 }
 
-// Cerrar la sesion y limpiar localStorage
 function logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_role');
     localStorage.removeItem('userRole');
-    // Disparar evento para que el proveedor de tema detecte el cambio
     window.dispatchEvent(new Event('auth-change'));
 }
 
-// Obtener el token del localStorage
 function getToken() {
     return localStorage.getItem('token') || localStorage.getItem('access_token');
 }
 
-// Verificar si hay usuario autenticado
 function isAuthenticated() {
     return !!getToken();
 }
 
-// Obtener la informacion del usuario actual desde el token
 async function getCurrentUser() {
     const token = getToken();
     if (!token) {
         return null;
     }
 
-    // Decodificar el token JWT para obtener el user_id
     const { jwtDecode } = await import('jwt-decode');
     const decoded = jwtDecode(token);
     const userId = decoded.user_id;
 
-    // Obtener la informacion completa del usuario desde el backend
     const response = await fetch(`${API_URL}User/${userId}/`, {
         method: 'GET',
         headers: {
