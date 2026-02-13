@@ -483,7 +483,7 @@ const SesionRegistro = () => {
     };
 
     return (
-        <div className="flex justify-center items-center min-h-[80vh] bg-background p-4 relative bg-[url('/path/to/pattern.svg')]">
+        <div className="flex justify-center items-center min-h-[80vh] bg-background p-4 relative bg-[url('/pattern.svg')]">
                 <Card className="w-full max-w-md shadow-2xl bg-card/90 backdrop-blur-md border-border/50 transition-all duration-300 relative">
                 
                 {/* Botón Flotante Volver */}
