@@ -26,6 +26,11 @@ echo ""
 echo "Verificando conexion a PostgreSQL..."
 python manage.py dbshell --command="SELECT 1;" 2>/dev/null && echo "✓ Conexion exitosa" || echo "⚠ No se pudo verificar conexion (continuando...)"
 
+# Recolectar archivos estaticos
+echo ""
+echo "Paso 0: Recolectando archivos estaticos..."
+python manage.py collectstatic --noinput || echo "⚠ Advertencia: collectstatic tuvo problemas"
+
 # Crear migraciones (primera vez en Railway)
 echo ""
 echo "Paso 1: Creando migraciones..."
