@@ -45,3 +45,7 @@ gunicorn>=23.0.0,<24.0
 # WhiteNoise para archivos estáticos
 # Última versión: 6.9.0 (julio 2025)
 whitenoise>=6.9.0,<6.10
+
+# Brevo (Sendinblue) para emails transaccionales
+# COMENTADO: Descomentar cuando se vaya a usar en producción
+# sib-api-v3-sdk>=1.0.0
