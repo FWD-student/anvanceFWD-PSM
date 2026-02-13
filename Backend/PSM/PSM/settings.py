@@ -29,7 +29,7 @@ railway_domain = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
 if railway_domain and railway_domain not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(railway_domain)
 
-# AGREGADO: Permitir dominios adicionales via variable de entorno (separados por coma)
+# AGREGADO: Permitir que los dominios adicionales via variable de entorno (separados por coma)
 additional_hosts = os.environ.get('ADDITIONAL_HOSTS', '')
 if additional_hosts:
     ALLOWED_HOSTS.extend([host.strip() for host in additional_hosts.split(',') if host.strip()])
@@ -176,7 +176,7 @@ if database_url:
         'default': dj_database_url.parse(database_url, conn_max_age=600)
     }
 else:
-    # Local - MySQL (tu configuración actual)
+    # Local - MySQL (la configuración actual)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
@@ -222,10 +222,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # SEGURIDAD EN PRODUCCIÓN
 # =============================================================================
 if not DEBUG:
-    # Confiar en el header de Railway para saber si estamos en HTTPS
+    # Confio en el header de Railway para saber si estamos en HTTPS
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     
-    SECURE_SSL_REDIRECT = True
+    # Desactivo redirección SSL en Django para evitar problemas con el Health Check interno de Railway
+    # Railway ya maneja la redirección HTTP->HTTPS en su capa de proxy
+    SECURE_SSL_REDIRECT = False
+    
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
