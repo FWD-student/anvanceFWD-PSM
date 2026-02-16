@@ -11,134 +11,100 @@ import { useToast } from "@/hooks/use-toast"
 import { useModoRendimiento } from '../../hooks/use-modo-rendimiento';
 import { MapPin, Clock, CalendarDays } from "lucide-react";
 
-
 function CaruselEvent() {
-    const [eventos, setEventos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userInterests, setUserInterests] = useState([]);
     const { toast } = useToast();
-
-    const [eventosProcesados, setEventosProcesados] = useState([]);
     const { esGamaBaja, animacionesHabilitadas } = useModoRendimiento();
+    
+    // Estado para datos crudos y procesados
+    const [rawData, setRawData] = useState({ eventos: [], ubicaciones: [], categorias: [] });
+    const [eventosProcesados, setEventosProcesados] = useState([]);
 
+    // 1. Cargar datos iniciales
     useEffect(() => {
-        const loadData = async () => {
+        const loadInitialData = async () => {
             try {
-                // Verificar autenticación
+                // Verificar auth
                 const isAuth = authService.isAuthenticated();
                 setIsAuthenticated(isAuth);
-                
-                let intereses = [];
+
                 if (isAuth) {
-                    try {
+                   try {
                         const user = await authService.getCurrentUser();
-                        if (user && user.intereses) {
-                            intereses = user.intereses;
-                            setUserInterests(intereses);
-                        }
-                    } catch (e) {
-                        console.error("Error cargando usuario para intereses:", e);
-                    }
+                        if (user?.intereses) setUserInterests(user.intereses);
+                   } catch (e) { console.error(e); }
                 }
 
-                // Cargar eventos, ubicaciones y categorías en paralelo
-                const [eventosData, ubicacionesData, categoriasData] = await Promise.all([
+                // Cargar datos
+                const [eventos, ubicaciones, categorias] = await Promise.all([
                     eventoService.getEventos(true),
                     ubicacionService.getUbicaciones(),
                     categoriaService.getCategEventos()
                 ]);
 
-                // Crear mapa de ubicaciones para acceso O(1)
-                const mapaUbicaciones = ubicacionesData.reduce((acc, ub) => {
-                    acc[ub.id] = ub.recinto;
-                    return acc;
-                }, {});
-
-                // Crear mapa de categorías/deportes para acceso O(1)
-                const mapaCategorias = categoriasData.reduce((acc, cat) => {
-                    acc[cat.id] = cat;
-                    return acc;
-                }, {});
-
-                const now = new Date();
-                now.setHours(0, 0, 0, 0);
-
-                // Procesar eventos usando map
-                const eventosMapeados = eventosData.map(evento => {
-                    const fechaInicio = new Date(evento.fecha_inicio + 'T00:00:00');
-                    const fechaFin = new Date(evento.fecha_fin + 'T00:00:00');
-                    // Mapear nombre de ubicación
-                    const nombreUbicacion = mapaUbicaciones[evento.ubicacion] || 'Ubicación por confirmar';
-                    // Mapear información de categoría/deporte
-                    const categoriaInfo = mapaCategorias[evento.categoria] || null;
-                    
-                    // Determinar estado del evento:
-                    // - Pasado: fecha_fin < hoy
-                    // - En curso: fecha_inicio <= hoy <= fecha_fin
-                    // - Futuro: fecha_inicio > hoy
-                    const esPasado = fechaFin < now;
-                    const esEnCurso = !esPasado && fechaInicio <= now && fechaFin >= now;
-                    const esFuturo = fechaInicio > now;
-                    
-                    return {
-                        ...evento,
-                        fechaObj: fechaInicio,
-                        fechaFinObj: fechaFin,
-                        ubicacion_nombre: nombreUbicacion,
-                        categoria_info: categoriaInfo,
-                        esPasado,
-                        esEnCurso,
-                        esFuturo
-                    };
-                });
-
-                // Separar por estado
-                const pasados = eventosMapeados
-                    .filter(e => e.esPasado)
-                    .sort((a, b) => b.fechaFinObj - a.fechaFinObj); // Más reciente primero
-
-                const enCurso = eventosMapeados
-                    .filter(e => e.esEnCurso)
-                    .sort((a, b) => a.fechaFinObj - b.fechaFinObj); // Termina más pronto primero
-
-                const futuros = eventosMapeados
-                    .filter(e => e.esFuturo)
-                    .sort((a, b) => a.fechaObj - b.fechaObj);
-
-                // Priorizar intereses en futuros
-                if (intereses.length > 0) {
-                    futuros.sort((a, b) => {
-                        const aMatch = intereses.includes(a.categoria);
-                        const bMatch = intereses.includes(b.categoria);
-                        if (aMatch && !bMatch) return -1;
-                        if (!aMatch && bMatch) return 1;
-                        return 0; 
-                    });
-                }
-
-                // Construir lista final: Pasado (izquierda), En curso (centro), Futuros (derecha)
-                const listaFinal = [
-                    ...(pasados.length > 0 ? [{ ...pasados[0] }] : []),
-                    ...enCurso,
-                    ...futuros
-                ];
-
-                setEventosProcesados(listaFinal);
+                setRawData({ eventos, ubicaciones, categorias });
             } catch (error) {
-                console.error("Error cargando datos del carrusel:", error);
-                toast({
-                    title: "Error de carga",
-                    description: "No se pudieron cargar los eventos.",
-                    variant: "destructive"
-                });
+                console.error("Error cargando datos:", error);
+                toast({ title: "Error", description: "No se pudieron cargar los eventos.", variant: "destructive" });
             } finally {
                 setLoading(false);
             }
         };
-
-        loadData();
+        loadInitialData();
     }, []);
+
+    // 2. Procesar datos con useMemo
+    useEffect(() => {
+        if (loading) return;
+
+        const { eventos, ubicaciones, categorias } = rawData;
+        
+        // Mapas O(1)
+        const mapaUbicaciones = ubicaciones.reduce((acc, u) => ({ ...acc, [u.id]: u.recinto }), {});
+        const mapaCategorias = categorias.reduce((acc, c) => ({ ...acc, [c.id]: c }), {});
+        
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        const procesados = eventos.map(evento => {
+            const inicio = new Date(evento.fecha_inicio + 'T00:00:00');
+            const fin = new Date(evento.fecha_fin + 'T00:00:00');
+            
+            return {
+                ...evento,
+                fechaObj: inicio,
+                fechaFinObj: fin,
+                ubicacion_nombre: mapaUbicaciones[evento.ubicacion] || 'Por confirmar',
+                categoria_info: mapaCategorias[evento.categoria],
+                esPasado: fin < now,
+                esEnCurso: fin >= now && inicio <= now,
+                esFuturo: inicio > now
+            };
+        });
+
+        // Ordenar y filtrar
+        const pasados = procesados.filter(e => e.esPasado).sort((a, b) => b.fechaFinObj - a.fechaFinObj);
+        const enCurso = procesados.filter(e => e.esEnCurso).sort((a, b) => a.fechaFinObj - b.fechaFinObj);
+        const futuros = procesados.filter(e => e.esFuturo).sort((a, b) => a.fechaObj - b.fechaObj);
+
+        // Priorizar intereses
+        if (userInterests.length > 0) {
+            futuros.sort((a, b) => {
+                const aMatch = userInterests.includes(a.categoria);
+                const bMatch = userInterests.includes(b.categoria);
+                return (bMatch ? 1 : 0) - (aMatch ? 1 : 0);
+            });
+        }
+
+        setEventosProcesados([
+            ...(pasados.length ? [pasados[0]] : []),
+            ...enCurso,
+            ...futuros
+        ]);
+
+    }, [rawData, userInterests, loading]);
 
     const handleInscribirse = async (eventoId, eventoNombre) => {
         if (!isAuthenticated) {

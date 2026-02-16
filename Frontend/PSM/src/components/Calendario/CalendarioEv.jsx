@@ -55,133 +55,90 @@ function CalendarioEv() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [view, setView] = useState(Views.MONTH);
   const [date, setDate] = useState(new Date());
+  
+  const [rawData, setRawData] = useState({ events: [], cats: [], locs: [] });
+  const [loading, setLoading] = useState(true);
+  
   const location = useLocation();
 
+  // 1. Cargar datos 
   useEffect(() => {
-    cargarDatos();
-  }, [location.pathname]); // Recargar/Refiltrar si cambia la URL
+    const fetchData = async () => {
+      try {
+        const [eventosData, categoriasData, ubicacionesData] = await Promise.all([
+          EventoService.getEventos(true),
+          categoriaService.getCategEventos(),
+          ubicacionService.getUbicaciones()
+        ]);
+        setRawData({ events: eventosData, cats: categoriasData, locs: ubicacionesData });
+        setCategorias(categoriasData);
+        setUbicaciones(ubicacionesData);
+      } catch (error) {
+        console.error("Error al cargar datos:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
-  const cargarDatos = async () => {
-    try {
-      // Cargar eventos, categorias y ubicaciones en paralelo
-      const [eventosData, categoriasData, ubicacionesData] = await Promise.all([
-        EventoService.getEventos(true),
-        categoriaService.getCategEventos(),
-        ubicacionService.getUbicaciones()
-      ]);
-
-      setCategorias(categoriasData);
-      setUbicaciones(ubicacionesData);
-
-      // Crear mapa de categorias y ubicaciones para acceso rapido
-      const categoriasMap = {};
-      categoriasData.forEach(cat => { categoriasMap[cat.id] = cat; });
+  // 2. Procesar
+  useEffect(() => {
+      if (loading) return;
+      const { events, cats, locs } = rawData;
       
-      const ubicacionesMap = {};
-      ubicacionesData.forEach(ubi => { ubicacionesMap[ubi.id] = ubi; });
+      const catsMap = cats.reduce((acc, c) => ({ ...acc, [c.id]: c }), {});
+      const locsMap = locs.reduce((acc, u) => ({ ...acc, [u.id]: u }), {});
 
-      // Filtrar eventos según la URL
       const now = new Date();
-      now.setHours(0, 0, 0, 0); // Normalizar a medianoche para comparaciones de fechas
+      now.setHours(0,0,0,0);
 
-      let eventosFiltrados = eventosData;
-
+      let filtered = events;
       if (location.pathname.includes('/eventos/proximos')) {
-          eventosFiltrados = eventosData.filter(e => {
-              const fechaFin = new Date(e.fecha_fin + 'T00:00:00');
-              return fechaFin >= now;
-          });
+          filtered = events.filter(e => new Date(e.fecha_fin + 'T00:00:00') >= now);
       } else if (location.pathname.includes('/eventos/pasados')) {
-          eventosFiltrados = eventosData.filter(e => {
-              const fechaFin = new Date(e.fecha_fin + 'T00:00:00');
-              return fechaFin < now;
-          });
+          filtered = events.filter(e => new Date(e.fecha_fin + 'T00:00:00') < now);
       }
 
-      // Map backend data to calendar format con horarios parseados
-      const eventosFormateados = [];
+      const formatted = [];
       
-      eventosFiltrados.forEach(evento => {
-        const { hora: horaInicio, min: minInicio } = parsearHora(evento.hora_inicio);
-        const { hora: horaFin, min: minFin } = parsearHora(evento.hora_fin);
+      filtered.forEach(evento => {
+        const { hora: hI, min: mI } = parsearHora(evento.hora_inicio);
+        const { hora: hF, min: mF } = parsearHora(evento.hora_fin);
         
-        // Agregar informacion de categoria y ubicacion al evento
-        const eventoConInfo = {
-          ...evento,
-          categoria_info: categoriasMap[evento.categoria] || null,
-          ubicacion_info: ubicacionesMap[evento.ubicacion] || null
+        const resource = {
+            ...evento,
+            categoria_info: catsMap[evento.categoria],
+            ubicacion_info: locsMap[evento.ubicacion]
         };
-        
-        // Obtener dias del evento (puede venir como string JSON o como array)
-        let diasEvento = evento.dias_semana || [];
-        if (typeof diasEvento === 'string') {
-          try {
-            diasEvento = JSON.parse(diasEvento);
-          } catch (e) {
-            diasEvento = [];
-          }
-        }
-        if (!Array.isArray(diasEvento)) {
-          diasEvento = [];
-        }
-        
-        // Si no hay dias especificos, crear evento para todo el rango de fechas
-        if (diasEvento.length === 0) {
-          const fechaInicio = new Date(evento.fecha_inicio + 'T00:00:00');
-          fechaInicio.setHours(horaInicio, minInicio, 0, 0);
-          
-          const fechaFin = new Date(evento.fecha_fin + 'T00:00:00');
-          fechaFin.setHours(horaFin, minFin, 0, 0);
-          
-          eventosFormateados.push({
-            title: evento.nombre,
-            start: fechaInicio,
-            end: fechaFin,
-            allDay: false,
-            resource: eventoConInfo
-          });
+
+        let dias = evento.dias_semana;
+        if (typeof dias === 'string') try { dias = JSON.parse(dias); } catch { dias = []; }
+        if (!Array.isArray(dias)) dias = [];
+
+        const startBase = new Date(evento.fecha_inicio + 'T00:00:00');
+        const endBase = new Date(evento.fecha_fin + 'T00:00:00');
+
+        if (dias.length === 0) {
+            const s = new Date(startBase); s.setHours(hI, mI, 0, 0);
+            const e = new Date(endBase); e.setHours(hF, mF, 0, 0);
+            formatted.push({ title: evento.nombre, start: s, end: e, allDay: false, resource });
         } else {
-          // Crear un evento por cada dia del rango que coincida con los dias seleccionados
-          const fechaInicio = new Date(evento.fecha_inicio + 'T00:00:00');
-          const fechaFin = new Date(evento.fecha_fin + 'T00:00:00');
-          
-          // Iterar por cada dia en el rango
-          for (let d = new Date(fechaInicio); d <= fechaFin; d.setDate(d.getDate() + 1)) {
-            const diaSemana = d.getDay(); // 0 = domingo, 1 = lunes, etc.
-            
-            // Verificar si este dia esta en los dias del evento
-            const diaCoincide = diasEvento.some(dia => DIAS_MAP[dia] === diaSemana);
-            
-            if (diaCoincide) {
-              const eventoStart = new Date(d);
-              eventoStart.setHours(horaInicio, minInicio, 0, 0);
-              
-              const eventoEnd = new Date(d);
-              eventoEnd.setHours(horaFin, minFin, 0, 0);
-              
-              eventosFormateados.push({
-                title: evento.nombre,
-                start: eventoStart,
-                end: eventoEnd,
-                allDay: false,
-                resource: eventoConInfo
-              });
+            for (let d = new Date(startBase); d <= endBase; d.setDate(d.getDate() + 1)) {
+                if (dias.some(dia => DIAS_MAP[dia] === d.getDay())) {
+                     const s = new Date(d); s.setHours(hI, mI, 0, 0);
+                     const e = new Date(d); e.setHours(hF, mF, 0, 0);
+                     formatted.push({ title: evento.nombre, start: s, end: e, allDay: false, resource });
+                }
             }
-          }
         }
       });
+      setEventos(formatted);
+  }, [rawData, loading, location.pathname]);
 
-      setEventos(eventosFormateados);
-    } catch (error) {
-      console.error("Error al cargar eventos para el calendario:", error);
-    }
-  };
-
-  // Funcion para asignar colores segun la categoria del evento
   const eventPropGetter = (event) => {
     const categoriaId = event.resource?.categoria;
     const colores = COLORES_CATEGORIAS[categoriaId] || COLOR_DEFAULT;
-    
     return {
       style: {
         backgroundColor: colores.bg,
@@ -200,25 +157,17 @@ function CalendarioEv() {
     return (
       <div className="flex items-center gap-1 overflow-hidden">
         {imageUrl && (
-            <img 
-                src={imageUrl} 
-                alt={event.title}
-                className="w-4 h-4 rounded-full object-cover flex-shrink-0"
-            />
+            <img src={imageUrl} alt={event.title} className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
         )}
         <span className="truncate">{event.title}</span>
       </div>
     );
   };
 
-  const handleSelectEvent = (event) => {
-    setSelectedEvent(event);
-  };
-
+  const handleSelectEvent = (event) => setSelectedEvent(event);
   const onView = useCallback((newView) => setView(newView), [setView]);
   const onNavigate = useCallback((newDate) => setDate(newDate), [setDate]);
 
-  // Formatear hora para mostrar (HH:MM:SS -> HH:MM AM/PM)
   const formatearHora = (horaStr) => {
     if (!horaStr) return '';
     const { hora, min } = parsearHora(horaStr);
@@ -227,31 +176,13 @@ function CalendarioEv() {
     return `${hora12}:${min.toString().padStart(2, '0')} ${periodo}`;
   };
 
-  // Formatear dias de la semana
   const formatearDias = (diasArray) => {
     let dias = diasArray;
-    // Parsear si viene como string JSON
-    if (typeof dias === 'string') {
-      try {
-        dias = JSON.parse(dias);
-      } catch (e) {
-        return 'No especificado';
-      }
-    }
+    if (typeof dias === 'string') try { dias = JSON.parse(dias); } catch { return 'No especificado'; }
     if (!dias || !Array.isArray(dias) || dias.length === 0) return 'No especificado';
     if (dias.length === 7) return 'Todos los días';
-    
-    const diasLabels = {
-      'lunes': 'Lun',
-      'martes': 'Mar',
-      'miercoles': 'Mié',
-      'jueves': 'Jue',
-      'viernes': 'Vie',
-      'sabado': 'Sáb',
-      'domingo': 'Dom'
-    };
-    
-    return dias.map(d => diasLabels[d] || d).join(', ');
+    const map = { 'lunes': 'Lun', 'martes': 'Mar', 'miercoles': 'Mié', 'jueves': 'Jue', 'viernes': 'Vie', 'sabado': 'Sáb', 'domingo': 'Dom' };
+    return dias.map(d => map[d] || d).join(', ');
   };
 
   return (

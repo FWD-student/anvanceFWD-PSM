@@ -38,7 +38,7 @@ class UserSerializer(serializers.ModelSerializer):
             'password': {'write_only': True},
             'intereses': {'required': False},
             'nacionalidad': {'required': False},
-            'primer_apellido': {'required': False},
+            'primer_apellido': {'required': True}, # Requerido para formalidad
             'segundo_apellido': {'required': False},
             'edad': {'required': False, 'allow_null': True},
             'fecha_nacimiento': {'required': False, 'allow_null': True},
@@ -46,8 +46,9 @@ class UserSerializer(serializers.ModelSerializer):
             'dias_anticipacion_notificacion': {'required': False},
             'email_verificado': {'required': False},
             'debe_cambiar_password': {'required': False},
-            'first_name': {'required': False},
-            'last_name': {'required': False},
+            'first_name': {'required': True}, # Requerido
+            'last_name': {'required': False}, # Usamos primer y segundo apellido
+            'email': {'required': True}, # Requerido
         }
 
     def create(self, validated_data):
@@ -123,6 +124,16 @@ class ContactoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contacto
         fields = '__all__'
+
+    def validate_correo(self, value):
+        if not value or '@' not in value:
+            raise serializers.ValidationError("Ingrese un correo válido.")
+        return value
+
+    def validate_mensaje(self, value):
+        if len(value) < 10:
+            raise serializers.ValidationError("El mensaje es muy corto (mínimo 10 caracteres).")
+        return value
 
 class UserGroupSerializer(serializers.ModelSerializer):
     class Meta:
