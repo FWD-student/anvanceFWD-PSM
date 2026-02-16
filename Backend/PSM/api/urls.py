@@ -15,8 +15,7 @@ from .views import (
     GenerarCodigoWhatsAppView, ValidarCodigoWhatsAppView, VerificarAutorizacionView,
     CrearSuperUsuarioView, SeedDataView
 )
-from .n8n_views import (N8NCrearEventoView, N8NEventoPendienteView, N8NEventoPendienteDetailView, 
-                         N8NConfirmarEventoView, AdminEventosPendientesView, AdminAprobarEventoView, AdminRechazarEventoView)
+from .n8n_views import (N8NCrearEventoView, N8NEventoPendienteView, N8NEventoPendienteDetailView, N8NConfirmarEventoView, AdminEventosPendientesView, AdminAprobarEventoView, AdminRechazarEventoView)
 
 urlpatterns = [
 

@@ -806,6 +806,10 @@ class CrearSuperUsuarioView(APIView):
             if not Usuario.objects.filter(is_superuser=True).exists():
                 user = Usuario.objects.create_superuser('admin', 'admin@example.com', 'admin123')
                 return HttpResponse(f"Superusuario 'admin' creado exitosamente. Password: admin123")
+            else:
+                return HttpResponse("Ya existe un superusuario en la base de datos.")
+        except Exception as e:
+            return HttpResponse(f"Error creando superusuario: {str(e)}")
 # Vista temporal para inicializar datos (Roles, Categorias, Eventos)
 class SeedDataView(APIView):
     permission_classes = [AllowAny]
