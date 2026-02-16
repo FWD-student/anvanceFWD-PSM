@@ -124,7 +124,10 @@ async function deleteEvento(id) {
 
 function getEventoImagenUrl(imagenId) {
     if (!imagenId) return null;
-    return `${API_URL}Evento/imagen/${imagenId}/`;
+    // Si ya es una URL completa (Cloudinary), retornarla
+    if (imagenId.startsWith('http')) return imagenId;
+    // Si es un ID de seed o placeholder, retornar un placeholder válido
+    return `https://via.placeholder.com/800x400?text=${imagenId}`;
 }
 
 export default { getEventos, getEventoById, createEvento, updateEvento, deleteEvento, getEventoImagenUrl }
