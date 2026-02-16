@@ -2,8 +2,8 @@
 const getApiUrl = () => {
     // En producción (Vercel), usa tu backend de Railway
     if (import.meta.env.PROD) {
-        const url = import.meta.env.VITE_API_URL || 'https://anvancefwd-psm-production.up.railway.app/api';
-        return url.endsWith('/') ? url.slice(0, -1) : url;
+        // HARDCODED PARA ASEGURAR QUE FUNCIONE
+        return 'https://anvancefwd-psm-production.up.railway.app/api';
     }
     // En desarrollo local
     return 'http://127.0.0.1:8000/api';
