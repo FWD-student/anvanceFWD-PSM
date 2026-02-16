@@ -16,17 +16,17 @@ export const ENDPOINTS = {
     auth: {
         login: `${API_BASE_URL}/token/`,
         refresh: `${API_BASE_URL}/token/refresh/`,
-        register: `${API_BASE_URL}/usuarios/`,
+        register: `${API_BASE_URL}/register/`,
     },
-    users: `${API_BASE_URL}/usuarios/`,
-    eventos: `${API_BASE_URL}/eventos/`,
-    inscripciones: `${API_BASE_URL}/inscripciones/`,
-    categorias: `${API_BASE_URL}/categorias/`,
-    resenas: `${API_BASE_URL}/resenas/`,
+    users: `${API_BASE_URL}/User/`,
+    eventos: `${API_BASE_URL}/Evento/`,
+    inscripciones: `${API_BASE_URL}/Inscripcion/`,
+    categorias: `${API_BASE_URL}/CategEvento/`,
+    resenas: `${API_BASE_URL}/Resena/`,
     estadisticas: `${API_BASE_URL}/estadisticas/`,
     configuracion: `${API_BASE_URL}/configuracion/perfil/`,
-    contacto: `${API_BASE_URL}/contacto/`,
-    ubicaciones: `${API_BASE_URL}/ubicaciones/`,
+    contacto: `${API_BASE_URL}/Contacto/`,
+    ubicaciones: `${API_BASE_URL}/Ubicacion/`,
 };
 
 export default {
