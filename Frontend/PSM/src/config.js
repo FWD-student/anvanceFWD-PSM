@@ -2,7 +2,7 @@
 const getApiUrl = () => {
     // En producción (Vercel), usa tu backend de Railway
     if (import.meta.env.PROD) {
-        const url = import.meta.env.VITE_API_URL || 'https://tu-app.railway.app/api';
+        const url = import.meta.env.VITE_API_URL || 'https://anvancefwd-psm-production.up.railway.app/api';
         return url.endsWith('/') ? url.slice(0, -1) : url;
     }
     // En desarrollo local
