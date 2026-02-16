@@ -5,6 +5,7 @@ echo "Looking for static files..."
 python manage.py collectstatic --noinput
 
 echo "Running migrations..."
+python manage.py makemigrations api
 python manage.py migrate
 
 echo "Seeding database (if empty)..."
