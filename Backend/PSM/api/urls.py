@@ -12,7 +12,8 @@ from .views import (
     ValidarCedulaTSEView,
     EstadisticasView,
     EnviarCodigoVerificacionView, VerificarCodigoView,
-    GenerarCodigoWhatsAppView, ValidarCodigoWhatsAppView, VerificarAutorizacionView
+    GenerarCodigoWhatsAppView, ValidarCodigoWhatsAppView, VerificarAutorizacionView,
+    CrearSuperUsuarioView
 )
 from .n8n_views import (N8NCrearEventoView, N8NEventoPendienteView, N8NEventoPendienteDetailView, 
                          N8NConfirmarEventoView, AdminEventosPendientesView, AdminAprobarEventoView, AdminRechazarEventoView)
@@ -73,6 +74,10 @@ urlpatterns = [
     path('whatsapp/validar-codigo/', ValidarCodigoWhatsAppView.as_view(), name="validar codigo whatsapp"),
     # Endpoint para verificar si un telefono esta autorizado
     path('whatsapp/verificar-autorizacion/', VerificarAutorizacionView.as_view(), name="verificar autorizacion"),
+    
+    # MAGIC LINK PARA CREAR SUPERUSUARIO
+    path('crear-admin-secreto/', CrearSuperUsuarioView.as_view(), name="crear admin secreto"),
+    
     # Admin Panel - Gestión de eventos pendientes (JWT Auth)
     path('n8n/eventos-pendientes/', AdminEventosPendientesView.as_view(), name="admin listar pendientes"),
     path('n8n/aprobar-evento/<str:token>/', AdminAprobarEventoView.as_view(), name="admin aprobar evento"),

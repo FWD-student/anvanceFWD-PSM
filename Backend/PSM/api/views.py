@@ -797,6 +797,19 @@ class VerificarAutorizacionView(APIView):
                 'autorizado': False,
                 'mensaje': 'Debes enviar el telefono'
             }, status=status.HTTP_400_BAD_REQUEST)
+
+# VISTA TEMPORAL PARA CREAR SUPERUSUARIO (RAILWAY PASS)
+class CrearSuperUsuarioView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request):
+        try:
+            if not Usuario.objects.filter(is_superuser=True).exists():
+                user = Usuario.objects.create_superuser('admin', 'admin@example.com', 'admin123')
+                return HttpResponse(f"Superusuario 'admin' creado exitosamente. Password: admin123")
+            else:
+                return HttpResponse("Ya existe un superusuario en la base de datos.")
+        except Exception as e:
+            return HttpResponse(f"Error creando superusuario: {str(e)}")
         
         # Buscar codigo activo con ese telefono
         try:
